@@ -1,0 +1,84 @@
+version: "3.8"
+
+services:
+  # React環境に関する設定
+  front:
+    build:
+      # frontディレクトリ内のDockerfileをビルドする
+      context: ./front
+      # コンテナ側起動時のディレクトリ位置を/workspace/frontとする
+      args:
+        - FRONT_WORKDIR=/workspace/front
+    # 下記2行はコンテナを起動させ続けるため記載
+    tty: true
+    stdin_open: true
+    # マウントに関する設定
+    # ホスト側のルート位置(docker-compose.ymlが格納されている階層)を、コンテナ側 /workspace にバインドマウント
+    # コンテナ側のReactプロジェクトのnode_modulesを、front_storeにボリュームマウント
+    volumes:
+      - .:/workspace
+      - front_store:/workspace/front/$FRONT_PROJ_NAME/node_modules
+    # React(vite)は5173番ポートで起動するため、ローカル側のものをポートフォワード
+    ports:
+      - "5173:5173"
+    # docker-compose起動時コマンド。プロジェクトディレクトリがある場合はアプリを起動し、ない場合はメッセージを出して待機
+    command: >
+      sh -c 
+        "if [ -e $FRONT_PROJ_NAME/package.json ]; then 
+          cd $FRONT_PROJ_NAME && yarn install && yarn dev --host
+        else
+          echo 'Project Directory is not found...' && tail -f /dev/null
+        fi" 
+
+  # NestJSに関する設定
+  api:
+    build:
+      # apiディレクトリ内のDockerfileをビルドする
+      context: ./api
+      # コンテナ側起動時のディレクトリ位置を/workspace/apiとする
+      args:
+        - API_WORKDIR=/workspace/api
+    # 下記2行はコンテナを起動させ続けるため記載
+    tty: true
+    stdin_open: true
+    # マウントに関する設定
+    # ホスト側のルート位置(docker-compose.ymlが格納されている階層)を、コンテナ側 /workspace にバインドマウント
+    # コンテナ側のNestJSプロジェクトのnode_modulesを、api_storeにボリュームマウント
+    volumes:
+      - .:/workspace
+      - api_store:/workspace/api/$API_PROJ_NAME/node_modules
+    # NestJSは3000番ポートで起動するため、ローカル側のものをポートフォワード
+    # また、Prisma Studioを使う際は5555番ポートで起動するため、ローカル側のものをポートフォワード
+    ports:
+      - "3000:3000"
+      - "5555:5555"
+    # docker-compose起動時コマンド。プロジェクトディレクトリがある場合はアプリを起動し、ない場合はメッセージを出して待機
+    command: >
+      sh -c 
+        "if [ -e $API_PROJ_NAME/package.json ]; then 
+          cd $API_PROJ_NAME && yarn install && yarn start:dev
+        else
+          echo 'Project Directory is not found...' && tail -f /dev/null
+        fi"
+    # db(Postgres)が起動してから起動するようにする。
+    depends_on:
+      - db
+
+  db:
+    image: postgres:12-alpine
+    restart: always
+    environment:
+      TZ: Asia/Tokyo
+      POSTGRES_DB: $DB_NAME
+      POSTGRES_USER: $DB_USER
+      POSTGRES_PASSWORD: $DB_PASS
+    volumes:
+      - db_store:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+
+# 今回使うボリューム
+volumes:
+  db_store:
+  front_store:
+  api_store:
