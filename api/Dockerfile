@@ -10,11 +10,11 @@ RUN yarn global add @nestjs/cli
 
 RUN echo -e '#!/bin/bash\ngit add' > /usr/bin/ga && \
 	chmod +x /usr/bin/ga
-RUN echo -e '#!/bin/bash\ngit add -A && git commit -m' > /usr/bin/gam && \
-	chmod +x /usr/bin/gam
+RUN echo -e '#!/bin/bash\ngit add -A && git commit' > /usr/bin/gac && \
+	chmod +x /usr/bin/gac
 RUN echo -e '#!/bin/bash\ngit branch' > /usr/bin/gb && \
 	chmod +x /usr/bin/gb
-RUN echo -e '#!/bin/bash\ngit commit -m' > /usr/bin/gc && \
+RUN echo -e '#!/bin/bash\ngit commit' > /usr/bin/gc && \
 	chmod +x /usr/bin/gc
 RUN echo -e '#!/bin/bash\ngit checkout' > /usr/bin/gco && \
 	chmod +x /usr/bin/gco
