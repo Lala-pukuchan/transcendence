@@ -19,8 +19,6 @@ RUN echo -e '#!/bin/bash\ngit commit -m' > /usr/bin/gc && \
 	chmod +x /usr/bin/gc
 RUN echo -e '#!/bin/bash\ngit checkout' > /usr/bin/gco && \
 	chmod +x /usr/bin/gco
-RUN echo -e '#!/bin/bash\ngit remote add origin' > /usr/bin/grinit && \
-	chmod +x /usr/bin/grinit
 RUN echo -e '#!/bin/bash\ngit remote set-url origin' > /usr/bin/grnew && \
 	chmod +x /usr/bin/grnew
 RUN echo -e '#!/bin/bash\ngit status' > /usr/bin/gs && \
