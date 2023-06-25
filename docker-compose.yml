@@ -3,6 +3,7 @@ version: "3.8"
 services:
   # React環境に関する設定
   front:
+    container_name: front
     build:
       # frontディレクトリ内のDockerfileをビルドする
       context: ./front
@@ -32,6 +33,7 @@ services:
 
   # NestJSに関する設定
   api:
+    container_name: api
     build:
       # apiディレクトリ内のDockerfileをビルドする
       context: ./api
@@ -65,6 +67,7 @@ services:
       - db
 
   db:
+    container_name: db
     image: postgres:12-alpine
     restart: always
     environment:
