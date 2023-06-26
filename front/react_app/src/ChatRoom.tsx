@@ -1,7 +1,7 @@
-import { Button, Box, Typography } from '@mui/material';
+import { Button, Box, Typography, Grid, Paper, TextField } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import UndoIcon from '@mui/icons-material/Undo';
-import Paper from '@mui/material/Paper';
+import SendIcon from '@mui/icons-material/Send';
 
 function ChatRoom() {
 
@@ -32,6 +32,18 @@ function ChatRoom() {
 						))}
 					</Box>
 				</Box>
+			</Box>
+			<Box sx={{ p: 2, backgroundColor: "background.default" }}>
+				<Grid container spacing={2}>
+					<Grid item xs={10}>
+						<TextField id="outlined-basic" label="Outlined" variant="outlined" sx={{ width: 600}}/>
+					</Grid>
+					<Grid item xs={2}>
+						<Button variant="contained" endIcon={<SendIcon />} sx={{ m: 2 }}>
+							Send
+						</Button>
+					</Grid>
+				</Grid>
 			</Box>
 			<Button variant="contained" endIcon={<UndoIcon />} onClick={() => navigate('/selectRoom')} sx={{ m: 2 }}>
 				Return Back
