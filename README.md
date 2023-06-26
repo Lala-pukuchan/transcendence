@@ -11,11 +11,33 @@ $ docker-compose exec api sh -c "nest new <環境変数API_PROJ_NAMEの値> --pa
 
 ## How to install MUI
 ```
+frontのコンテナに入った上で行うこと
 $ cd /workspace/front/react_app
 $ npm install @mui/material @emotion/react @emotion/styled
 ```
 
 ## How to install Babel
 ```
-npm install --save-dev @babel/core @babel/cli @babel/preset-env @babel/preset-react @babel/register
+frontのコンテナに入った上で行うこと
+$ cd /workspace/front/react_app
+$ npm install --save-dev @babel/core @babel/cli @babel/preset-env @babel/preset-react @babel/register
+```
+
+## version up npm
+```
+/workspace/front/react_app # npm update -g npm
+
+removed 17 packages, changed 101 packages, and audited 251 packages in 10s
+
+28 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+/workspace/front/react_app # npm -v
+9.7.2
+```
+
+# react-router-dom
+```
+npm install react-router-dom
 ```
