@@ -43,6 +43,7 @@ services:
     # 下記2行はコンテナを起動させ続けるため記載
     tty: true
     stdin_open: true
+    env_file: .env
     # マウントに関する設定
     # ホスト側のルート位置(docker-compose.ymlが格納されている階層)を、コンテナ側 /workspace にバインドマウント
     # コンテナ側のNestJSプロジェクトのnode_modulesを、api_storeにボリュームマウント
@@ -65,21 +66,21 @@ services:
     # db(Postgres)が起動してから起動するようにする。
     depends_on:
       - db
+    networks:
+      - app_network
 
   db:
     container_name: db
     image: postgres:12-alpine
     restart: always
-    environment:
-      TZ: Asia/Tokyo
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASS}
+    env_file: .env
     volumes:
       - db_store:/var/lib/postgresql/data
       - ./db/entrypoint.sh:/docker-entrypoint-initdb.d/entrypoint.sh
     ports:
       - 5432:5432
+    networks:
+      - app_network
     # command: ["postgres"]
     # entrypoint: ["sh", "/docker-entrypoint-initdb.d/entrypoint.sh"]
 
@@ -88,3 +89,7 @@ volumes:
   db_store:
   front_store:
   api_store:
+
+networks:
+  app_network:
+    driver: bridge
