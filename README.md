@@ -14,6 +14,8 @@ $ docker-compose exec api sh -c "nest new <環境変数API_PROJ_NAMEの値> --pa
 frontのコンテナに入った上で行うこと
 $ cd /workspace/front/react_app
 $ npm install @mui/material @emotion/react @emotion/styled
+$ npm install @mui/icons-material @mui/material @emotion/styled @emotion/react
+$ npm install @mui/x-data-grid
 ```
 
 ## How to install Babel

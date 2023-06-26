@@ -1,24 +1,31 @@
-import Divider from '@mui/material/Divider';
 import Paper from '@mui/material/Paper';
 import MenuList from '@mui/material/MenuList';
 import MenuItem from '@mui/material/MenuItem';
 import ListItemText from '@mui/material/ListItemText';
+import { useNavigate } from 'react-router-dom';
 
 function Top() {
+
+  const navigate = useNavigate();
 
   return (
     <>
       <Paper sx={{ width: 320, maxWidth: '100%' }}>
         <MenuList>
-          <MenuItem>
-            <ListItemText>Chat</ListItemText>
+          <MenuItem onClick={() => navigate('/chat')}>
+            <ListItemText>
+              Chat
+            </ListItemText>
           </MenuItem>
-          <MenuItem>
-            <ListItemText>Game</ListItemText>
+          <MenuItem onClick={() => navigate('/game')}>
+            <ListItemText>
+              Game
+            </ListItemText>
           </MenuItem>
-          <Divider />
-          <MenuItem>
-            <ListItemText>Account Information</ListItemText>
+          <MenuItem onClick={() => navigate('/account')}>
+            <ListItemText>
+              Account Information
+            </ListItemText>
           </MenuItem>
         </MenuList>
       </Paper>
