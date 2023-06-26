@@ -67,7 +67,6 @@ function SelectRoom() {
 			.get("/rooms")
 			.then((response) => {
 				console.log("response is ", response);
-				// 取得したデータをrowsとしてセット
 				console.log("body is ", response.data);
 				setRows(roomsToRows(response));
 			})
