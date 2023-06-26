@@ -6,6 +6,7 @@ import ChatIcon from '@mui/icons-material/Chat';
 import { useState, useEffect } from 'react';
 import { httpClient } from './httpClient.ts';
 import { Room } from '../model/room.model';
+import { roomsToRows } from './roomsToRows';
 
 function SelectRoom() {
 
@@ -45,27 +46,37 @@ function SelectRoom() {
 
 	useEffect(() => {
 		// データ取得のAPIリクエスト
-		const fetchRows = async () => {
-			await httpClient
-					.get("/rooms")
-					.then((response) => {
-						console.log("response is ", response);
-						// 取得したデータをrowsとしてセット
-						console.log("body is ", response.data);
-						setRows(response.data.Rooms.map((room: Room) => ({
-							id: room.id.toString(),
-							name: room.name
-						})));
-						console.log("rows are ", rows);
-					})
-			  		.catch(() => {
-						console.log("error");
-					});
-		};
-		fetchRows();
-	  }, []);
+		// const fetchRows = async () => {
+		// 	await httpClient
+		// 			.get("/rooms")
+		// 			.then((response) => {
+		// 				console.log("response is ", response);
+		// 				// 取得したデータをrowsとしてセット
+		// 				console.log("body is ", response.data);
+		// 				setRows(response.data.Rooms.map((room: Room) => ({
+		// 					id: room.id.toString(),
+		// 					roomName: room.name
+		// 				})));
+		// 			})
+		// 	  		.catch(() => {
+		// 				console.log("error");
+		// 			});
+		// };
+		// fetchRows();
+		httpClient
+			.get("/rooms")
+			.then((response) => {
+				console.log("response is ", response);
+				// 取得したデータをrowsとしてセット
+				console.log("body is ", response.data);
+				setRows(roomsToRows(response));
+			})
+			.catch(() => {
+				console.log("error");
+			});
+	}, []);
 	
-
+	console.log("rows are ", rows);
 
   return (
     <>
