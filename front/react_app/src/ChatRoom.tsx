@@ -54,7 +54,6 @@ function ChatRoom() {
 
 const Message = ({ message }) => {
 
-	// change to my user account
 	const isMine = message.sender === "I";
 
 	return (
