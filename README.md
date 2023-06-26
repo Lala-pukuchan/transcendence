@@ -9,6 +9,7 @@ $ docker-compose exec api sh -c "nest new <環境変数API_PROJ_NAMEの値> --pa
 ```
 - [How to create project](https://qiita.com/katkatprog/items/a53fa97ba60fa361983a)
 
+# front
 ## How to install MUI
 ```
 frontのコンテナに入った上で行うこと
@@ -39,7 +40,14 @@ found 0 vulnerabilities
 9.7.2
 ```
 
-# react-router-dom
+## react-router-dom
 ```
 npm install react-router-dom
+```
+
+# back
+## install swagger
+```
+cd /workspace/api/nest_app
+yarn add @nestjs/swagger swagger-ui-express
 ```
