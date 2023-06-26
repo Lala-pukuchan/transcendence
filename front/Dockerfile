@@ -9,6 +9,8 @@ ENV TZ Asia/Tokyo
 RUN apk update && apk upgrade && apk add --no-cache git vim bash
 # gitはインストールしておきたい。また、git rebase等でvimも必要になるのでインストール
 
+# axiosをインストールしておく
+
 RUN echo -e '#!/bin/bash\ngit add' > /usr/bin/ga && \
 	chmod +x /usr/bin/ga
 RUN echo -e '#!/bin/bash\ngit add -A && git commit' > /usr/bin/gac && \
