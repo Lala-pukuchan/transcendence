@@ -6,7 +6,7 @@ export class GetRoomsResponse {
   Rooms: Room[];
 }
 
-// export class GetRoomsRequest {
-//   @ApiProperty({ type: [Number] })
-//   ids: Room['id'][];
-// }
+export class GetRoomsRequest {
+  @ApiProperty({ type: [Number] })
+  ids: Room['id'][];
+}

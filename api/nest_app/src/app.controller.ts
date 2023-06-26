@@ -15,6 +15,8 @@ export class AppController {
   @Get('/rooms')
   @ApiResponse({ status: HttpStatus.OK, type: GetRoomsResponse })
   getRooms(@Query() { ids }: GetRoomsRequest): GetRoomsResponse {
-    return { Rooms: [] };
+    return { Rooms: [
+		{ id: 1, name: 'DM_personA_personB'},
+		{ id: 2, name: 'DM_personA_personC'}] };
   }
 }
