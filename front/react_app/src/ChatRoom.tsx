@@ -1,6 +1,5 @@
-import { Button, Box, Grid, TextField, Paper, Typography } from '@mui/material';
+import { Button, Box, Grid, TextField, Paper, Typography, Avatar } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import UndoIcon from '@mui/icons-material/Undo';
 import SendIcon from '@mui/icons-material/Send';
 import { useRef, useEffect, useCallback, useState } from 'react';
 import io from 'socket.io-client';
@@ -37,9 +36,11 @@ function ChatRoom() {
 
 		// json形式で送信
 		const message = {
-			text: inputRef.current.value,
-			sender: userId,
-			postedTime: Date().toLocaleString(),
+			room_id: roomId,
+			chat_text: inputRef.current.value,
+			user_id: userId,
+			chat_time: Date.now(),
+			contents_path: ""
 		}
 
 		// メッセージ送信
@@ -66,30 +67,45 @@ function ChatRoom() {
 
 	return (
 		<>
-			<Box sx={{ width: 800, height: '80vh', backgroundColor: 'primary.dark', display: 'flex', flexDirection: 'column'}} >
-				<Box sx={{ height: "100vh", display: "flex", flexDirection: "column" }}>
-					<Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
-						{chatLog.map((message, index) => (
-							<Message key={index} message={message} myAccountUserId={userId}/>
-						))}
-					</Box>
+			<Box
+				sx={{
+					width: 800,
+					height: "80vh",
+					display: "flex",
+					flexDirection: "column",
+					bgcolor: "primary.dark",
+				}}
+				>
+				<Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
+					{chatLog.map((message, index) => (
+						<Message key={index} message={message} myAccountUserId={userId}/>
+					))}
 				</Box>
-			</Box>
-			<Box sx={{ p: 2, backgroundColor: "background.default" }}>
-				<Grid container spacing={2}>
+				<Box sx={{ p: 2, backgroundColor: "background.default" }}>
+					<Grid container spacing={2}>
 					<Grid item xs={10}>
-						<TextField id="outlined-basic" label="Outlined" variant="outlined" sx={{ width: 600 }} defaultValue="" inputRef={inputRef}/>
+						<TextField
+						size="small"
+						fullWidth
+						placeholder="Type a message"
+						variant="outlined"
+						inputRef={inputRef}
+						/>
 					</Grid>
 					<Grid item xs={2}>
-						<Button variant="contained" endIcon={<SendIcon />} sx={{ m: 2 }} onClick={submitMessage}>
-							Send
+						<Button
+						fullWidth
+						color="primary"
+						variant="contained"
+						endIcon={<SendIcon />}
+						onClick={submitMessage}
+						>
+						Send
 						</Button>
 					</Grid>
-				</Grid>
+					</Grid>
+				</Box>
 			</Box>
-			<Button variant="contained" endIcon={<UndoIcon />} onClick={() => navigate('/selectRoom')} sx={{ m: 2 }}>
-				Return Back
-			</Button>
 		</>
 	)
 
@@ -97,26 +113,43 @@ function ChatRoom() {
 
 const Message = ({ message, myAccountUserId }) => {
 
-	const isMine = message.sender === myAccountUserId;
+	// 自分のメッセージかどうか
+	const isMine = message.user_id === myAccountUserId;
 
 	return (
-		<Box
-			sx={{
-				display: "flex",
-				justifyContent: isMine ? "flex-start" : "flex-end",
-				mb: 2,
-			}}
-		>
-			<Paper
-				variant="outlined"
+		<>
+			<Box
 				sx={{
-					p: 1,
-					backgroundColor: isMine ? "primary.light" : "secondary.light",
+					display: "flex",
+					justifyContent: isMine ? "flex-end" : "flex-start",
+					mb: 2,
 				}}
-			>
-				<Typography variant="body1">{message.text}</Typography>
-			</Paper>
-		</Box>
+				>
+				<Box
+					sx={{
+					display: "flex",
+					flexDirection: isMine ? "row" : "row-reverse",
+					alignItems: "center",
+					}}
+				>
+					<Avatar sx={{ bgcolor: isMine ? "primary.main" : "secondary.main" }}>
+						{isMine ? "B" : "U"}
+					</Avatar>
+					<Paper
+						variant="outlined"
+						sx={{
+							p: 2,
+							ml: isMine ? 1 : 0,
+							mr: isMine ? 0 : 1,
+							backgroundColor: isMine ? "primary.light" : "secondary.light",
+							borderRadius: isMine ? "20px 20px 20px 5px" : "20px 20px 5px 20px",
+						}}
+						>
+						<Typography variant="body1">{message.chat_text}</Typography>
+					</Paper>
+				</Box>
+			</Box>
+		</>
 	);
 };
 
