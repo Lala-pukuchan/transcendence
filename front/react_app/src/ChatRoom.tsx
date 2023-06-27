@@ -1,5 +1,5 @@
 import { Button, Box, Grid, TextField, Paper, Typography, Avatar } from '@mui/material';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import SendIcon from '@mui/icons-material/Send';
 import { useRef, useEffect, useCallback, useState } from 'react';
 import io from 'socket.io-client';
@@ -8,9 +8,6 @@ import io from 'socket.io-client';
 const socket = io('http://localhost:3000');
 
 function ChatRoom() {
-
-	// ページ遷移用
-	const navigate = useNavigate();
 
 	// ルーム情報の取得
 	const location = useLocation();
