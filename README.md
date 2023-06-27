@@ -42,7 +42,14 @@ found 0 vulnerabilities
 
 ## react-router-dom
 ```
+cd /workspace/front/react_app
 npm install react-router-dom
+```
+
+## install socket
+```
+cd /workspace/front/react_app
+npm install @types/socket.io-client
 ```
 
 # back
@@ -50,4 +57,11 @@ npm install react-router-dom
 ```
 cd /workspace/api/nest_app
 yarn add @nestjs/swagger swagger-ui-express
+```
+
+## install socket
+```
+cd /workspace/api/nest_app
+yarn add @nestjs/websockets @nestjs/platform-socket.io
+yarn add @types/socket.io
 ```

@@ -1,19 +1,23 @@
 import Button from '@mui/material/Button';
 import AddCommentIcon from '@mui/icons-material/AddComment';
 import ChatIcon from '@mui/icons-material/Chat';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 
 function Chat() {
 
-    const navigate = useNavigate();
+  const navigate = useNavigate();
+
+  // ルーム情報の取得
+	const location = useLocation();
+	const userId = location.state;
 
   return (
     <>
         <Button variant="outlined" startIcon={<AddCommentIcon />} onClick={() => navigate('/createRoom')}>
             Create Room
         </Button>
-        <Button variant="contained" endIcon={<ChatIcon />} onClick={() => navigate('/selectRoom')}>
+        <Button variant="contained" endIcon={<ChatIcon />} onClick={() => navigate('/selectRoom', { state: userId })}>
             Select Room
         </Button>
     </>

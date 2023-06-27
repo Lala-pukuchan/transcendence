@@ -1,7 +1,7 @@
 import { Button } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import UndoIcon from '@mui/icons-material/Undo';
-import { DataGrid, GridColDef, GridRowsProp } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridRowsProp, GridEventListener } from '@mui/x-data-grid';
 import ChatIcon from '@mui/icons-material/Chat';
 import { useState, useEffect } from 'react';
 import { httpClient } from './httpClient.ts';
@@ -18,6 +18,10 @@ function SelectRoom() {
 
 	const navigate = useNavigate();
 
+	// ユーザー情報の取得
+	const location = useLocation();
+	const userId = location.state;
+
 	// const rows: GridRowsProp = [
 	// 	{ id: 1, roomName: 'DM_personA_personB', roomType1: 'DM', roomType2: 'Public' },
 	// 	{ id: 2, roomName: 'DM_personA_personC', roomType1: 'DM', roomType2: 'Private' },
@@ -28,6 +32,8 @@ function SelectRoom() {
 	// ]
 	const [rows, setRows] = useState<GridRowsProp>([]);
 
+	const [roomId, setRoomId] = useState(0);
+
 	const cols: GridColDef[] = [
 		{
 			field: 'id',
@@ -35,7 +41,7 @@ function SelectRoom() {
 		},
 		{
 			field: 'roomName',
-			width: 200,
+			// width: 200,
 			headerName: 'ルーム名'
 		},
 		// {
@@ -83,26 +89,32 @@ function SelectRoom() {
 	
 	console.log("rows are ", rows);
 
-  return (
-    <>
-		<DataGrid
-			rows={rows}
-			columns={cols}
-			initialState={{
-				pagination: {
-					paginationModel: { page: 0, pageSize: 10 },
-				},
-			}}
-			pageSizeOptions={[5, 10]}
-			checkboxSelection
-		/>
-        <Button variant="contained" endIcon={<UndoIcon />} onClick={() => navigate('/chat')} sx={{ m: 2 }}>
-            Return Back
-        </Button>
-		<Button variant="contained" endIcon={<ChatIcon />} onClick={() => navigate('/chatRoom')} sx={{ m: 2 }}>
-            Start Chat
-        </Button>
-    </>
-  )
+	// 行をクリックしたときのイベント
+	const handleEvent: GridEventListener<'headerSelectionCheckboxChange'> = (
+		params
+	) => {
+		setRoomId(params.row.id);
+	};
+
+	return (
+		<>
+			<DataGrid 
+				rows={rows} columns={cols}
+				initialState={{
+					pagination: {
+						paginationModel: { page: 0, pageSize: 10 },
+					},
+				}}
+				pageSizeOptions={[5, 10]}
+				onRowClick={handleEvent}
+			/>
+			<Button variant="contained" endIcon={<UndoIcon />} onClick={() => navigate('/chat')} sx={{ m: 2 }}>
+				Return Back
+			</Button>
+			<Button variant="contained" endIcon={<ChatIcon />} onClick={() => navigate('/chatRoom', { state: {room: roomId, user: userId} })} sx={{ m: 2 }}>
+				Start Chat
+			</Button>
+		</>
+	)
 }
 export default SelectRoom
