@@ -6,11 +6,17 @@ import ChatIcon from '@mui/icons-material/Chat';
 import { useState, useEffect } from 'react';
 import { httpClient } from './httpClient.ts';
 import { Room } from '../model/room.model';
-import { roomsToRows } from './roomsToRows';
+
+function roomsToRows(response: any): GridRowsProp {
+	return response.data.Rooms.map((room: Room) => ({
+	  id: room.id.toString(),
+	  roomName: room.name
+	}));
+}
 
 function SelectRoom() {
 
-    const navigate = useNavigate();
+	const navigate = useNavigate();
 
 	// const rows: GridRowsProp = [
 	// 	{ id: 1, roomName: 'DM_personA_personB', roomType1: 'DM', roomType2: 'Public' },
