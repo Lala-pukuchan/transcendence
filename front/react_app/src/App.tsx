@@ -4,9 +4,9 @@ import Chat from './Chat.tsx';
 import Game from './Game.tsx';
 import Account from './Account.tsx';
 import SelectRoom from './SelectRoom.tsx';
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import CreateRoom from './CreateRoom.tsx';
 import ChatRoom from './ChatRoom.tsx';
-
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 function App() {
   return (
@@ -19,6 +19,7 @@ function App() {
           <Route path="/account" element={<Account />} />
           <Route path="/selectRoom" element={<SelectRoom />} />
           <Route path="/chatRoom" element={<ChatRoom />} />
+          <Route path="/createRoom" element={<CreateRoom />} />
         </Routes>
       </BrowserRouter>
     </>
