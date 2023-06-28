@@ -66,12 +66,30 @@ function ChatRoom() {
 	}, [msg]);
 
 
-	// メッセージ履歴のスクロール
+	// メッセージ履歴の最下部スクロール
 	const chatLogRef = useRef(null);
 	useEffect(() => {
 		const chatLogElement = chatLogRef.current;
 		chatLogElement.scrollTop = chatLogElement.scrollHeight;
 	}, [chatLog]);
+
+
+	// メッセージ送信ボタンのフォーカス
+	const sendButtonRef = useRef(null);
+	useEffect(() => {
+		const handleKeyPress = (event) => {
+			if (event.key === 'Enter') {
+				event.preventDefault();
+				sendButtonRef.current.click();
+			}
+		};
+	
+		document.addEventListener('keydown', handleKeyPress);
+	
+		return () => {
+			document.removeEventListener('keydown', handleKeyPress);
+		};
+	}, []);
 
 	return (
 		<>
@@ -107,6 +125,7 @@ function ChatRoom() {
 						variant="contained"
 						endIcon={<SendIcon />}
 						onClick={submitMessage}
+						ref={sendButtonRef}
 						>
 						Send
 						</Button>
