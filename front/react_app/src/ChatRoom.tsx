@@ -31,6 +31,9 @@ function ChatRoom() {
 	// socketメッセージ送信処理
 	const submitMessage = useCallback(() => {
 
+		if (inputRef.current.value === '')
+			return;
+
 		// json形式で送信
 		const message = {
 			room_id: roomId,
@@ -39,7 +42,8 @@ function ChatRoom() {
 			chat_time: Date.now(),
 			contents_path: ""
 		}
-
+		// メッセージ入力欄の初期化
+		inputRef.current.value = '';
 		// メッセージ送信
 		socket.emit('message', message);
 
@@ -62,6 +66,13 @@ function ChatRoom() {
 	}, [msg]);
 
 
+	// メッセージ履歴のスクロール
+	const chatLogRef = useRef(null);
+	useEffect(() => {
+		const chatLogElement = chatLogRef.current;
+		chatLogElement.scrollTop = chatLogElement.scrollHeight;
+	}, [chatLog]);
+
 	return (
 		<>
 			<Box
@@ -73,7 +84,7 @@ function ChatRoom() {
 					bgcolor: "primary.dark",
 				}}
 				>
-				<Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
+				<Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }} ref={chatLogRef}>
 					{chatLog.map((message, index) => (
 						<Message key={index} message={message} myAccountUserId={userId}/>
 					))}
