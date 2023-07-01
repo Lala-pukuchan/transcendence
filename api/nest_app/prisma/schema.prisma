@@ -19,8 +19,9 @@ model User {
 
     // relationships
     friends           User[]    @relation("UserFriends")
-    friendRequests    User[]    @relation("UserFriends")
     blockedUsers      User[]    @relation("BlockedUsers")
+    // we need to specify the following fields because we want to have "friends" and "blockedUsers" as a relation
+    friendRequests    User[]    @relation("UserFriends")
     blockedBy         User[]    @relation("BlockedUsers")
 
     // channels
