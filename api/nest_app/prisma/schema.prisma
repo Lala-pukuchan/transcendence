@@ -10,42 +10,83 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model user_info {
-  user_id      String           @id
-  username     String
-  picture_path String?
-  rooms        user_room_map[]
-  chats        chat_info[]
+model User {
+    id                String    @id @default(uuid())
+
+    // basic info
+    username          String    @unique
+    avatar            String?   @default("default.jpg") // Default avatar path
+
+    // relationships
+    friends           User[]    @relation("UserFriends")
+    blockedUsers      User[]    @relation("BlockedUsers")
+    // we need to specify the following fields because we want to have "friends" and "blockedUsers" as a relation
+    friendRequests    User[]    @relation("UserFriends")
+    blockedBy         User[]    @relation("BlockedUsers")
+
+    // channels
+    channels          Channel[]
+    createdChannels   Channel[] @relation("ChannelOwner")
+    adminChannels     Channel[] @relation("ChannelAdmins")
+
+    // messages
+    messages          Message[] @relation("ChannelAuthor")
+
+    // stats
+    wins              Int       @default(0)
+    losses            Int       @default(0)
+    ladderLevel       Int       @default(0)
+    achievements      String[]
+
+    // matches
+    matches           Match[] @relation("UserMatch")
 }
 
-model room_info {
-  room_id      String           @id
-  room_name    String
-  room_type_1  String
-  room_type_2  String
-  room_password String?
-  users        user_room_map[]
-  chats        chat_info[]
+model Channel {
+    id          Int       @id @default(autoincrement())
+
+    // basic info
+    name        String
+
+    // settings
+    isDM        Boolean   @default(false)
+    isPublic    Boolean   @default(true)
+    password    String?
+
+    // members
+    ownerId     String
+    owner       User      @relation("ChannelOwner", fields: [ownerId], references: [id])
+    admins      User[]    @relation("ChannelAdmins")
+    users       User[]
+
+    // messages
+    messages    Message[]
+
+    // status
+    lastUpdated DateTime @default(now())
 }
 
-model user_room_map {
-  user_id   String   @map("user_id")
-  room_id   String   @map("room_id")
-  user_type String?
-  user      user_info @relation(fields: [user_id], references: [user_id])
-  room      room_info @relation(fields: [room_id], references: [room_id])
+model Message {
+    id        Int      @id @default(autoincrement())
 
-  @@id([user_id, room_id])
+    // basic info
+    content   String
+    createdAt DateTime @default(now())
+
+    // relations
+    userId    String
+    author    User     @relation("ChannelAuthor", fields: [userId], references: [id])
+    channelId Int
+    channel   Channel  @relation(fields: [channelId], references: [id])
 }
 
-model chat_info {
-  room_id       String   @map("room_id")
-  user_id       String   @map("user_id")
-  chat_time     DateTime
-  chat_text     String
-  contents_path String?
-  room          room_info @relation(fields: [room_id], references: [room_id])
-  user          user_info @relation(fields: [user_id], references: [user_id])
+model Match {
+    id          Int      @id @default(autoincrement())
 
-  @@id([room_id, chat_time])
+    // basic info
+    result      String   // "win" or "loss"
+    createdAt   DateTime @default(now())
+
+    // relations
+    users       User[]   @relation("UserMatch")
 }
