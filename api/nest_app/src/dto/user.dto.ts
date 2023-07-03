@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, IsInt } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsInt, IsBoolean } from 'class-validator';
 
 export class FriendDetail {
     @ApiProperty({ description: 'The ID of the friend.'})
@@ -112,4 +112,35 @@ export class GetUserDetailResponse {
     @ApiProperty({ description: 'The matches of the user.'})
     @IsOptional()
     matches: MatchDetail[];
+}
+
+export class GetChannelsResponse {
+    @ApiProperty({ description: 'The ID of the channel.'})
+    @IsInt()
+    @IsNotEmpty()
+    id: number;
+
+    @ApiProperty({ description: 'The name of the channel.'})
+    @IsString()
+    @IsNotEmpty()
+    name: string;
+
+    @ApiProperty({ description: 'flag indicating if the channel is a direct message channel.'})
+    @IsNotEmpty()
+    @IsBoolean()
+    isDM: boolean;
+
+    @ApiProperty({ description: 'flag indicating if the channel is piblic.'})
+    @IsNotEmpty()
+    @IsBoolean()
+    isPublic: boolean;
+
+    @ApiProperty({ description: 'The password of the channel.'})
+    @IsString()
+    @IsOptional()
+    password: string;
+
+    @ApiProperty({ description: 'The last updated date of the channel.'})
+    @IsNotEmpty()
+    lastUpdated: Date;
 }
