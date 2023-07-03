@@ -60,8 +60,6 @@ services:
       sh -c 
         "if [ -e $API_PROJ_NAME/package.json ]; then 
           cd $API_PROJ_NAME && yarn install && yarn start:dev
-          yarn add prisma --dev
-          cd $API_PROJ_NAME/nest_app && yarn prisma migrate dev --name init
         else
           echo 'Project Directory is not found...' && tail -f /dev/null
         fi"

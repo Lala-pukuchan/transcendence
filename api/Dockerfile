@@ -28,3 +28,7 @@ RUN echo -e '#!/bin/bash\nls -alF' > /usr/bin/ll && \
 	chmod +x /usr/bin/ll
 RUN echo -e '#!/bin/bash\nrm -i' > /usr/bin/rm && \
 	chmod +x /usr/bin/rm
+
+COPY ./entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
