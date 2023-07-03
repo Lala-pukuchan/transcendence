@@ -1,17 +1,12 @@
 import { Controller, Get, Post, Patch, HttpStatus, Body, Param } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { CreateUserDto, GetUsersInfoResponse, GetUserDetailResponse } from './dto/user.dto';
-import { ApiResponse } from '@nestjs/swagger';
+import { CreateUserDto, GetUsersInfoResponse, GetUserDetailResponse, GetChannelsResponse } from '../dto/user.dto';
+import { ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('user')
 @Controller('users')
 export class UsersController {
     constructor(private readonly usersService: UsersService) {}
-
-    @Post()
-    @ApiResponse({ status: HttpStatus.OK, type: CreateUserDto })
-    createUser(@Body() createUserDto: CreateUserDto) {
-      return this.usersService.createUser(createUserDto);
-    }
 
     @Get()
     @ApiResponse({ status: HttpStatus.OK, type: GetUsersInfoResponse})
@@ -24,6 +19,12 @@ export class UsersController {
     getUserDetail(@Param('username') username: string) {
         return this.usersService.getUserDetail(username);
     }
+    
+    @Post()
+    @ApiResponse({ status: HttpStatus.OK, type: CreateUserDto })
+    createUser(@Body() createUserDto: CreateUserDto) {
+      return this.usersService.createUser(createUserDto);
+    }
 
     @Patch(':username/avatar')
     @ApiResponse({ status: HttpStatus.OK, type: GetUserDetailResponse, description: 'Change user avatar.'})
@@ -35,5 +36,21 @@ export class UsersController {
     @ApiResponse({ status: HttpStatus.OK, type: GetUserDetailResponse, description: 'Add friend.'})
     addFriend(@Param('username') username: string, @Body('username') friend_username: string) {
         return this.usersService.addFriend(username, friend_username);
+    }
+
+    @Patch(':username/channels')
+    @ApiResponse({ status: HttpStatus.OK, type: GetUserDetailResponse, description: 'Join a channel.'})
+    joinChannel(
+        @Param('username') username: string,
+        @Body('channelId') channelId: number,
+        @Body('password') password: string,
+    ) {
+        return this.usersService.joinChannel(username, channelId, password);
+    }
+
+    @Get(':username/channels')
+    @ApiResponse({ status: HttpStatus.OK, type: [GetChannelsResponse], description: 'Get a list of channels the user is a part of.'})
+    getUserChannels(@Param('username') username: string) {
+        return this.usersService.getUserChannels(username);
     }
 }
