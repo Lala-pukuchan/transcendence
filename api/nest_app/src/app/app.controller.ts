@@ -1,7 +1,7 @@
 import { Controller, Get, Post, HttpStatus, Query, Body } from '@nestjs/common';
 import { AppService } from './app.service';
 import { ApiResponse } from '@nestjs/swagger';
-import { GetRoomsResponse, GetRoomsRequest, GetUsersRequest } from './dto/room.dto';
+import { GetRoomsResponse, GetRoomsRequest, GetUsersRequest } from '../dto/channel.dto';
 
 @Controller()
 export class AppController {
