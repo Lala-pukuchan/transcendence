@@ -9,9 +9,10 @@ import { ChannelController } from './channel/channel.controller';
 import { ChannelService } from './channel/channel.service';
 import { MessageController } from './message/message.controller';
 import { MessageService } from './message/message.service';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
-  imports: [ChatModule],
+  imports: [ChatModule, AuthModule],
   controllers: [AppController, UsersController, ChannelController, MessageController],
   providers: [AppService, UsersService, PrismaService, ChannelService, MessageService],
 })

@@ -65,3 +65,13 @@ cd /workspace/api/nest_app
 yarn add @nestjs/websockets @nestjs/platform-socket.io
 yarn add @types/socket.io
 ```
+
+## install passport
+```
+cd /workspace/api/nest_app
+yarn add @nestjs/passport passport passport-42 express-session
+cd src
+nest g module auth
+nest g service auth
+nest g controller auth
+```
