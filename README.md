@@ -75,3 +75,17 @@ nest g module auth
 nest g service auth
 nest g controller auth
 ```
+
+## How to set up app in 42
+- [create new app](https://profile.intra.42.fr/oauth/applications/new)
+- [view created app](https://profile.intra.42.fr/oauth/applications/14601)
+
+![app](./readme_img/app.png)
+
+- set the below information in .env
+```
+ex.)
+FORTY_TWO_ClIENT_ID=u-s4t2ud-f6da009c2bb9aa3bbf7649c21b5d92bb0ab92de284fad88bb099c7101f933480
+FORTY_TWO_CLIENT_SECRET=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
+FORTY_TWO_CALL_BACK_URL=/auth/redirect
+```
