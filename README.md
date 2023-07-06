@@ -89,3 +89,6 @@ FORTY_TWO_ClIENT_ID=u-s4t2ud-f6da009c2bb9aa3bbf7649c21b5d92bb0ab92de284fad88bb09
 FORTY_TWO_CLIENT_SECRET=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
 FORTY_TWO_CALL_BACK_URL=/auth/redirect
 ```
+
+- login url
+  - http://localhost:3000/auth/login

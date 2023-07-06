@@ -2,7 +2,7 @@ import { Strategy, Profile } from 'passport-42';
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable } from '@nestjs/common';
 
-// 42PassportstrategyをPassportStrategyクラスを拡張して生成
+// FortyTwoOauthStrategyをPassportStrategyクラスを拡張して生成
 @Injectable()
 export class FortyTwoOauthStrategy extends PassportStrategy(Strategy) {
 

@@ -1,17 +1,20 @@
-import { Controller, Get, Res } from '@nestjs/common';
+import { Controller, Get, Res, UseGuards } from '@nestjs/common';
 import { Response } from 'express';
+import { FortyTwoOauthGuard } from './guards/fortytwo.guards';
 
 @Controller('auth')
 export class AuthController {
 
 	// ログイン機能
 	@Get('login')
+	@UseGuards(FortyTwoOauthGuard)
 	login() {
 		return;
 	}
 
 	// Oauth2 Providerのリダイレクト先URL
 	@Get('redirect')
+	@UseGuards(FortyTwoOauthGuard)
 	redirect(@Res() res:Response) {
 
 		// アプリのトップにリダイレクトさせる
