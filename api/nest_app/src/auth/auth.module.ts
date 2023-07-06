@@ -4,7 +4,13 @@ import { AuthController } from './auth.controller';
 import { FortyTwoOauthStrategy } from './strategies/fortytwo.strategy'
 
 @Module({
-  providers: [AuthService, FortyTwoOauthStrategy],
+  providers: [
+    FortyTwoOauthStrategy,
+    {
+      provide: 'AUTH_SERVICE',
+      useClass: AuthService
+    }
+  ],
   controllers: [AuthController]
 })
 export class AuthModule {}

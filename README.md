@@ -74,6 +74,7 @@ cd src
 nest g module auth
 nest g service auth
 nest g controller auth
+yarn add -D @types/express-session
 ```
 
 ## How to set up app in 42

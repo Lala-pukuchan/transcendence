@@ -10,9 +10,14 @@ import { ChannelService } from './channel/channel.service';
 import { MessageController } from './message/message.controller';
 import { MessageService } from './message/message.service';
 import { AuthModule } from './auth/auth.module';
+import { PassportModule } from '@nestjs/passport';
 
 @Module({
-  imports: [ChatModule, AuthModule],
+  imports: [
+    ChatModule,
+    AuthModule,
+    PassportModule.register({ session: true })
+  ],
   controllers: [AppController, UsersController, ChannelController, MessageController],
   providers: [AppService, UsersService, PrismaService, ChannelService, MessageService],
 })
