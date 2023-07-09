@@ -51,29 +51,29 @@ import { useNavigate, useLocation } from 'react-router-dom';
 // }
 
 function Game() {
-
-	const canvasRef = useRef(null);
+	const navigate = useNavigate();
+	const canvasRef = useRef<HTMLCanvasElement | null>(null);
 	const contextRef = useRef(null);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    const context = canvas.getContext('2d');
-    contextRef.current = context;
-	canvas.width = 1400;
-	canvas.height = 1000;
-
-	canvas.style.width = (canvas.width / 2) + 'px';
-	canvas.style.height = (canvas.height / 2) + 'px';
-
-	var color = '#2c3e50';
-	context.clearRect(
+	const canvas = canvasRef.current;
+	const context = canvas.getContext('2d');
+	contextRef.current = context;
+	canvas.width = 1200;
+	canvas.height = 800;
+	
+	context.clearRect( //なくてもいいかも
 		0,
 		0,
 		canvas.width,
 		canvas.height
 	);
 
+	canvas.style.width = (canvas.width / 2) + 'px';
+	canvas.style.height = (canvas.height / 2) + 'px';
+
 	// Set the fill style to black
+	let color: string = '#2c3e50';
 	context.fillStyle = color;
 
 	// Draw the background
@@ -83,9 +83,11 @@ function Game() {
 		canvas.width,
 		canvas.height
 	);
-
+	context.fillStyle = '#429955';
+context.fillRect(50, 50, 100, 100);
 	// Set the fill style to white (For the paddles and the ball)
 	context.fillStyle = '#ffffff';
+	// player.draw(context);
 	// player = Paddle.new.call(this, 'left');
 	// paddle = Paddle.new.call(this, 'right');
 	// ball = Ball.new.call(this);
@@ -94,21 +96,27 @@ function Game() {
 	// running = over = false;
 	// turn = paddle;
 	// timer = round = 0;
-	
   }, []);
 
   // ここでcontextRef.currentを使用して描画ロジックを追加
 
 
 
-  return (
-    <div>
-      {/* 他のコンポーネントやテキストなど */}
-      <canvas ref={canvasRef} width={500} height={500}></canvas>
-      {/* 他のコンポーネントやテキストなど */}
-    </div>
-  );
-  }
+	return (
+		<>
+			{/* <h2>Game</h2> */}
+			<div>
+				<h2>Game</h2>
+				{/* 他のコンポーネントやテキストなど */}
+				<canvas ref={canvasRef}></canvas>
+				{/* 他のコンポーネントやテキストなど */}
+			</div>
+			<Button variant="contained" endIcon={<UndoIcon />} onClick={() => navigate('/')} sx={{ m: 2 }}>
+ 				Return Back
+ 			</Button>
+		</>
+	);
+	}
 export default Game
 
 
