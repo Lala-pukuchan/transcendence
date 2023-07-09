@@ -9,10 +9,11 @@ import { ChannelController } from './channel/channel.controller';
 import { ChannelService } from './channel/channel.service';
 import { MessageController } from './message/message.controller';
 import { MessageService } from './message/message.service';
+import { AvatarController } from './avatar/avatar.controller';
 
 @Module({
   imports: [ChatModule],
-  controllers: [AppController, UsersController, ChannelController, MessageController],
+  controllers: [AppController, UsersController, ChannelController, MessageController, AvatarController],
   providers: [AppService, UsersService, PrismaService, ChannelService, MessageService],
 })
 export class AppModule {}
