@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Patch, HttpStatus, Body, Param } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { CreateUserDto, GetUsersInfoResponse, GetUserDetailResponse, GetChannelsResponse } from '../dto/user.dto';
+import { /*CreateUserDto,*/ GetUsersInfoResponse, GetUserDetailResponse, GetChannelsResponse } from '../dto/user.dto';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('user')
@@ -20,11 +20,11 @@ export class UsersController {
         return this.usersService.getUserDetail(username);
     }
     
-    @Post()
-    @ApiResponse({ status: HttpStatus.OK, type: CreateUserDto })
-    createUser(@Body() createUserDto: CreateUserDto) {
-      return this.usersService.createUser(createUserDto);
-    }
+    //@Post()
+    //@ApiResponse({ status: HttpStatus.OK, type: CreateUserDto })
+    //createUser(@Body() createUserDto: CreateUserDto) {
+    //  return this.usersService.createUser(createUserDto);
+    //}
 
     @Patch(':username/avatar')
     @ApiResponse({ status: HttpStatus.OK, type: GetUserDetailResponse, description: 'Change user avatar.'})
