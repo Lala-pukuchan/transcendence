@@ -53,6 +53,20 @@ npm install @types/socket.io-client
 ```
 
 # back
+## prisma
+```
+cd /nest_app/prisma
+npx prisma studio
+```
+- after changing db table, pls drop table and migrate again
+```
+psql -h localhost -U postgres
+password: yuhmatsu
+DROP TABLE public."User" CASCADE;
+exit
+yarn prisma migrate dev
+```
+
 ## install swagger
 ```
 cd /workspace/api/nest_app

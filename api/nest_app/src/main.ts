@@ -14,6 +14,7 @@ async function bootstrap() {
 
 	// セッションの設定
 	app.use(session({
+		// cookieの保持時間（一日）
 		cookie: {
 			maxAge: 86400000,
 		},

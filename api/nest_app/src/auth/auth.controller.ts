@@ -12,7 +12,7 @@ export class AuthController {
 		return;
 	}
 
-	// Oauth2 Providerのリダイレクト先URL
+	// Oauth2 Providerのリダイレクト先指定機能
 	@Get('redirect')
 	@UseGuards(FortyTwoOauthGuard)
 	redirect(@Res() res:Response) {
@@ -21,7 +21,7 @@ export class AuthController {
 		res.redirect('http://localhost:5173/');
 	}
 
-	// ユーザーのログイン状態
+	// ユーザーのログイン状態判定機能
 	@Get('status')
 	status() {}
 

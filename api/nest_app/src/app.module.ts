@@ -16,6 +16,7 @@ import { PassportModule } from '@nestjs/passport';
   imports: [
     ChatModule,
     AuthModule,
+    // 認証用セッション登録
     PassportModule.register({ session: true })
   ],
   controllers: [AppController, UsersController, ChannelController, MessageController],
