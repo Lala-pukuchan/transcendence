@@ -1,6 +1,6 @@
 import { Controller, Get, Res, UseGuards } from '@nestjs/common';
 import { Response } from 'express';
-import { FortyTwoOauthGuard } from './guards/fortytwo.guards';
+import { AuthenticatedGuard, FortyTwoOauthGuard } from './guards/fortytwo.guards';
 
 @Controller('auth')
 export class AuthController {
@@ -23,7 +23,10 @@ export class AuthController {
 
 	// ユーザーのログイン状態判定機能
 	@Get('status')
-	status() {}
+	@UseGuards(AuthenticatedGuard)
+	status() {
+		return 'ok';
+	}
 
 	// ログアウト機能
 	@Get('logout')
