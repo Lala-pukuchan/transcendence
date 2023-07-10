@@ -18,6 +18,8 @@ model User {
 
     // basic info
     username          String    @unique
+    // fortyTwoId        String    @unique
+    // discriminator     String    @default("0000")
     avatar            String?   @default("default.jpg") // Default avatar path
 
     // relationships

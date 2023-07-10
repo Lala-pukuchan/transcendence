@@ -30,6 +30,9 @@ down :
 	@printf "$(RC)"
 	docker compose -v down
 
+prisma:
+	docker exec api npx prisma studio --schema=./nest_app/prisma/schema.prisma
+
 clean : down
 
 fclean : 
