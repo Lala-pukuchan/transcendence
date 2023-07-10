@@ -11,6 +11,7 @@ import { MessageController } from './message/message.controller';
 import { MessageService } from './message/message.service';
 import { AuthModule } from './auth/auth.module';
 import { PassportModule } from '@nestjs/passport';
+import { AvatarController } from './avatar/avatar.controller';
 
 @Module({
   imports: [
@@ -19,7 +20,7 @@ import { PassportModule } from '@nestjs/passport';
     // 認証用セッション登録
     PassportModule.register({ session: true })
   ],
-  controllers: [AppController, UsersController, ChannelController, MessageController],
+  controllers: [AppController, UsersController, ChannelController, MessageController, AvatarController],
   providers: [AppService, UsersService, PrismaService, ChannelService, MessageService],
 })
 export class AppModule {}
