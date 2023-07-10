@@ -14,7 +14,7 @@ model User {
     id                String    @id @default(uuid())
 
     // 42 oauth info
-    fortyTwoId            String    @unique
+    fortyTwoId        String    @unique
 
     // basic info
     username          String    @unique

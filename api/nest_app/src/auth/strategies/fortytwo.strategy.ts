@@ -2,7 +2,6 @@ import { Strategy, Profile } from 'passport-42';
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable, Inject } from '@nestjs/common';
 import { AuthenticationProvider } from '../auth';
-import { UserDetails } from 'src/utils/types';
 
 // FortyTwoOauthStrategyをPassportStrategyクラスを拡張して生成
 @Injectable()
@@ -21,12 +20,11 @@ export class FortyTwoOauthStrategy extends PassportStrategy(Strategy) {
 		});
 	}
 
-	// 検証済みユーザー情報を42Oauthから取得
+	// 検証済みユーザー情報を42Oauthから取得し、検証する
 	async validate(accessToken: string, refreshToken: string, profile: Profile) {
 		const { username, discriminator, id: fortytwoId, avatar } = profile;
-		console.log(profile);
-		console.log('user info: ', username, discriminator, fortytwoId, avatar);
+		console.log('login user info: ', username, discriminator, fortytwoId, avatar);
 		const details = { username, discriminator, fortytwoId, avatar };
-		await this.authService.validateUser(details);
+		return this.authService.validateUser(details);
 	}
 }
