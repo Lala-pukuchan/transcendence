@@ -2,6 +2,8 @@ import { Controller, Get, Res, Request, UseGuards } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthenticatedGuard, FortyTwoOauthGuard } from './guards/fortytwo.guards';
 import { JwtService } from '@nestjs/jwt';
+import { JwtAuthGuard } from './guards/jwt.guards';
+
 
 @Controller('auth')
 export class AuthController {
@@ -39,5 +41,12 @@ export class AuthController {
 	// ログアウト機能
 	@Get('logout')
 	logout() {}
+
+	// JWTの対象ユーザー情報を返却する機能
+	@UseGuards(JwtAuthGuard)
+	@Get('profile')
+	getProfile(@Request() req) {
+	  return req.user;
+	}
 
 }
