@@ -4,8 +4,15 @@ import { AuthController } from './auth.controller';
 import { FortyTwoOauthStrategy } from './strategies/fortytwo.strategy'
 import { PrismaService } from '../prisma.service';
 import { SessionSerializer } from './utils/Serializer';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
+  imports: [
+    JwtModule.register({
+      secret: process.env.JWT_SECRET,
+      signOptions: { expiresIn: '1d' },
+    })
+  ],
   providers: [
     FortyTwoOauthStrategy,
     {

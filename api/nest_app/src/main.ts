@@ -18,7 +18,7 @@ async function bootstrap() {
 		cookie: {
 			maxAge: 86400000,
 		},
-		secret: 'jfido:asjf;nsuhfdjjf',
+		secret: process.env.SESSION_SECRET,
 		resave: false,
 		saveUninitialized: false
 	}))
