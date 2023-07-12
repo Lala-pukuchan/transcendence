@@ -108,29 +108,20 @@ FORTY_TWO_CALL_BACK_URL=/auth/redirect
 - login url
   - http://localhost:3000/auth/login
 
-## How ot set up app in Google Auth
-- [enable google auth](https://cloud.google.com/docs/authentication?hl=ja)
-
-![google](./readme_img/google.png)
-1. 無料で利用開始ボタンを押下
-2. 登録
-![register](./readme_img/register.png)
-3. 新しいプロジェクトを作成ボタンを押下
-![project](./readme_img/project.png)
-4. プロジェクト: transcendenceを作成
-5. APIアイコンのcredentialsを検索
-![credentials](./readme_img/credentials.png)
-6. Oauth同意画面でUserType:外部を選択
-![oauth](./readme_img/oauth.png)
-7. アプリ名:transcendence、ユーザーサポートメール、ディベロッパーメールを入力
-![appname](./readme_img/appname.png)
-8. スコープにemail, profileを追加
-![scope](./readme_img/scope.png)
-9. testuserに自分のemailを追加
-![testuser](./readme_img/testuser.png)
-10. 認証情報からOauthクライアントIDを作成（アプリ：ウェブアプリケーション、名前：transcendence、承認済みリダイレクトURI：http://localhost:3000/auth/google/redirect）
-![clientid](./readme_img/clientid.png)
-
+## How ot set up app in Google Auth TFA
 ```
-{"web":{"client_id":"1074386836796-2pv7o3lutor8r15bl0lsoh5qav395d89.apps.googleusercontent.com","project_id":"transcendence-392501","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_secret":"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","redirect_uris":["http://localhost:3000/auth/google/redirect"]}}
+cd /workspace/api/nest_app
+yarn add @nestjs/jwt
+yarn add passport-jwt
+yarn add otplib
+yarn add qrcode
+```
+```
+curl http://localhost:3000/auth/profile -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InJ1a29iYXlhIiwiaWF0IjoxNjg5MDc5MDY2LCJleHAiOjE2ODkxNjU0NjZ9.u1y7igJAgyLEDKOTl6-enfttDgwgWIUIQIXjWpj3Um0"
+{"id":"f434212f-4dc2-4d8f-a884-775200ed3893","fortyTwoId":"103540","username":"rukobaya","avatar":"default.jpg","wins":0,"losses":0,"ladderLevel":0,"achievements":[]}
+
+curl -X POST http://localhost:3000/auth/2fa/generate -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InJ1a29iYXlhIiwiaWF0IjoxNjg5MTUzODUyLCJleHAiOjE2ODkyNDAyNTJ9.6yhiMYmPtM0QsJlOjCv49dWip_7cmUhHpe-RQn6A02o"
+
+curl -X POST http://localhost:3000/auth/2fa/authenticate -H "Content-Type: application/json" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InJ1a29iYXlhIiwiaWF0IjoxNjg5MTUzODUyLCJleHAiOjE2ODkyNDAyNTJ9.6yhiMYmPtM0QsJlOjCv49dWip_7cmUhHpe-RQn6A02o" -d '{"twoFactorAuthenticationCode": "031590"}'
+
 ```

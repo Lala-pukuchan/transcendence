@@ -16,10 +16,12 @@ model User {
     // 42 oauth info
     fortyTwoId        String    @unique
 
+    // 2fa info
+    twoFactorSecret   String?
+    isEnabledTfa      Boolean   @default(false)
+
     // basic info
     username          String    @unique
-    // fortyTwoId        String    @unique
-    // discriminator     String    @default("0000")
     avatar            String?   @default("default.jpg") // Default avatar path
 
     // relationships
