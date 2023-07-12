@@ -4,12 +4,18 @@ import { UserDetails } from 'src/utils/types';
 import { PrismaService } from '../prisma.service';
 import { User } from '@prisma/client';
 import { UserSession } from '../dto/user.dto';
+import { authenticator } from 'otplib';
+import { toDataURL } from 'qrcode';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService implements AuthenticationProvider {
 
 	// prismaを利用して、DBにアクセス
-	constructor(private readonly prisma : PrismaService) {}
+	constructor(
+		private readonly prisma : PrismaService,
+		private readonly jwtService: JwtService
+	) {}
 
 	// ユーザー検証（ユーザーがDBに存在する場合は返却、しない場合は作成して返却）
 	async validateUser(details: UserDetails): Promise<User> {
@@ -30,8 +36,70 @@ export class AuthService implements AuthenticationProvider {
 		return newUser;
 	}
 
+	// ユーザー検索
 	async findUser(fortyTwoId: string) : Promise<UserSession | undefined> {
 		return this.prisma.user.findUnique({ where: { fortyTwoId: fortyTwoId } });
 	}
 
+	// ユーザー検索
+	async findUserByName(username: string) : Promise<User | undefined> {
+		return this.prisma.user.findUnique({ where: { username: username } });
+	}
+
+	// 二要素認証必要要素の生成
+	async generateTwoFactorAuthenticationSecret(user: User) {
+
+		// 二要素認証シークレット生成
+		const secret = authenticator.generateSecret();
+	
+		// otp設定用URL作成
+		const otpauthUrl = authenticator.keyuri(user.username, process.env.AUTH_APP_NAME, secret);
+	
+		// 二要素認証シークレットをDBに保存
+		await this.prisma.user.update({
+			where: { username: user.username },
+			data: { twoFactorSecret: secret }
+		});
+	
+		return {
+		  secret,
+		  otpauthUrl
+		}
+	}
+
+	// QRコード生成
+	async generateQrCodeDataURL(otpAuthUrl: string) {
+		return toDataURL(otpAuthUrl);
+	}
+
+	// ユーザーの入力した二要素認証コードの検証
+	isTwoFactorAuthenticationCodeValid(twoFactorAuthenticationCode: string, user: User) {
+		return authenticator.verify({
+		  token: twoFactorAuthenticationCode,
+		  secret: user.twoFactorSecret,
+		});
+	}
+
+    async turnOnTwoFactorAuthentication(username: string) {
+        const user = await this.prisma.user.update({
+            where: { username: username },
+            data: { isEnabledTfa: true },
+        });
+    }
+
+	// 二要素認証ログイン
+	async loginWith2fa(userWithoutPsw: Partial<User>) {
+		const payload = {
+			username: userWithoutPsw.username,
+			isEnabledTfa: !!userWithoutPsw.isEnabledTfa,
+			isTwoFactorAuthenticated: true,
+		};
+
+		console.log('payload: ', payload);
+	
+		return {
+			username: payload.username,
+			access_token: this.jwtService.sign(payload),
+		};
+	}
 }

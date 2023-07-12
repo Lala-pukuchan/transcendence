@@ -21,7 +21,8 @@ import { JwtModule } from '@nestjs/jwt';
       useClass: AuthService
     },
     PrismaService,
-    SessionSerializer
+    SessionSerializer,
+    AuthService
   ],
   controllers: [AuthController]
 })

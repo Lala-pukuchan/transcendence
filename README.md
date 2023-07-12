@@ -112,8 +112,16 @@ FORTY_TWO_CALL_BACK_URL=/auth/redirect
 ```
 cd /workspace/api/nest_app
 yarn add @nestjs/jwt
+yarn add passport-jwt
+yarn add otplib
+yarn add qrcode
 ```
 ```
 curl http://localhost:3000/auth/profile -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InJ1a29iYXlhIiwiaWF0IjoxNjg5MDc5MDY2LCJleHAiOjE2ODkxNjU0NjZ9.u1y7igJAgyLEDKOTl6-enfttDgwgWIUIQIXjWpj3Um0"
 {"id":"f434212f-4dc2-4d8f-a884-775200ed3893","fortyTwoId":"103540","username":"rukobaya","avatar":"default.jpg","wins":0,"losses":0,"ladderLevel":0,"achievements":[]}
+
+curl -X POST http://localhost:3000/auth/2fa/generate -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InJ1a29iYXlhIiwiaWF0IjoxNjg5MTUzODUyLCJleHAiOjE2ODkyNDAyNTJ9.6yhiMYmPtM0QsJlOjCv49dWip_7cmUhHpe-RQn6A02o"
+
+curl -X POST http://localhost:3000/auth/2fa/authenticate -H "Content-Type: application/json" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InJ1a29iYXlhIiwiaWF0IjoxNjg5MTUzODUyLCJleHAiOjE2ODkyNDAyNTJ9.6yhiMYmPtM0QsJlOjCv49dWip_7cmUhHpe-RQn6A02o" -d '{"twoFactorAuthenticationCode": "031590"}'
+
 ```
