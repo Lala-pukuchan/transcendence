@@ -30,17 +30,22 @@ export class MatchDetail {
     result: string;
 }
 
-//export class CreateUserDto {
-//    @ApiProperty({ description: 'The name of the user.'})
-//    @IsString()
-//    @IsNotEmpty()
-//    username: string;
+export class CreateUserDto {
+   @ApiProperty({ description: 'The name of the user.'})
+   @IsString()
+   @IsNotEmpty()
+   username: string;
 
-//    @ApiProperty({ description: 'The file path of the user avatar.'})
-//    @IsOptional()
-//    @IsString()
-//    avatar: string;
-//}
+   @ApiProperty({ description: 'The file path of the user avatar.'})
+   @IsOptional()
+   @IsString()
+   avatar: string;
+
+    @ApiProperty({ description: 'The fortyTwoId of the user.'})
+    @IsString()
+    @IsNotEmpty()
+    fortyTwoId: string;
+}
 
 export class UserSession {
     @ApiProperty({ description: 'The username of the user.' })

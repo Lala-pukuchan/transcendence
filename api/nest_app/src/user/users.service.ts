@@ -1,29 +1,30 @@
 import { Injectable, ConflictException, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { Prisma, User, Channel } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
-//import { CreateUserDto } from '../dto/user.dto';
+import { CreateUserDto } from '../dto/user.dto';
 
 @Injectable()
 export class UsersService {
     constructor(private readonly prisma : PrismaService) {}
 
-    //存在する名前で作ろうとした時のエラーハンドリングがうまくいっていない
-    //async createUser(data: CreateUserDto) {
-    //    try {
-    //        return this.prisma.user.create({
-    //            data: {
-    //                username: data.username,
-    //                avatar: data.avatar || 'default.jpg'
-    //            },
-    //        });
-    //    } catch (error) {
-    //        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-    //            throw new ConflictException('A user with this username already exists.');
-    //        } else {
-    //            throw new InternalServerErrorException('Something went wrong.');
-    //        }
-    //    }
-    //}
+    // 存在する名前で作ろうとした時のエラーハンドリングがうまくいっていない
+    async createUser(data: CreateUserDto) {
+       try {
+           return this.prisma.user.create({
+               data: {
+                   username: data.username,
+                   avatar: data.avatar || 'default.jpg',
+                   fortyTwoId: data.fortyTwoId,
+               },
+           });
+       } catch (error) {
+           if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+               throw new ConflictException('A user with this username already exists.');
+           } else {
+               throw new InternalServerErrorException('Something went wrong.');
+           }
+       }
+    }
 
     async getUsersInfo() {
         return this.prisma.user.findMany({
@@ -133,4 +134,12 @@ export class UsersService {
             lastUpdated: channel.lastUpdated,
         }));
     }
+
+    async findUserByUsername(username: string) {
+        return this.prisma.user.findUnique({
+          where: {
+            username: username,
+          },
+        });
+      }
 }
