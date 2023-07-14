@@ -1,8 +1,35 @@
 import TransferList from './TransferList.tsx';
-import { Divider, Avatar, FormGroup, FormControlLabel, Switch, Typography, Badge, Grid, Rating, IconButton, Stack } from '@mui/material';
-
+import { Divider, Avatar, FormControlLabel, Switch, Typography, Badge, Grid, Rating, IconButton, Stack } from '@mui/material';
+import { useState, useEffect } from 'react';
+import { httpClient } from './httpClient.ts';
 import PhotoCamera from "@mui/icons-material/PhotoCamera";
+import { getCookie } from './utils/GetCookie.tsx';
+
 function Account() {
+
+	if (!getCookie("token")) {
+		window.location.href = "login";
+		return null;
+	}
+
+	// 二要素認証
+	const [tfaEnabled, setTfaEnabled] = useState(false);
+
+	useEffect(() => {
+
+		const username = localStorage.getItem('username');
+
+		httpClient
+			.get("/users/" + username)
+			.then((response) => {
+				console.log("response: ", response);
+				console.log("enabled: ", response.data.isEnabledTfa);
+				setTfaEnabled(response.data.isEnabledTfa);
+			})
+			.catch(() => {
+				console.log("error");
+			});
+	}, []);
 
 	return (
 		<>
@@ -29,9 +56,7 @@ function Account() {
 						</Stack>
 						<p>Name: ○○○</p>
 					<Divider sx={{ m:3 }}>Two Factor Authentication</Divider>
-						<FormGroup>
-							<FormControlLabel control={<Switch defaultChecked />} label="Enable TFA" />
-						</FormGroup>
+						<FormControlLabel control={<Switch defaultChecked={tfaEnabled} />} label="Enable TFA" />
 					<Divider sx={{ m:3 }}>Pong Game</Divider>
 						<Typography component="legend">Game Rating</Typography>
 						<Rating name="no-value" value={3} />
