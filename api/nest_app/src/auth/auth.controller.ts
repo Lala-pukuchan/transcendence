@@ -31,7 +31,7 @@ export class AuthController {
 		res.cookie('token', token, { httpOnly: false });
 
 		// アプリのトップにリダイレクトさせる
-		res.redirect('http://localhost:5173/');
+		res.redirect(process.env.APP_URL);
 	}
 
 	// ユーザーのログイン状態判定機能
