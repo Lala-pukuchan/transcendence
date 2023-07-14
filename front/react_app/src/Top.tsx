@@ -24,6 +24,9 @@ function Top() {
   const decoded = decodeToken(getCookie("token"));
   console.log('decoded: ', decoded);
 
+  // ユーザー名をlocalStorageに保管
+  localStorage.setItem('username', decoded.username);
+
   return (
     <>
       <TextField id="outlined-basic" label="Outlined" variant="outlined" defaultValue="UserId" sx={{ m: 10 }} onChange={e => setUserId(e.target.value)}/>
