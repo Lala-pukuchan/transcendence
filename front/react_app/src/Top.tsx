@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { TextField } from '@mui/material';
 import { getCookie } from './utils/GetCookie.tsx';
+import { decodeToken } from "react-jwt";
 
 function Top() {
 
@@ -18,6 +19,10 @@ function Top() {
     window.location.href = "login";
     return null;
   }
+
+  // tokenデコード
+  const decoded = decodeToken(getCookie("token"));
+  console.log('decoded: ', decoded);
 
   return (
     <>

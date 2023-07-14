@@ -52,6 +52,12 @@ cd /workspace/front/react_app
 npm install @types/socket.io-client
 ```
 
+## install jwt handler
+```
+cd /workspace/front/react_app
+npm install react-jwt
+```
+
 # back
 ## prisma
 ```
