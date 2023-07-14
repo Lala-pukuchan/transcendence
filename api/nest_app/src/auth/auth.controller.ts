@@ -28,7 +28,7 @@ export class AuthController {
 		// ユーザー情報を内包するJWTトークンをCookieに付与
 		const payload = { username: req.session.passport.user.username };
 		const token = await this.jwtService.signAsync(payload);
-		res.cookie('token', token, { httpOnly: true });
+		res.cookie('token', token, { httpOnly: false });
 
 		// アプリのトップにリダイレクトさせる
 		res.redirect('http://localhost:5173/');

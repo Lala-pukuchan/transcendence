@@ -6,6 +6,7 @@ import Account from './Account.tsx';
 import SelectRoom from './SelectRoom.tsx';
 import CreateRoom from './CreateRoom.tsx';
 import ChatRoom from './ChatRoom.tsx';
+import Login from './Login.tsx';
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 function App() {
@@ -14,6 +15,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Top />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/chat" element={<Chat />} />
           <Route path="/game" element={<Game />} />
           <Route path="/account" element={<Account />} />
