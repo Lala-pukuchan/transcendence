@@ -13,8 +13,11 @@ function Top() {
 
   const [userId, setUserId] = useState("");
 
-  const token = getCookie("token");
-  console.log('token: ', token);
+  // tokenが無い場合、ログイン画面にリダイレクトさせる
+  if (!getCookie("token")) {
+    window.location.href = "login";
+    return null;
+  }
 
   return (
     <>
