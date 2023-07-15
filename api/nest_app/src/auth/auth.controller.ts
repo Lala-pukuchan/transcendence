@@ -84,6 +84,16 @@ export class AuthController {
 		await this.authService.turnOnTwoFactorAuthentication(req.user.username);
 	}
 
+	// 二要素認証OFF機能
+	@Post('2fa/turn-off')
+	@UseGuards(JwtAuthGuard)
+	async turnOffTwoFactorAuthentication(@Request() req) {
+
+		console.log('tfa off');
+		console.log('user', req.user);
+		await this.authService.turnOffTwoFactorAuthentication(req.user.username);
+	}
+
 	@Post('2fa/authenticate')
 	@UseGuards(JwtAuthGuard)
 	async authenticate(@Request() req, @Body() body) {

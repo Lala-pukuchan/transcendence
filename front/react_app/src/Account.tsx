@@ -65,6 +65,7 @@ function Account() {
 	const handleSwitchChange = async (event) => {
 		const { checked } = event.target;
 		if (checked) {
+			// QRコード生成
 			httpClient
 				.post("/auth/2fa/generate", null, { headers: { 'Authorization': 'Bearer ' + getCookie("token") }})
 				.then((response) => {
@@ -76,13 +77,29 @@ function Account() {
 				});
 			setOpen(true);
 		} else {
+			// 二要素認証OFF
 			setOpen(false);
+			httpClient
+			.post("/auth/2fa/turn-off", 
+			null,
+			{
+				headers: {
+					'Authorization': 'Bearer ' + getCookie("token"),
+				}
+			})
+			.then((response) => {
+				console.log("response: ", response);
+				setTfaEnabled(false);
+			})
+			.catch(() => {
+				console.log("error");
+			});
 		}
 	};
 
 	// 二要素認証コード検証
 	const [authCode, setAuthCode] = useState('');
-	const [errorMessage, setErrorMessage] = useState('Auth Code is wrong, please input the correct one');
+	const [errorMessage, setErrorMessage] = useState('');
 	const handleCheckCode = () => {
 		console.log('Auth Code:', authCode);
 		httpClient
@@ -99,6 +116,7 @@ function Account() {
 			.then((response) => {
 				console.log("response: ", response);
 				setOpen(false);
+				setTfaEnabled(true);
 			})
 			.catch(() => {
 				console.log("error");
