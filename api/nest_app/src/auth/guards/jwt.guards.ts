@@ -40,6 +40,7 @@ export class JwtAuthGuard implements CanActivate {
 
 	// ヘッダーからjwt取得（-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2Vybm..."）
 	private extractTokenFromHeader(request: Request): string | undefined {
+		console.log('req: ', request.body);
 		const [type, token] = request.headers.authorization?.split(' ') ?? [];
 		return type === 'Bearer' ? token : undefined;
 	}
