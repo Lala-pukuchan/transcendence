@@ -8,10 +8,13 @@ import { ApiResponse, ApiTags } from '@nestjs/swagger';
 export class MessageController {
     constructor(private readonly messageService: MessageService) {}
 
+    //　存在しないチャンネルIDを指定した場合、空の配列が返ってくる
+    // parseIntに失敗すると、500エラーが帰ってきてしまう
     @Get(':channelId')
     @ApiResponse({ status: 200, description: 'Successfully retrieved the messages.', type: [MessageResponseDto] })
-    async getMessages(@Param('channelId') channelId: number) {
-        return await this.messageService.getChannelMessages(channelId);
+    async getMessages(@Param('channelId') channelId: string) {
+        const id = parseInt(channelId, 10);
+        return await this.messageService.getChannelMessages(id);
     }
 
     @Post()
