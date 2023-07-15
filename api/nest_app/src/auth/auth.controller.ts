@@ -25,8 +25,10 @@ export class AuthController {
 	@UseGuards(FortyTwoOauthGuard)
 	async redirect(@Request() req, @Res() res:Response) {
 
+		console.log('redirect user: ', req.session.passport.user);
+
 		// ユーザー情報を内包するJWTトークンをCookieに付与
-		const payload = { username: req.session.passport.user.username };
+		const payload = { user: req.session.passport.user };
 		const token = await this.jwtService.signAsync(payload);
 		res.cookie('token', token, { httpOnly: false });
 
