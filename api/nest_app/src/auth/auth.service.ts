@@ -80,6 +80,7 @@ export class AuthService implements AuthenticationProvider {
 		});
 	}
 
+	// ユーザーの二要素認証設定をONにする
     async turnOnTwoFactorAuthentication(username: string) {
         const user = await this.prisma.user.update({
             where: { username: username },

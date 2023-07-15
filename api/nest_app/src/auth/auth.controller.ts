@@ -56,14 +56,14 @@ export class AuthController {
 	@Post('2fa/generate')
 	@UseGuards(JwtAuthGuard)
 	async register(@Request() req, @Res() res:Response) {
-	  const { otpauthUrl } = 
-	  	await this.authService.generateTwoFactorAuthenticationSecret(
-			req.user,
+		const { otpauthUrl } = 
+			await this.authService.generateTwoFactorAuthenticationSecret(
+				req.user,
+			);
+
+		return res.json(
+			await this.authService.generateQrCodeDataURL(otpauthUrl),
 		);
-  
-	  return res.json(
-		await this.authService.generateQrCodeDataURL(otpauthUrl),
-	  );
 	}
 
 	// 二要素認証ON機能
@@ -72,6 +72,7 @@ export class AuthController {
 	async turnOnTwoFactorAuthentication(@Request() req, @Body() body) {
 
 		console.log('tfa');
+		console.log('user', req.user);
 
 		const isCodeValid = this.authService.isTwoFactorAuthenticationCodeValid(
 			body.twoFactorAuthenticationCode,
@@ -80,7 +81,7 @@ export class AuthController {
 		if (!isCodeValid) {
 			throw new UnauthorizedException('Wrong authentication code');
 		}
-		await this.authService.turnOnTwoFactorAuthentication(req.user.id);
+		await this.authService.turnOnTwoFactorAuthentication(req.user.username);
 	}
 
 	@Post('2fa/authenticate')
