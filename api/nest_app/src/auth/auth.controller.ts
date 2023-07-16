@@ -98,7 +98,8 @@ export class AuthController {
 
 	@Post('2fa/authenticate')
 	@UseGuards(JwtAuthGuard)
-	async authenticate(@Request() req, @Body() body) {
+	async authenticate(@Request() req, @Body() body, @Res() res:Response) {
+
 		const isCodeValid = this.authService.isTwoFactorAuthenticationCodeValid(
 			body.twoFactorAuthenticationCode,
 			req.user,
@@ -108,7 +109,9 @@ export class AuthController {
 			throw new UnauthorizedException('Wrong authentication code');
 		}
 
-		return this.authService.loginWith2fa(req.user);
+		return res.json(
+			await this.authService.loginWith2fa(req.user)
+		);
 	}
 
 }

@@ -3,13 +3,11 @@ import { Divider, Avatar, FormControlLabel, Switch, Typography, Badge, Grid, Rat
 import { useState, useEffect } from 'react';
 import { httpClient } from './httpClient.ts';
 import PhotoCamera from "@mui/icons-material/PhotoCamera";
-import { getCookie } from './utils/GetCookie.tsx';
+import { getCookie } from './utils/HandleCookie.tsx';
 import './App.css'
+import { decodeToken } from "react-jwt";
 
 function Account() {
-
-	// apiパス
-	const api = import.meta.env.VITE_API_BASE_URL;
 
 	// tokenが無い場合、ログイン画面にリダイレクトさせる
 	if (!getCookie("token")) {
@@ -17,8 +15,11 @@ function Account() {
 		return null;
 	}
 
+	// jwt tokenのデコード
+	const decoded = decodeToken(getCookie("token"));
+
 	// ユーザー名
-	const username = localStorage.getItem('username');
+	const username = decoded.user.username;
 
 	// 二要素認証
 	const [tfaEnabled, setTfaEnabled] = useState(false);
@@ -117,10 +118,11 @@ function Account() {
 				console.log("response: ", response);
 				setOpen(false);
 				setTfaEnabled(true);
+				setErrorMessage('');
 			})
 			.catch(() => {
 				console.log("error");
-				setErrorMessage("Auth Code is wrong, please input the correct one");
+				setErrorMessage("Auth Code is wrong, please input the correct one.");
 			});
 	};
 
