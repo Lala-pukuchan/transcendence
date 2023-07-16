@@ -28,7 +28,7 @@ export class JwtAuthGuard implements CanActivate {
 			);
 		
 			//　JWTの内容から、DBの対象ユーザーを取得
-			const user = await this.prisma.user.findUnique({ where: { username: payload.username } });
+			const user = await this.prisma.user.findUnique({ where: { username: payload.user.username } });
 			request['user'] = user;
 		
 		} catch {

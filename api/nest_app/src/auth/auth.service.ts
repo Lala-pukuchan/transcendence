@@ -98,16 +98,14 @@ export class AuthService implements AuthenticationProvider {
 
 	// 二要素認証ログイン
 	async loginWith2fa(userWithoutPsw: Partial<User>) {
+
 		const payload = {
-			username: userWithoutPsw.username,
+			user: userWithoutPsw,
 			isEnabledTfa: !!userWithoutPsw.isEnabledTfa,
 			isTwoFactorAuthenticated: true,
 		};
 
-		console.log('payload: ', payload);
-	
 		return {
-			username: payload.username,
 			access_token: this.jwtService.sign(payload),
 		};
 	}
