@@ -6,17 +6,30 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import CheckIcon from '@mui/icons-material/Check';
 import { useLocation } from 'react-router-dom';
+import { getCookie } from './utils/GetCookie.tsx';
+import { decodeToken } from "react-jwt";
+import { useNavigate } from 'react-router-dom';
+import UndoIcon from '@mui/icons-material/Undo';
 
 function CreateRoom() {
-
   const [roomType, setroomType] = useState("");
   const [accessLevel, setaccessLevel] = useState("");
   const [password, setPassword] = useState("");
   const [roomName, setRoomName] = useState("");
   const [showPassword, setShowPassword] = React.useState(false);
 
-  const location = useLocation();
-  const userId = location.state;
+  const navigate = useNavigate();
+
+  if (!getCookie("token")) {
+    window.location.href = "login";
+    return null;
+  }
+
+  // tokenデコード
+  const decoded = decodeToken(getCookie("token"));
+  console.log('decoded: ', decoded);
+
+  const username = decoded.username;
 
   const handleTypeChange = (event: ChangeEvent<HTMLInputElement>) => {
     setroomType((event.target as HTMLInputElement).value);
@@ -54,7 +67,7 @@ function CreateRoom() {
     // 入力値を含むオブジェクト
     const data = {
       name: roomName,
-      owner: userId, // ここは適切な所有者名に置き換えてください
+      owner: username, // ここは適切な所有者名に置き換えてください
       isDM: roomType === "dm",
       isPublic: accessLevel === "public" || accessLevel === "protected",
       password: password,
@@ -80,6 +93,7 @@ function CreateRoom() {
 
       // 結果を表示（必要に応じて）
       console.log(result);
+      navigate('/chatRoom', { state: { room: result.id } });
     } catch (error) {
       // エラーハンドリング（ここではコンソールにエラーを表示）
       console.error('Error during room creation:', error);
@@ -155,6 +169,9 @@ function CreateRoom() {
           )}
         </FormControl>
       </Box>
+      <Button variant="contained" endIcon={<UndoIcon />} onClick={() => navigate('/chat')} sx={{ m: 2 }}>
+				Back
+			</Button>
       <Button variant="contained" endIcon={<CheckIcon />} sx={{ m: 2 }} disabled={!isInputComplete()} onClick={handleCreateRoom}>
         Create
       </Button>

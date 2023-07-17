@@ -37,8 +37,8 @@ export class MessageResponseDto {
     @IsNotEmpty()
     createdAt: Date;
 
-    @ApiProperty({ description : 'The ID of the user.'})
-    userId: string;
+    @ApiProperty({ description : 'The name of the user.'})
+    username: string;
 
     @ApiProperty({ description : 'The ID of the channel.'})
     @IsInt()

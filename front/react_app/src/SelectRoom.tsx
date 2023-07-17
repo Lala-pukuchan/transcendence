@@ -6,33 +6,32 @@ import ChatIcon from '@mui/icons-material/Chat';
 import { useState, useEffect } from 'react';
 import { httpClient } from './httpClient.ts';
 import { Room } from '../model/room.model';
+import { getCookie } from './utils/GetCookie.tsx';
+import { decodeToken } from "react-jwt";
+import AddCommentIcon from '@mui/icons-material/AddComment';
 
-function roomsToRows(response: any): GridRowsProp {
-	return response.data.Rooms.map((room: Room) => ({
-	  id: room.id.toString(),
-	  roomName: room.name
+function channelsToRows(response: any): GridRowsProp {
+	return response.data.map((channel: any) => ({
+	  id: channel.id.toString(),
+	  roomName: channel.name
 	}));
 }
 
 function SelectRoom() {
+  const [rows, setRows] = useState<GridRowsProp>([]);
+  const [roomId, setRoomId] = useState(0);
+	
+  const navigate = useNavigate();
 
-	const navigate = useNavigate();
+  if (!getCookie("token")) {
+    window.location.href = "login";
+    return null;
+  }
 
-	// ユーザー情報の取得
-	const location = useLocation();
-	const userId = location.state;
-
-	// const rows: GridRowsProp = [
-	// 	{ id: 1, roomName: 'DM_personA_personB', roomType1: 'DM', roomType2: 'Public' },
-	// 	{ id: 2, roomName: 'DM_personA_personC', roomType1: 'DM', roomType2: 'Private' },
-	// 	{ id: 3, roomName: 'DM_personA_personD', roomType1: 'DM', roomType2: 'Protected' },
-	// 	{ id: 4, roomName: 'roomD', roomType1: 'Room', roomType2: 'Public' },
-	// 	{ id: 5, roomName: 'roomE', roomType1: 'Room', roomType2: 'Private' },
-	// 	{ id: 6, roomName: 'roomF', roomType1: 'Room', roomType2: 'Protected' }
-	// ]
-	const [rows, setRows] = useState<GridRowsProp>([]);
-
-	const [roomId, setRoomId] = useState(0);
+  // tokenデコード
+  const decoded = decodeToken(getCookie("token"));
+  console.log('decoded: ', decoded);
+  const username = decoded.username;
 
 	const cols: GridColDef[] = [
 		{
@@ -41,60 +40,29 @@ function SelectRoom() {
 		},
 		{
 			field: 'roomName',
-			// width: 200,
+			width: 200,
 			headerName: 'ルーム名'
 		},
-		// {
-		// 	field: 'roomType1',
-		// 	width: 200,
-		// 	headerName: 'ルーム種別１'
-		// },
-		// {
-		// 	field: 'roomType2',
-		// 	width: 200,
-		// 	headerName: 'ルーム種別２'
-		// }
 	]
 
 	useEffect(() => {
-		// データ取得のAPIリクエスト
-		// const fetchRows = async () => {
-		// 	await httpClient
-		// 			.get("/rooms")
-		// 			.then((response) => {
-		// 				console.log("response is ", response);
-		// 				// 取得したデータをrowsとしてセット
-		// 				console.log("body is ", response.data);
-		// 				setRows(response.data.Rooms.map((room: Room) => ({
-		// 					id: room.id.toString(),
-		// 					roomName: room.name
-		// 				})));
-		// 			})
-		// 	  		.catch(() => {
-		// 				console.log("error");
-		// 			});
-		// };
-		// fetchRows();
-		httpClient
-			.get("/rooms")
-			.then((response) => {
-				console.log("response is ", response);
-				console.log("body is ", response.data);
-				setRows(roomsToRows(response));
-			})
-			.catch(() => {
-				console.log("error");
-			});
-	}, []);
+    httpClient
+      .get(`/users/${username}/channels`)
+      .then((response) => {
+        console.log("response is ", response);
+        setRows(channelsToRows(response));
+      })
+      .catch((error) => {
+        console.log("An error occurred:", error);
+      });
+  }, [username]);
 	
 	console.log("rows are ", rows);
 
 	// 行をクリックしたときのイベント
-	const handleEvent: GridEventListener<'headerSelectionCheckboxChange'> = (
-		params
-	) => {
-		setRoomId(params.row.id);
-	};
+	const handleEvent: GridEventListener<'rowClick'> = (params) => {
+    setRoomId(parseInt(params.id));
+  };
 
 	return (
 		<>
@@ -109,11 +77,20 @@ function SelectRoom() {
 				onRowClick={handleEvent}
 			/>
 			<Button variant="contained" endIcon={<UndoIcon />} onClick={() => navigate('/chat')} sx={{ m: 2 }}>
-				Return Back
+				Back
 			</Button>
-			<Button variant="contained" endIcon={<ChatIcon />} onClick={() => navigate('/chatRoom', { state: {room: roomId, user: userId} })} sx={{ m: 2 }}>
-				Start Chat
-			</Button>
+      <Button variant="outlined" startIcon={<AddCommentIcon />} onClick={() => navigate('/createRoom')}>
+        Create Room
+      </Button>
+			<Button
+        variant="contained"
+        endIcon={<ChatIcon />}
+        onClick={() => navigate('/chatRoom', { state: {room: roomId} })}
+        sx={{ m: 2 }}
+        disabled={roomId === 0}  // roomIdが0のとき、このボタンを無効化します
+      >
+        Start Chat
+      </Button>
 		</>
 	)
 }

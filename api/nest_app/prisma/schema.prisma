@@ -81,8 +81,8 @@ model Message {
     createdAt DateTime @default(now())
 
     // relations
-    userId    String
-    author    User     @relation("ChannelAuthor", fields: [userId], references: [id])
+    username    String
+    author    User     @relation("ChannelAuthor", fields: [username], references: [username])
     channelId Int
     channel   Channel  @relation(fields: [channelId], references: [id])
 }

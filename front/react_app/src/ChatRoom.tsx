@@ -3,16 +3,50 @@ import { useLocation } from 'react-router-dom';
 import SendIcon from '@mui/icons-material/Send';
 import { useRef, useEffect, useCallback, useState } from 'react';
 import io from 'socket.io-client';
+import { getCookie } from './utils/GetCookie.tsx';
+import { decodeToken } from "react-jwt";
+import { httpClient } from './httpClient.ts';
+import ChatIcon from '@mui/icons-material/Chat';
+import { useNavigate } from 'react-router-dom';
+
 
 // socket.ioの初期化(socketをどのタイミングで作成するかは要検討)
 const socket = io('http://localhost:3000');
 
 function ChatRoom() {
+  const navigate = useNavigate();
+
+  if (!getCookie("token")) {
+    window.location.href = "login";
+    return null;
+  }
+
+  // tokenデコード
+  const decoded = decodeToken(getCookie("token"));
+  console.log('decoded: ', decoded);
+  const username = decoded.username;
 
 	// ルーム情報の取得
 	const location = useLocation();
 	const roomId = location.state.room;
-	const userId = location.state.user;
+
+  // メッセージ表示用
+  const [chatLog, setChatLog] = useState<Array<any>>([]); // chatLogの型をstring[]からany[]に変更します
+
+  // チャットの履歴を取得する関数
+  async function getChatHistory() {
+    try {
+      const response = await httpClient.get(`/message/${roomId}`);
+      setChatLog(response.data);
+    } catch (error) {
+      console.error("An error occurred while fetching the chat history:", error);
+    }
+  }
+
+  // ページロード時にチャットの履歴を取得します
+  useEffect(() => {
+    getChatHistory();
+  }, []);
 
 	// socket初回接続時の処理
 	useEffect(() => {
@@ -29,28 +63,40 @@ function ChatRoom() {
 	const inputRef = useRef(null);
 
 	// socketメッセージ送信処理
-	const submitMessage = useCallback(() => {
+  const submitMessage = useCallback(() => {
+    if (inputRef.current.value === '')
+      return;
 
-		if (inputRef.current.value === '')
-			return;
+    // json形式で送信
+    const message = {
+      channelId: roomId,
+      content: inputRef.current.value,
+      username: username,
+      createdAt: Date.now(),
+      contents_path: ""
+    }
+    // メッセージ入力欄の初期化
+    inputRef.current.value = '';
+    // メッセージ送信
+    socket.emit('message', message);
 
-		// json形式で送信
-		const message = {
-			room_id: roomId,
-			chat_text: inputRef.current.value,
-			user_id: userId,
-			chat_time: Date.now(),
-			contents_path: ""
-		}
-		// メッセージ入力欄の初期化
-		inputRef.current.value = '';
-		// メッセージ送信
-		socket.emit('message', message);
+    // HTTP POSTリクエストでDBにメッセージを保存
+    httpClient.post('/message', {
+      username: username,
+      channelId: roomId,
+      content: message.content,
+      createdAt: new Date().toISOString()
+    })
+    .then((response) => {
+      console.log("Message saved successfully:", response);
+    })
+    .catch((error) => {
+      console.error("An error occurred while saving the message:", error);
+    });
+  }, []);
 
-	}, []);
 
 	// メッセージ表示用
-	const [chatLog, setChatLog] = useState<string[]>([]);
 	const [msg, setMsg] = useState('');
 
 	// socketメッセージ受信処理
@@ -91,6 +137,23 @@ function ChatRoom() {
 		};
 	}, []);
 
+  const [composing, setComposing] = useState(false);
+
+  const handleCompositionStart = () => {
+    setComposing(true);
+  };
+
+  const handleCompositionEnd = () => {
+    setComposing(false);
+  };
+
+  const handleKeyDown = (event) => {
+    if (event.key === 'Enter' && !event.isComposing && !composing) {
+      event.preventDefault();
+      submitMessage();
+    }
+  };
+
 	return (
 		<>
 			<Box
@@ -104,33 +167,47 @@ function ChatRoom() {
 				>
 				<Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }} ref={chatLogRef}>
 					{chatLog.map((message, index) => (
-						<Message key={index} message={message} myAccountUserId={userId}/>
+						<Message key={index} message={message} myAccountUserId={username}/>
 					))}
 				</Box>
 				<Box sx={{ p: 2, backgroundColor: "background.default" }}>
-					<Grid container spacing={2}>
-					<Grid item xs={10}>
-						<TextField
-						size="small"
-						fullWidth
-						placeholder="Type a message"
-						variant="outlined"
-						inputRef={inputRef}
-						/>
-					</Grid>
-					<Grid item xs={2}>
-						<Button
-						fullWidth
-						color="primary"
-						variant="contained"
-						endIcon={<SendIcon />}
-						onClick={submitMessage}
-						ref={sendButtonRef}
-						>
-						Send
-						</Button>
-					</Grid>
-					</Grid>
+        <Grid container spacing={2}>
+          <Grid item xs={2}>
+            <Button
+              variant="contained"
+              endIcon={<ChatIcon />}
+              onClick={() => navigate('/selectRoom')}
+            >
+              Back
+            </Button>
+          </Grid>
+          <Grid item xs={8}>
+            <TextField
+              size="small"
+              fullWidth
+              placeholder="Type a message"
+              variant="outlined"
+              inputProps={{
+                ref: inputRef,
+                onKeyDown: handleKeyDown,
+                onCompositionStart: handleCompositionStart,
+                onCompositionEnd: handleCompositionEnd,
+              }}
+            />
+          </Grid>
+          <Grid item xs={2}>
+            <Button
+              fullWidth
+              color="primary"
+              variant="contained"
+              endIcon={<SendIcon />}
+              onClick={submitMessage}
+              ref={sendButtonRef}
+            >
+              Send
+            </Button>
+          </Grid>
+        </Grid>
 				</Box>
 			</Box>
 		</>
@@ -141,7 +218,7 @@ function ChatRoom() {
 const Message = ({ message, myAccountUserId }) => {
 
 	// 自分のメッセージかどうか
-	const isMine = message.user_id === myAccountUserId;
+	const isMine = message.username === myAccountUserId;
 
 	return (
 		<>
@@ -172,7 +249,7 @@ const Message = ({ message, myAccountUserId }) => {
 							borderRadius: isMine ? "20px 20px 20px 5px" : "20px 20px 5px 20px",
 						}}
 						>
-						<Typography variant="body1">{message.chat_text}</Typography>
+						<Typography variant="body1">{message.content}</Typography>
 					</Paper>
 				</Box>
 			</Box>
