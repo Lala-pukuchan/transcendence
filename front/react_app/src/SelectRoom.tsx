@@ -6,7 +6,7 @@ import ChatIcon from '@mui/icons-material/Chat';
 import { useState, useEffect } from 'react';
 import { httpClient } from './httpClient.ts';
 import { Room } from '../model/room.model';
-import { getCookie } from './utils/GetCookie.tsx';
+import { getCookie } from './utils/HandleCookie.tsx';
 import { decodeToken } from "react-jwt";
 import AddCommentIcon from '@mui/icons-material/AddComment';
 
@@ -31,7 +31,7 @@ function SelectRoom() {
   // tokenデコード
   const decoded = decodeToken(getCookie("token"));
   console.log('decoded: ', decoded);
-  const username = decoded.username;
+  const username = decoded.user.username;
 
 	const cols: GridColDef[] = [
 		{

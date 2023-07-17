@@ -6,7 +6,7 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import CheckIcon from '@mui/icons-material/Check';
 import { useLocation } from 'react-router-dom';
-import { getCookie } from './utils/GetCookie.tsx';
+import { getCookie } from './utils/HandleCookie.tsx';
 import { decodeToken } from "react-jwt";
 import { useNavigate } from 'react-router-dom';
 import UndoIcon from '@mui/icons-material/Undo';
@@ -29,7 +29,7 @@ function CreateRoom() {
   const decoded = decodeToken(getCookie("token"));
   console.log('decoded: ', decoded);
 
-  const username = decoded.username;
+  const username = decoded.user.username;
 
   const handleTypeChange = (event: ChangeEvent<HTMLInputElement>) => {
     setroomType((event.target as HTMLInputElement).value);

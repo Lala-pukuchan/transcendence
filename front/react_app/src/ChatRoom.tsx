@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import SendIcon from '@mui/icons-material/Send';
 import { useRef, useEffect, useCallback, useState } from 'react';
 import io from 'socket.io-client';
-import { getCookie } from './utils/GetCookie.tsx';
+import { getCookie } from './utils/HandleCookie.tsx';
 import { decodeToken } from "react-jwt";
 import { httpClient } from './httpClient.ts';
 import ChatIcon from '@mui/icons-material/Chat';
@@ -24,7 +24,7 @@ function ChatRoom() {
   // tokenデコード
   const decoded = decodeToken(getCookie("token"));
   console.log('decoded: ', decoded);
-  const username = decoded.username;
+  const username = decoded.user.username;
 
 	// ルーム情報の取得
 	const location = useLocation();
