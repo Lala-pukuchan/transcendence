@@ -1,5 +1,5 @@
 import { Button, Box, Grid, TextField, Paper, Typography, Avatar } from '@mui/material';
-import { useRef, useEffect, useCallback, useState } from 'react';
+import { useRef, useEffect, useLayoutEffect, useCallback, useState } from 'react';
 import UndoIcon from '@mui/icons-material/Undo';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -176,17 +176,25 @@ function Game() {
 	// const [player, setPlayer] = useState<Position>(new Position(paddleWidth,paddleHeight,wallOffset,canvas.height / 2 - paddleHeight / 2));
 	// const [computerPlayer, setComputerPlayer] = useState<Position>(new Position(paddleWidth,paddleHeight,canvas.width - (wallOffset + paddleWidth) ,canvas.height / 2 - paddleHeight / 2));
 	// const [ball, setBall] = useState<Position>(new Position(ballSWidth,ballSWidth,canvas.width / 2 - ballSWidth / 2, canvas.height / 2 - ballSWidth / 2));
-
-
-	useEffect(() => {
-		const canvas = canvasRef.current;
-		const context = canvas.getContext('2d');
+	let canvas: any;
+	let context: any;
+	useLayoutEffect(() => {
+		canvas = canvasRef.current;
+		context = canvas.getContext('2d');
 		contextRef.current = context;
 
 		canvas.width = 1200;
 		canvas.height = 800;
 		canvas.style.width = (canvas.width / 2) + 'px';
 		canvas.style.height = (canvas.height / 2) + 'px';
+		context.clearRect(0, 0, canvas.width, canvas.height);
+		context.fillStyle = '#429950';
+		context.fillRect(0, 0, canvas.width, canvas.height);
+		
+	}, []);
+	
+	useEffect(() => {
+		
 		//なくてもいいかも
 		// context.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -199,12 +207,13 @@ function Game() {
 		// running = over = false;
 		// turn = paddle;
 		// timer = round = 0;
-		const player = new Position(paddleWidth, paddleHeight, wallOffset, canvas.height / 2 - paddleHeight / 2);
-		const opponent = new Position(paddleWidth, paddleHeight, canvas.width - wallOffset - paddleWidth, canvas.height / 2 - paddleHeight / 2);
-		const ball = new Ball(ballWidth, ballWidth, canvas.width / 2 - ballWidth / 2, canvas.height / 2 - ballWidth / 2);
+		
 		// player.draw(context);
 		// ball.draw(context);
 		// ball.update(player,player,canvas);
+		const player = new Position(paddleWidth, paddleHeight, wallOffset, canvas.height / 2 - paddleHeight / 2);
+		const opponent = new Position(paddleWidth, paddleHeight, canvas.width - wallOffset - paddleWidth, canvas.height / 2 - paddleHeight / 2);
+		const ball = new Ball(ballWidth, ballWidth, canvas.width / 2 - ballWidth / 2, canvas.height / 2 - ballWidth / 2);
 		function gameLoop() {
 			context.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -223,8 +232,6 @@ function Game() {
 	}, []);
 
 	// ここでcontextRef.currentを使用して描画ロジックを追加
-
-
 
 	return (
 		<>
