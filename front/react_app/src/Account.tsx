@@ -24,6 +24,9 @@ function Account() {
 	// 二要素認証
 	const [tfaEnabled, setTfaEnabled] = useState(false);
 
+	// アバター
+	const [avatarPath, setAvatarPath] = useState(import.meta.env.VITE_API_BASE_URL + "users/" + username + "/avatar");
+
 	// ユーザー情報取得
 	useEffect(() => {
 
@@ -126,6 +129,38 @@ function Account() {
 			});
 	};
 
+	// アバター画像アップロード
+	const handleFileUpload = (event) => {
+
+		// アップロード画像取得
+		const file = event.target.files[0];
+		const formData = new FormData();
+		formData.append("avatar", file);
+
+		// アバター画像アップロードAPI
+		httpClient
+			.post("/users/" + username + "/avatar",
+				formData,
+				{ 
+					headers: {
+						'Authorization': 'Bearer ' + getCookie("token"),
+						"Content-Type": "multipart/form-data",
+					}
+				})
+			.then((response) => {
+				console.log("response: ", response);
+			})
+			.catch(() => {
+				console.log("error");
+			});
+
+		const reader = new FileReader();
+		reader.onloadend = () => {
+			setAvatarPath(reader.result);
+		};
+		reader.readAsDataURL(file);
+	};
+
 	return (
 		<>
 			<Grid
@@ -137,19 +172,25 @@ function Account() {
 				sx={{ minHeight: '100vh' }}
 				>
 				<Grid item xs={3}>
-				<Typography id="modal-modal-title" variant="h6" component="h2">My Account Information</Typography>
-						<Avatar alt="Remy Sharp" src="/static/images/avatar/1.jpg" />
+				<Divider sx={{ m:3 }}>
+					<Typography variant="body1" fontWeight="bold">
+						My Account Information
+					</Typography>
+				</Divider>
+					<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+						<Avatar alt={username} src={avatarPath} sx={{ width: 100, height: 100 }}/>
 						<Stack direction="row" spacing={2}>
 							<IconButton
-							color="primary"
-							aria-label="upload picture"
-							component="label"
+								color="primary"
+								aria-label="upload picture"
+								component="label"
 							>
-							<input hidden accept="image/*" type="file" />
-							<PhotoCamera />
+								<input hidden accept="image/*" type="file" onChange={handleFileUpload}/>
+								<PhotoCamera />
 							</IconButton>
 						</Stack>
-						<p>Name: ○○○</p>
+						<p>Name: {username}</p>
+					</div>
 					<Divider sx={{ m:3 }}>Two Factor Authentication</Divider>
 						<FormControlLabel control={<Switch checked={tfaEnabled} />} onChange={handleSwitchChange} label="Enable TFA" />
 						<Modal
