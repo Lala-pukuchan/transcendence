@@ -130,7 +130,7 @@ export class UsersService {
             name: channel.name,
             isDM: channel.isDM,
             isPublic: channel.isPublic,
-            password: channel.password,
+            isProtected: channel.isProtected,
             lastUpdated: channel.lastUpdated,
         }));
     }

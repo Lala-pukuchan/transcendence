@@ -2,6 +2,7 @@ import { Controller, Get, Post, Patch, HttpStatus, Body, Param } from '@nestjs/c
 import { UsersService } from './users.service';
 import { CreateUserDto, GetUsersInfoResponse, GetUserDetailResponse, GetChannelsResponse } from '../dto/user.dto';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { BadRequestException } from '@nestjs/common';
 
 @ApiTags('user')
 @Controller('users')
