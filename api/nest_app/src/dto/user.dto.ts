@@ -152,11 +152,6 @@ export class GetChannelsResponse {
     @IsBoolean()
     isPublic: boolean;
 
-    @ApiProperty({ description: 'The password of the channel.'})
-    @IsString()
-    @IsOptional()
-    password: string;
-
     @ApiProperty({ description: 'The last updated date of the channel.'})
     @IsNotEmpty()
     lastUpdated: Date;

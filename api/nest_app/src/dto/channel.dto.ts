@@ -22,6 +22,11 @@ export class createChannelDto {
     @IsOptional()
     isPublic: boolean;
 
+    @ApiProperty({ description: 'flag indicating if the channel is protected.'})
+    @IsBoolean()
+    @IsOptional()
+    isProtected: boolean;
+
     @ApiProperty({ description: 'The password of the channel.'})
     @IsString()
     @IsOptional()
