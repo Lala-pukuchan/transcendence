@@ -8,6 +8,9 @@ import { decodeToken } from "react-jwt";
 import { httpClient } from './httpClient.ts';
 import ChatIcon from '@mui/icons-material/Chat';
 import { useNavigate } from 'react-router-dom';
+import IconButton from '@mui/material/IconButton';
+import SettingsIcon from '@mui/icons-material/Settings';
+
 
 
 // socket.ioの初期化(socketをどのタイミングで作成するかは要検討)
@@ -156,6 +159,20 @@ function ChatRoom() {
 
 	return (
 		<>
+      <IconButton
+        edge="start"
+        color="inherit"
+        aria-label="settings"
+        sx={{
+          position: 'fixed',
+          left: 280, // 左端からの距離を20pxに設定
+          top: 70, // 上端からの距離を20pxに設定
+        }}
+        onClick={() => {
+        }}
+      >
+      <SettingsIcon />
+    </IconButton>
 			<Box
 				sx={{
 					width: 800,

@@ -70,6 +70,7 @@ function CreateRoom() {
       owner: username, // ここは適切な所有者名に置き換えてください
       isDM: roomType === "dm",
       isPublic: accessLevel === "public" || accessLevel === "protected",
+      isProtected: accessLevel === "protected",
       password: password,
     };
 
