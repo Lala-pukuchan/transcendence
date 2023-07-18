@@ -58,6 +58,7 @@ model Channel {
     // settings
     isDM        Boolean   @default(false)
     isPublic    Boolean   @default(true)
+    isProtected Boolean   @default(false)
     password    String?
 
     // members
