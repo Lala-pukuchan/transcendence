@@ -161,3 +161,10 @@ export class GetChannelsResponse {
     @IsNotEmpty()
     lastUpdated: Date;
 }
+
+export class DisplayNameClass {
+    @ApiProperty({ description: 'The displayname of the user.' })
+    @IsString()
+    @IsNotEmpty()
+    displayName: string;
+}

@@ -30,6 +30,7 @@ export class AuthService implements AuthenticationProvider {
 		const newUser = await this.prisma.user.create({
 			data: {
 				username: details.username,
+				displayName: details.username,
 				fortyTwoId: details.fortytwoId
 			}
 		});
