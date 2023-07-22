@@ -142,4 +142,12 @@ export class UsersService {
           },
         });
       }
+
+    async updateUserDisplayName(userName: string, newDisplayName: string): Promise<User> {
+        const user = await this.prisma.user.update({
+            where: { username: userName },
+            data: { displayName: newDisplayName },
+        });
+        return user;
+    }
 }
