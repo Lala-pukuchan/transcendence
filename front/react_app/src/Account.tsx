@@ -1,11 +1,12 @@
-import TransferList from './TransferList.tsx';
-import { Divider, Avatar, FormControlLabel, Switch, Typography, Badge, Grid, Rating, IconButton, Button, Stack, Modal, Box, TextField } from '@mui/material';
 import { useState, useEffect } from 'react';
+import TransferList from './TransferList.tsx';
+import { Divider, Avatar, FormControlLabel, Switch, Typography, Badge, Grid, Rating, IconButton, Button, Stack, Modal, Box, TextField, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 import { httpClient } from './httpClient.ts';
 import PhotoCamera from "@mui/icons-material/PhotoCamera";
 import { getCookie } from './utils/HandleCookie.tsx';
-import './App.css'
 import { decodeToken } from "react-jwt";
+import EditIcon from '@mui/icons-material/Edit';
+import './App.css'
 
 function Account() {
 
@@ -161,6 +162,44 @@ function Account() {
 		reader.readAsDataURL(file);
 	};
 
+	// ディスプレイ名更新機能
+	const [openDn, setOpenDn] = useState(false);
+	const handleClickOpen = () => {
+		setOpenDn(true);
+	};
+	const handleClose = () => {
+		setOpenDn(false);
+	};
+	const [displayName, setDisplayName] = useState('');
+	const [newDisplayName, setNewDisplayName] = useState('');
+	const handleDisplayNameChange = (event) => {
+		setNewDisplayName(event.target.value);
+	};
+	const [errorMessageDn, setErrorMessageDn] = useState('');
+	const submitDn = (event) => {
+		httpClient
+			.patch("/users/" + username, 
+			{
+				"displayName": newDisplayName
+			},
+			{
+				headers: {
+					'Authorization': 'Bearer ' + getCookie("token"),
+					'Content-Type': 'application/json'
+				}
+			})
+			.then((response) => {
+				console.log("response: ", response);
+				setOpenDn(false);
+				setDisplayName(newDisplayName);
+				setErrorMessageDn('');
+			})
+			.catch(() => {
+				console.log("error");
+				setErrorMessageDn("DisplayName is duplicated. Please input another one.");
+			});
+	};
+
 	return (
 		<>
 			<Grid
@@ -189,7 +228,34 @@ function Account() {
 								<PhotoCamera />
 							</IconButton>
 						</Stack>
-						<p>Name: {username}</p>
+						<div style={{ display: 'inline' }}>
+							<p style={{ display: 'inline' }}>Name: {displayName}</p>
+							<button style={{ display: 'inline-block', marginLeft: '5px', paddingTop: '0px', paddingLeft: '0px', paddingRight: '0px', paddingBottom: '0px' }} onClick={handleClickOpen}>
+								<EditIcon />
+							</button>
+						</div>
+						<Dialog open={openDn} onClose={handleClose}>
+							<DialogTitle>Edit DisplayName</DialogTitle>
+							<DialogContent sx={{ width: 400 }}>
+								<DialogContentText>
+									Please input displaName
+								</DialogContentText>
+								{errorMessageDn && <div style={{ color: 'red' }}>{errorMessageDn}</div>}
+								<TextField
+									autoFocus
+									margin="dense"
+									id="name"
+									label="Display Name"
+									variant="standard"
+									value={newDisplayName}
+									onChange={handleDisplayNameChange}
+								/>
+							</DialogContent>
+							<DialogActions>
+							<Button onClick={handleClose}>Cancel</Button>
+							<Button onClick={submitDn}>Submit</Button>
+							</DialogActions>
+						</Dialog>
 					</div>
 					<Divider sx={{ m:3 }}>Two Factor Authentication</Divider>
 						<FormControlLabel control={<Switch checked={tfaEnabled} />} onChange={handleSwitchChange} label="Enable TFA" />
