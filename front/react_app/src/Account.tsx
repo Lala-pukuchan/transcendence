@@ -28,6 +28,9 @@ function Account() {
 	// アバター
 	const [avatarPath, setAvatarPath] = useState(import.meta.env.VITE_API_BASE_URL + "users/" + username + "/avatar");
 
+	// ディスプレイ名
+	const [displayName, setDisplayName] = useState('');
+
 	// ユーザー情報取得
 	useEffect(() => {
 
@@ -36,6 +39,7 @@ function Account() {
 			.then((response) => {
 				console.log("response: ", response);
 				setTfaEnabled(response.data.isEnabledTfa);
+				setDisplayName(response.data.displayName);
 			})
 			.catch(() => {
 				console.log("error");
@@ -170,7 +174,6 @@ function Account() {
 	const handleClose = () => {
 		setOpenDn(false);
 	};
-	const [displayName, setDisplayName] = useState('');
 	const [newDisplayName, setNewDisplayName] = useState('');
 	const handleDisplayNameChange = (event) => {
 		setNewDisplayName(event.target.value);
