@@ -52,7 +52,27 @@ cd /workspace/front/react_app
 npm install @types/socket.io-client
 ```
 
+## install jwt handler
+```
+cd /workspace/front/react_app
+npm install react-jwt
+```
+
 # back
+## prisma
+```
+cd /nest_app/prisma
+npx prisma studio
+```
+- after changing db table, pls drop table and migrate again
+```
+psql -h localhost -U postgres
+password: yuhmatsu
+DROP TABLE public."User" CASCADE;
+exit
+yarn prisma migrate dev
+```
+
 ## install swagger
 ```
 cd /workspace/api/nest_app
@@ -64,4 +84,50 @@ yarn add @nestjs/swagger swagger-ui-express
 cd /workspace/api/nest_app
 yarn add @nestjs/websockets @nestjs/platform-socket.io
 yarn add @types/socket.io
+```
+
+## install passport
+```
+cd /workspace/api/nest_app
+yarn add @nestjs/passport passport passport-42 express-session
+cd src
+nest g module auth
+nest g service auth
+nest g controller auth
+yarn add -D @types/express-session
+```
+
+## How to set up app in 42
+- [create new app](https://profile.intra.42.fr/oauth/applications/new)
+- [view created app](https://profile.intra.42.fr/oauth/applications/14601)
+
+![app](./readme_img/app.png)
+
+- set the below information in .env
+```
+ex.)
+FORTY_TWO_ClIENT_ID=u-s4t2ud-f6da009c2bb9aa3bbf7649c21b5d92bb0ab92de284fad88bb099c7101f933480
+FORTY_TWO_CLIENT_SECRET=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
+FORTY_TWO_CALL_BACK_URL=/auth/redirect
+```
+
+- login url
+  - http://localhost:3000/auth/login
+
+## How ot set up app in Google Auth TFA
+```
+cd /workspace/api/nest_app
+yarn add @nestjs/jwt
+yarn add passport-jwt
+yarn add otplib
+yarn add qrcode
+```
+```
+curl http://localhost:3000/auth/profile -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InJ1a29iYXlhIiwiaWF0IjoxNjg5MDc5MDY2LCJleHAiOjE2ODkxNjU0NjZ9.u1y7igJAgyLEDKOTl6-enfttDgwgWIUIQIXjWpj3Um0"
+{"id":"f434212f-4dc2-4d8f-a884-775200ed3893","fortyTwoId":"103540","username":"rukobaya","avatar":"default.jpg","wins":0,"losses":0,"ladderLevel":0,"achievements":[]}
+
+curl -X POST http://localhost:3000/auth/2fa/generate -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InJ1a29iYXlhIiwiaWF0IjoxNjg5MTUzODUyLCJleHAiOjE2ODkyNDAyNTJ9.6yhiMYmPtM0QsJlOjCv49dWip_7cmUhHpe-RQn6A02o"
+
+curl -X POST http://localhost:3000/auth/2fa/authenticate -H "Content-Type: application/json" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InJ1a29iYXlhIiwiaWF0IjoxNjg5MTUzODUyLCJleHAiOjE2ODkyNDAyNTJ9.6yhiMYmPtM0QsJlOjCv49dWip_7cmUhHpe-RQn6A02o" -d '{"twoFactorAuthenticationCode": "031590"}'
+
 ```

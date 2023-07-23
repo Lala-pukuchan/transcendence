@@ -14,7 +14,7 @@ function Chat() {
 
   return (
     <>
-        <Button variant="outlined" startIcon={<AddCommentIcon />} onClick={() => navigate('/createRoom')}>
+        <Button variant="outlined" startIcon={<AddCommentIcon />} onClick={() => navigate('/createRoom', { state: userId })}>
             Create Room
         </Button>
         <Button variant="contained" endIcon={<ChatIcon />} onClick={() => navigate('/selectRoom', { state: userId })}>

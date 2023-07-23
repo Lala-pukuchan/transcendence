@@ -31,15 +31,32 @@ export class MatchDetail {
 }
 
 export class CreateUserDto {
-    @ApiProperty({ description: 'The name of the user.'})
+   @ApiProperty({ description: 'The name of the user.'})
+   @IsString()
+   @IsNotEmpty()
+   username: string;
+
+   @ApiProperty({ description: 'The file path of the user avatar.'})
+   @IsOptional()
+   @IsString()
+   avatar: string;
+
+    @ApiProperty({ description: 'The fortyTwoId of the user.'})
+    @IsString()
+    @IsNotEmpty()
+    fortyTwoId: string;
+}
+
+export class UserSession {
+    @ApiProperty({ description: 'The username of the user.' })
     @IsString()
     @IsNotEmpty()
     username: string;
 
-    @ApiProperty({ description: 'The file path of the user avatar.'})
-    @IsOptional()
+    @ApiProperty({ description: 'The fortyTwoId of the user.' })
     @IsString()
-    avatar: string;
+    @IsNotEmpty()
+    fortyTwoId: string;
 }
 
 export class GetUsersInfoResponse {
@@ -135,12 +152,14 @@ export class GetChannelsResponse {
     @IsBoolean()
     isPublic: boolean;
 
-    @ApiProperty({ description: 'The password of the channel.'})
-    @IsString()
-    @IsOptional()
-    password: string;
-
     @ApiProperty({ description: 'The last updated date of the channel.'})
     @IsNotEmpty()
     lastUpdated: Date;
+}
+
+export class DisplayNameClass {
+    @ApiProperty({ description: 'The displayname of the user.' })
+    @IsString()
+    @IsNotEmpty()
+    displayName: string;
 }

@@ -1,10 +1,12 @@
 import { existsSync, mkdirSync } from 'fs';
 import { ApiTags, ApiResponse } from '@nestjs/swagger';
-import { Controller, Post, UploadedFile, UseInterceptors, Param, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, UploadedFile, UseInterceptors, Param, HttpStatus, Res } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { join } from 'path';
 import { UsersService } from '../user/users.service';
+import { NotFoundException } from '@nestjs/common';
+import { Response } from 'express';
 
 
 @Controller()
@@ -37,5 +39,15 @@ export class AvatarController {
     const avatarPath = `${file.destination}/${file.filename}`; 
     await this.usersService.changeAvatar(username, avatarPath);
     return { status: HttpStatus.OK, message: 'The file has been successfully uploaded.'};
+  }
+
+  @Get('users/:username/avatar')
+  @ApiResponse({ status: HttpStatus.OK, description: 'Return the avatar image.'})
+  async getAvatar(@Param('username') username: string, @Res() res: Response) {
+    const user = await this.usersService.findUserByUsername(username);
+    if (!user) {
+      throw new NotFoundException(`User with username ${username} not found.`);
+    }
+    res.sendFile(user.avatar);
   }
 }

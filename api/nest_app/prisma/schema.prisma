@@ -13,10 +13,16 @@ datasource db {
 model User {
     id                String    @id @default(uuid())
 
+    // 42 oauth info
+    fortyTwoId        String    @unique
+
+    // 2fa info
+    twoFactorSecret   String?
+    isEnabledTfa      Boolean   @default(false)
+
     // basic info
     username          String    @unique
-    // fortyTwoId        String    @unique
-    // discriminator     String    @default("0000")
+    displayName       String?   @unique
     avatar            String?   @default("default.jpg") // Default avatar path
 
     // relationships
@@ -53,6 +59,7 @@ model Channel {
     // settings
     isDM        Boolean   @default(false)
     isPublic    Boolean   @default(true)
+    isProtected Boolean   @default(false)
     password    String?
 
     // members
@@ -76,8 +83,8 @@ model Message {
     createdAt DateTime @default(now())
 
     // relations
-    userId    String
-    author    User     @relation("ChannelAuthor", fields: [userId], references: [id])
+    username    String
+    author    User     @relation("ChannelAuthor", fields: [username], references: [username])
     channelId Int
     channel   Channel  @relation(fields: [channelId], references: [id])
 }

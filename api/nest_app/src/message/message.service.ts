@@ -34,7 +34,7 @@ export class MessageService {
             data: {
                 content: createMessageDto.content,
                 createdAt: createMessageDto.createdAt,
-                userId: user.id,
+                username: user.username,
                 channelId: createMessageDto.channelId
             }
         });

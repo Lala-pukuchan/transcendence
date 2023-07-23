@@ -7,22 +7,23 @@ import { CreateUserDto } from '../dto/user.dto';
 export class UsersService {
     constructor(private readonly prisma : PrismaService) {}
 
-    //存在する名前で作ろうとした時のエラーハンドリングがうまくいっていない
+    // 存在する名前で作ろうとした時のエラーハンドリングがうまくいっていない
     async createUser(data: CreateUserDto) {
-        try {
-            return this.prisma.user.create({
-                data: {
-                    username: data.username,
-                    avatar: data.avatar || 'default.jpg'
-                },
-            });
-        } catch (error) {
-            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-                throw new ConflictException('A user with this username already exists.');
-            } else {
-                throw new InternalServerErrorException('Something went wrong.');
-            }
-        }
+       try {
+           return this.prisma.user.create({
+               data: {
+                   username: data.username,
+                   avatar: data.avatar || 'default.jpg',
+                   fortyTwoId: data.fortyTwoId,
+               },
+           });
+       } catch (error) {
+           if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+               throw new ConflictException('A user with this username already exists.');
+           } else {
+               throw new InternalServerErrorException('Something went wrong.');
+           }
+       }
     }
 
     async getUsersInfo() {
@@ -129,8 +130,24 @@ export class UsersService {
             name: channel.name,
             isDM: channel.isDM,
             isPublic: channel.isPublic,
-            password: channel.password,
+            isProtected: channel.isProtected,
             lastUpdated: channel.lastUpdated,
         }));
+    }
+
+    async findUserByUsername(username: string) {
+        return this.prisma.user.findUnique({
+          where: {
+            username: username,
+          },
+        });
+      }
+
+    async updateUserDisplayName(userName: string, newDisplayName: string): Promise<User> {
+        const user = await this.prisma.user.update({
+            where: { username: userName },
+            data: { displayName: newDisplayName },
+        });
+        return user;
     }
 }

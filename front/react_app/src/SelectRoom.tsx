@@ -6,33 +6,47 @@ import ChatIcon from '@mui/icons-material/Chat';
 import { useState, useEffect } from 'react';
 import { httpClient } from './httpClient.ts';
 import { Room } from '../model/room.model';
+import { getCookie } from './utils/HandleCookie.tsx';
+import { decodeToken } from "react-jwt";
+import AddCommentIcon from '@mui/icons-material/AddComment';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import TextField from '@mui/material/TextField';
+import InputAdornment from '@mui/material/InputAdornment';
+import IconButton from '@mui/material/IconButton';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
-function roomsToRows(response: any): GridRowsProp {
-	return response.data.Rooms.map((room: Room) => ({
-	  id: room.id.toString(),
-	  roomName: room.name
-	}));
+function channelsToRows(response: any): GridRowsProp {
+  return response.data.map((channel: any) => ({
+    id: channel.id.toString(),
+    roomName: channel.name,
+    isProtected: channel.isProtected,
+  }));
 }
 
 function SelectRoom() {
+  const [rows, setRows] = useState<GridRowsProp>([]);
+  const [roomId, setRoomId] = useState(0);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedRoom, setSelectedRoom] = useState(null);
+  const [inputPassword, setInputPassword] = useState('');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+	
+  const navigate = useNavigate();
 
-	const navigate = useNavigate();
+  if (!getCookie("token")) {
+    window.location.href = "login";
+    return null;
+  }
 
-	// ユーザー情報の取得
-	const location = useLocation();
-	const userId = location.state;
-
-	// const rows: GridRowsProp = [
-	// 	{ id: 1, roomName: 'DM_personA_personB', roomType1: 'DM', roomType2: 'Public' },
-	// 	{ id: 2, roomName: 'DM_personA_personC', roomType1: 'DM', roomType2: 'Private' },
-	// 	{ id: 3, roomName: 'DM_personA_personD', roomType1: 'DM', roomType2: 'Protected' },
-	// 	{ id: 4, roomName: 'roomD', roomType1: 'Room', roomType2: 'Public' },
-	// 	{ id: 5, roomName: 'roomE', roomType1: 'Room', roomType2: 'Private' },
-	// 	{ id: 6, roomName: 'roomF', roomType1: 'Room', roomType2: 'Protected' }
-	// ]
-	const [rows, setRows] = useState<GridRowsProp>([]);
-
-	const [roomId, setRoomId] = useState(0);
+  // tokenデコード
+  const decoded = decodeToken(getCookie("token"));
+  console.log('decoded: ', decoded);
+  const username = decoded.user.username;
 
 	const cols: GridColDef[] = [
 		{
@@ -41,60 +55,55 @@ function SelectRoom() {
 		},
 		{
 			field: 'roomName',
-			// width: 200,
+			width: 200,
 			headerName: 'ルーム名'
 		},
-		// {
-		// 	field: 'roomType1',
-		// 	width: 200,
-		// 	headerName: 'ルーム種別１'
-		// },
-		// {
-		// 	field: 'roomType2',
-		// 	width: 200,
-		// 	headerName: 'ルーム種別２'
-		// }
 	]
 
 	useEffect(() => {
-		// データ取得のAPIリクエスト
-		// const fetchRows = async () => {
-		// 	await httpClient
-		// 			.get("/rooms")
-		// 			.then((response) => {
-		// 				console.log("response is ", response);
-		// 				// 取得したデータをrowsとしてセット
-		// 				console.log("body is ", response.data);
-		// 				setRows(response.data.Rooms.map((room: Room) => ({
-		// 					id: room.id.toString(),
-		// 					roomName: room.name
-		// 				})));
-		// 			})
-		// 	  		.catch(() => {
-		// 				console.log("error");
-		// 			});
-		// };
-		// fetchRows();
-		httpClient
-			.get("/rooms")
-			.then((response) => {
-				console.log("response is ", response);
-				console.log("body is ", response.data);
-				setRows(roomsToRows(response));
-			})
-			.catch(() => {
-				console.log("error");
-			});
-	}, []);
+    httpClient
+      .get(`/users/${username}/channels`)
+      .then((response) => {
+        console.log("response is ", response);
+        setRows(channelsToRows(response));
+      })
+      .catch((error) => {
+        console.log("An error occurred:", error);
+      });
+  }, [username]);
 	
 	console.log("rows are ", rows);
 
 	// 行をクリックしたときのイベント
-	const handleEvent: GridEventListener<'headerSelectionCheckboxChange'> = (
-		params
-	) => {
-		setRoomId(params.row.id);
-	};
+  const handleEvent: GridEventListener<'rowClick'> = (params) => {
+    setSelectedRoom(params.row);
+    setRoomId(parseInt(params.id));
+  };
+
+  const handlePasswordSubmit = () => {
+    httpClient
+      .post(`/channels/${selectedRoom.id}/verifyPassword`, { password: inputPassword })
+      .then((response) => {
+        console.log(response);  // レスポンスをログ出力
+        if (response.data.isValid) {
+          setOpenDialog(false);  // パスワードが検証された後にダイアログを閉じます
+          navigate('/chatRoom', { state: {room: roomId} });
+        } else {
+          // パスワードが間違っている場合、ここでエラーメッセージを表示します
+          alert("パスワードが間違っています");
+        }
+      })
+      .catch((error) => {
+        console.log("An error occurred:", error);
+        alert("An error occurred while verifying the password");  // エラーメッセージを表示します
+      });
+  };
+
+  const toggleShowPassword = () => {
+    setShowPassword(!showPassword);
+  };
+  
+
 
 	return (
 		<>
@@ -108,12 +117,59 @@ function SelectRoom() {
 				pageSizeOptions={[5, 10]}
 				onRowClick={handleEvent}
 			/>
+      <Dialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)}>
+      <DialogTitle>Password Required</DialogTitle>
+      <DialogContent>
+        <TextField
+          autoFocus
+          margin="dense"
+          label="Password"
+          type={showPassword ? "text" : "password"}  // showPasswordの値によりタイプを動的に変更します
+          fullWidth
+          variant="standard"
+          value={inputPassword}
+          onChange={(e) => setInputPassword(e.target.value)}
+          InputProps={{  // このプロパティでエンドアドーンメントを追加します
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label="toggle password visibility"
+                  onClick={toggleShowPassword}
+                >
+                  {showPassword ? <Visibility /> : <VisibilityOff />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handlePasswordSubmit}>
+          Submit
+        </Button>
+      </DialogActions>
+    </Dialog>
 			<Button variant="contained" endIcon={<UndoIcon />} onClick={() => navigate('/chat')} sx={{ m: 2 }}>
-				Return Back
+				Back
 			</Button>
-			<Button variant="contained" endIcon={<ChatIcon />} onClick={() => navigate('/chatRoom', { state: {room: roomId, user: userId} })} sx={{ m: 2 }}>
-				Start Chat
-			</Button>
+      <Button variant="outlined" startIcon={<AddCommentIcon />} onClick={() => navigate('/createRoom')}>
+        Create Room
+      </Button>
+      <Button
+        variant="contained"
+        endIcon={<ChatIcon />}
+        onClick={() => {
+          if (selectedRoom.isProtected) {
+            setIsDialogOpen(true);
+          } else {
+            navigate('/chatRoom', { state: {room: roomId} });
+          }
+        }}
+        sx={{ m: 2 }}
+        disabled={roomId === 0}  // roomIdが0のとき、このボタンを無効化します
+      >
+        Start Chat
+      </Button>
 		</>
 	)
 }

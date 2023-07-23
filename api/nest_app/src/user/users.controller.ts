@@ -1,7 +1,8 @@
 import { Controller, Get, Post, Patch, HttpStatus, Body, Param } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { CreateUserDto, GetUsersInfoResponse, GetUserDetailResponse, GetChannelsResponse } from '../dto/user.dto';
+import { CreateUserDto, GetUsersInfoResponse, GetUserDetailResponse, GetChannelsResponse, DisplayNameClass } from '../dto/user.dto';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { BadRequestException } from '@nestjs/common';
 
 @ApiTags('user')
 @Controller('users')
@@ -23,13 +24,7 @@ export class UsersController {
     @Post()
     @ApiResponse({ status: HttpStatus.OK, type: CreateUserDto })
     createUser(@Body() createUserDto: CreateUserDto) {
-      return this.usersService.createUser(createUserDto);
-    }
-
-    @Patch(':username/avatar')
-    @ApiResponse({ status: HttpStatus.OK, type: GetUserDetailResponse, description: 'Change user avatar.'})
-    changeAvatar(@Param('username') username: string, @Body('avatar') newAvatar: string) {
-        return this.usersService.changeAvatar(username, newAvatar);
+     return this.usersService.createUser(createUserDto);
     }
 
     @Patch(':username/friends')
@@ -52,5 +47,14 @@ export class UsersController {
     @ApiResponse({ status: HttpStatus.OK, type: [GetChannelsResponse], description: 'Get a list of channels the user is a part of.'})
     getUserChannels(@Param('username') username: string) {
         return this.usersService.getUserChannels(username);
+    }
+
+    @Patch(':username')
+    @ApiResponse({ status: HttpStatus.OK, type: DisplayNameClass, description: 'Update users displayname.'})
+    updateUser(
+        @Param('username') username: string,
+        @Body('displayName') displayName: string)
+    {
+        return this.usersService.updateUserDisplayName(username, displayName);
     }
 }
