@@ -28,6 +28,11 @@ export class ChannelService {
                         username: owner,
                     },
                 },
+                admins: {
+                    connect: {
+                        username: owner,
+                    },
+                },
                 isDM: isDM,
                 isPublic: isPublic,
                 isProtected: isProtected,
@@ -126,5 +131,49 @@ export class ChannelService {
           },
         },
       });
+    }
+
+    async addUserToAdmins(channelId: number, username: string) {
+      const user = await this.prisma.user.findUnique({ where: { username: username } });
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+    
+      const channel = await this.prisma.channel.findUnique({ where: { id: channelId }, include: { users: true } });
+      if (!channel) {
+        throw new NotFoundException('Channel not found');
+      }
+    
+      if (!channel.users.find(u => u.username === username)) {
+        throw new BadRequestException('User not in the channel');
+      }
+
+      await this.prisma.channel.update({
+        where: { id: channelId },
+        data: {
+          admins: {
+            connect: { id: user.id },
+          },
+        },
+      });
+    }
+
+    async getNonAdminUsersInChannel(channelId: number) {
+      const channel = await this.prisma.channel.findUnique({
+        where: { id: channelId },
+        include: {
+          admins: true,
+          users: true
+        }
+      })
+  
+      if (!channel) {
+        throw new NotFoundException(`Channel with ID ${channelId} not found`);
+      }
+  
+      const adminIds = new Set(channel.admins.map(admin => admin.id));
+      const nonAdminUsers = channel.users.filter(user => !adminIds.has(user.id));
+  
+      return nonAdminUsers;
     }
 }
