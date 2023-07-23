@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body } from '@nestjs/common';
 import { ChannelService } from './channel.service';
 import { createChannelDto } from 'src/dto/channel.dto';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -40,6 +40,7 @@ export class ChannelController {
   }
 
   @Get(':channelId/users/not-members')
+  @ApiResponse({ status: 200, description: 'Successfully returned users not in channel' })
   async getUsersNotInChannel(@Param('channelId') channelId: string) {
     const channelIdNumber = Number(channelId);
 
@@ -49,6 +50,19 @@ export class ChannelController {
 
     return this.channelService.getUsersNotInChannel(channelIdNumber);
   }
+
+  @Get(':channelId/users/not-owners')
+  @ApiResponse({ status: 200, description: 'Successfully returned users in channel without owner' })
+  async getUsersInChannelWithoutOwner(@Param('channelId') channelId: string) {
+    const channelIdNumber = Number(channelId);
+
+    if (isNaN(channelIdNumber)) {
+      throw new BadRequestException('Invalid channel ID.');
+    }
+
+    return this.channelService.getUsersInChannelWithoutOwner(channelIdNumber);
+  }
+
 
   @Post(':channelId/users')
   @ApiResponse({ status: 200, description: 'Successfully added user to channel' })
@@ -84,5 +98,17 @@ export class ChannelController {
     }
 
     return this.channelService.getNonAdminUsersInChannel(channelIdNumber);
+  }
+
+  @Delete(':channelId/users/:username')
+  @ApiResponse({ status: 200, description: 'Successfully removed user from channel' })
+  async removeUserFromChannel(@Param('channelId') channelId: string, @Param('username') username: string) {
+    const channelIdNumber = Number(channelId);
+
+    if (isNaN(channelIdNumber)) {
+      throw new BadRequestException('Invalid channel ID.');
+    }
+
+    return this.channelService.removeUserFromChannel(channelIdNumber, username);
   }
 }

@@ -176,4 +176,68 @@ export class ChannelService {
   
       return nonAdminUsers;
     }
+
+    async getUsersInChannelWithoutOwner(channelId: number) {
+      const channel = await this.prisma.channel.findUnique({
+        where: { id: channelId },
+        include: {
+          owner: true,
+          users: true,
+        },
+      });
+    
+      if (!channel) {
+        throw new NotFoundException(`Channel with ID ${channelId} not found`);
+      }
+    
+      const owner = channel.owner;
+      const users = channel.users.filter((user) => user.id !== owner.id);
+    
+      return users;
+    }
+
+    async removeUserFromChannel(channelId: number, username: string) {
+      const channel = await this.prisma.channel.findUnique({
+        where: { id: channelId },
+        include: {
+          owner: true,
+          admins: true,
+          users: true,
+        },
+      });
+    
+      if (!channel) {
+        throw new NotFoundException(`Channel with ID ${channelId} not found`);
+      }
+    
+      const user = channel.users.find((user) => user.username === username);
+    
+      if (!user) {
+        throw new NotFoundException(`User with username ${username} not found in channel with ID ${channelId}`);
+      }
+
+      if (user === channel.owner) {
+        throw new BadRequestException('Cannot remove owner from channel');
+      }
+    
+      await this.prisma.channel.update({
+        where: { id: channelId },
+        data: {
+          users: {
+            disconnect: { id: user.id },
+          },
+        },
+      });
+
+      if (channel.admins.find((admin) => admin.username === username)) {
+        await this.prisma.channel.update({
+          where: { id: channelId },
+          data: {
+            admins: {
+              disconnect: { id: user.id },
+            },
+          },
+        });
+      }
+    }
 }
