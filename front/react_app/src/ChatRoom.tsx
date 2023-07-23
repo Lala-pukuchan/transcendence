@@ -105,30 +105,6 @@ function ChatRoom() {
       console.error("An error occurred while saving the message:", error);
     });
   }, []);
-  
-  const [anchorEl, setAnchorEl] = useState(null);
-
-  const handleClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const [showUsers, setShowUsers] = useState(false);
-  const [showMembers, setShowMembers] = useState(false);
-  
-  const handleClose = (event) => {
-    closeMembers();
-    closeUsers();
-    if (event.target.textContent === "Add Users") {
-      getUsersNotInChannel();
-      setShowUsers(true);
-    }
-    else if (event.target.textContent === "Add Administrators") {
-      getMembers();
-      setShowMembers(true);
-    }
-
-    setAnchorEl(null);
-  };
 
 
 	// メッセージ表示用
@@ -189,10 +165,47 @@ function ChatRoom() {
     }
   };
 
-  //User一覧
-  const [users, setUsers] = useState<Array<any>>([]);
+  //以下はsubjectの機能を満たすためのchannel編集機能
+  const [users, setUsers] = useState<Array<any>>([]); //User一覧
+  const [selectedUsers, setSelectedUsers] = useState<Array<any>>([]); // 選択されたchannelに存在しないユーザーの状態を管理
+  const [showUsers, setShowUsers] = useState(false);
+  const [members, setMembers] = useState<Array<any>>([]); // チャンネルのmember一覧(adminは含まない)
+  const [selectedMembers, setSelectedMembers] = useState<Array<any>>([]); // 選択されたmemberの状態を管理
+  const [showMembers, setShowMembers] = useState(false);
+  const [notOwners, setNotOwners] = useState<Array<any>>([]); // owner以外のchannel参加者一覧
+  const [selectedNotOwners, setSelectedNotOwners] = useState<Array<any>>([]); // 選択されたowner以外のchannel参加者の状態を管理
+  const [showNotOwners, setShowNotOwners] = useState(false);
+  const [search, setSearch] = useState(''); // 検索文字列の状態を管理
+  const [page, setPage] = useState(0);  // 現在のページ番号の状態を追加
+  const itemsPerPage = 10; // 1ページあたりのアイテム数
+  const [anchorEl, setAnchorEl] = useState(null);
 
-  // ユーザー一覧を取得する関数
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+  
+  const handleClose = (event) => {
+    closeMembers();
+    closeUsers();
+    closeNotOwners();
+    if (event.target.textContent === "Add Users") {
+      getUsersNotInChannel();
+      setShowUsers(true);
+    }
+    else if (event.target.textContent === "Add Administrators") {
+      getMembers();
+      setShowMembers(true);
+    }
+    else if (event.target.textContent === "Kick Members") {
+      getNotOwners();
+      setShowNotOwners(true);
+    }
+
+    setAnchorEl(null);
+  };
+
+  // 特定のuserを取得する関数
+  // channelに存在しないユーザー一覧を取得する関数
   async function getUsersNotInChannel() {
     try {
       const response = await httpClient.get(`/channels/${roomId}/users/not-members`);
@@ -202,17 +215,8 @@ function ChatRoom() {
       console.error("An error occurred while fetching the users not in channel:", error);
     }
   }
-  
-  const [search, setSearch] = useState('');  // 検索文字列の状態を追加
 
-  // ユーザーをフィルタリングする関数
-  const filteredUsers = users.filter(user => 
-    user.username.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const [members, setMembers] = useState<Array<any>>([]);
-  
-  // channelのuser一覧を取得する関数
+  // channelのmember一覧を取得する関数
   async function getMembers() {
     try {
       const response = await httpClient.get(`/channels/${roomId}/users/members`);
@@ -223,26 +227,44 @@ function ChatRoom() {
     }
   }
 
+  //owner以外のchannel参加者一覧を取得する関数
+  async function getNotOwners() {
+    try {
+      const response = await httpClient.get(`/channels/${roomId}/users/not-owners`);
+      console.log('response: ', response);
+      setNotOwners(response.data);
+    } catch (error) {
+      console.error("An error occurred while fetching the users in channel:", error);
+    }
+  }
+
+  // 特定のuserをフィルタリングする関数
+  // channelに存在しないユーザーをフィルタリングする関数
+  const filteredUsers = users.filter(user => 
+    user.username.toLowerCase().includes(search.toLowerCase())
+  );
+
   // memberをフィルタリングする関数
   const filteredMembers = members.filter(member =>
     member.username.toLowerCase().includes(search.toLowerCase())
-    );
-    
-  const [page, setPage] = useState(0);  // 現在のページ番号の状態を追加
-  const itemsPerPage = 10;  // 1ページあたりのアイテム数
+  );
+
+  const filteredNotOwners = notOwners.filter(notOwner =>
+    notOwner.username.toLowerCase().includes(search.toLowerCase())
+  );
   
+  //特定のuserをページングする関数
   // メンバーをフィルタリングとページングする関数
   const displayMembers = filteredMembers.slice(page * itemsPerPage, (page + 1) * itemsPerPage);
 
-  // ユーザーをフィルタリングとページングする関数
+  // channelに存在しないユーザーをフィルタリングとページングする関数
   const displayedUsers = filteredUsers.slice(page * itemsPerPage, (page + 1) * itemsPerPage);
 
-  // 選択されたユーザーを管理
-  const [selectedUsers, setSelectedUsers] = useState<Array<any>>([]);
-  
-  // 選択されたmemberを管理
-  const [selectedMembers, setSelectedMembers] = useState<Array<any>>([]);
+  // owner以外のchannel参加者をフィルタリングとページングする関数
+  const displayedNotOwners = filteredNotOwners.slice(page * itemsPerPage, (page + 1) * itemsPerPage);
 
+  // チェックボックスが変更されたときに選択されたuserを追加または削除する関数
+  // チェックボックスが変更されたときに選択されたmemberを追加または削除
   const handleToggleMember = (member) => {
     if (selectedMembers.includes(member)) {
       setSelectedMembers(selectedMembers.filter((m) => m !== member));
@@ -251,7 +273,7 @@ function ChatRoom() {
     }
   };
 
-  // チェックボックスが変更されたときに選択されたユーザーを追加または削除
+  // チェックボックスが変更されたときに選択されたchannelに存在しないユーザーを追加または削除
   const handleToggleUser = (user) => {
     if (selectedUsers.includes(user)) {
       setSelectedUsers(selectedUsers.filter((u) => u !== user));
@@ -260,6 +282,17 @@ function ChatRoom() {
     }
   };
 
+  // チェックボックスが変更されたときに選択されたowner以外のchannel参加者を追加または削除
+  const handleToggleNotOwner = (notOwner) => {
+    if (selectedNotOwners.includes(notOwner)) {
+      setSelectedNotOwners(selectedNotOwners.filter((n) => n !== notOwner));
+    } else {
+      setSelectedNotOwners([...selectedNotOwners, notOwner]);
+    }
+  };
+
+  // ダイアログを閉じる関数
+  // ダイアログを閉じる関数(member)
   const closeMembers = () => {
     setSelectedMembers([]);
     setMembers([]);
@@ -268,6 +301,7 @@ function ChatRoom() {
     setShowMembers(false);
   };
 
+  // ダイアログを閉じる関数(channelに存在しないuser)
   const closeUsers = () => {
     setSelectedUsers([]);
     setUsers([]);
@@ -276,7 +310,17 @@ function ChatRoom() {
     setShowUsers(false);
   };
 
-  // チャンネルにadminを追加する関数
+  // ダイアログを閉じる関数(owner以外のchannel参加者)
+  const closeNotOwners = () => {
+    setSelectedNotOwners([]);
+    setNotOwners([]);
+    setSearch('');
+    setPage(0);
+    setShowNotOwners(false);
+  };
+
+  // member管理を行う関数
+  // チャンネルにmemberからadminを追加する関数
   const handleAddAdmin = async () => {
     // チャンネルにadminを追加
     try {
@@ -298,7 +342,7 @@ function ChatRoom() {
   };
 
   const handleAddUser = async () => {
-    // チャンネルにユーザーを追加
+    // チャンネルに存在しないuserを追加
     try {
       await Promise.all(
         selectedUsers.map((user) =>
@@ -313,6 +357,25 @@ function ChatRoom() {
       closeUsers();
     } catch (error) {
       console.error("An error occurred while adding the users to the channel:", error);
+    }
+  };
+
+  // チャンネルからmemberを削除する関数
+  const handleRemoveMember = async () => {
+    // チャンネルからmemberを削除
+    try {
+      await Promise.all(
+        selectedNotOwners.map((notOwner) =>
+          httpClient.delete(`/channels/${roomId}/users/${notOwner.username}`)
+        )
+      );
+      console.log("Members removed successfully.");
+      // 通知メッセージを表示するなど、ここで成功時の処理を追加できます。
+      // 状態をリセット
+      closeNotOwners();
+    }
+    catch (error) {
+      console.error("An error occurred while removing the members from the channel:", error);
     }
   };
 
@@ -340,6 +403,7 @@ function ChatRoom() {
     >
       <MenuItem onClick={handleClose}>Add Users</MenuItem>
       <MenuItem onClick={handleClose}>Add Administrators</MenuItem>
+      <MenuItem onClick={handleClose}>Kick Members</MenuItem>
     </Menu>
 			<Box
 				sx={{
@@ -449,6 +513,34 @@ function ChatRoom() {
           sx={{ mt: 2, mb: 2 }}
         >
           Add Administrators
+        </Button>
+      </Dialog>
+      <Dialog open={showNotOwners} onClose={() => closeNotOwners()}>
+        <DialogTitle>Choose users to kick</DialogTitle>
+        <TextField
+          placeholder="Search users"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        {displayedNotOwners.map((user, index) => (  // フィルタリングとページングされたユーザーを表示
+          <ListItem key={index}>
+            <Avatar src={import.meta.env.VITE_API_BASE_URL + "users/" + user.username + "/avatar"} sx={{ mr: 1 }} />
+            <ListItemText primary={user.username} />
+            <Checkbox color="primary" onChange={() => handleToggleNotOwner(user)} />
+          </ListItem>
+        ))}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1 }}>
+          <Button onClick={() => setPage(page - 1)} disabled={page === 0}>Previous</Button>
+          <Button onClick={() => setPage(page + 1)} disabled={(page + 1) * itemsPerPage >= filteredUsers.length}>Next</Button>
+        </Box>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          onClick={handleRemoveMember} 
+          disabled={selectedNotOwners.length === 0}
+          sx={{ mt: 2, mb: 2 }}
+        >
+          Kick Members
         </Button>
       </Dialog>
 		</>
