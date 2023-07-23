@@ -113,13 +113,20 @@ function ChatRoom() {
   };
 
   const [showUsers, setShowUsers] = useState(false);
+  const [showMembers, setShowMembers] = useState(false);
   
   const handleClose = (event) => {
+    closeMembers();
+    closeUsers();
     if (event.target.textContent === "Add Users") {
       getUsersNotInChannel();
       setShowUsers(true);
     }
-  
+    else if (event.target.textContent === "Add Administrators") {
+      getMembers();
+      setShowMembers(true);
+    }
+
     setAnchorEl(null);
   };
 
@@ -188,14 +195,14 @@ function ChatRoom() {
   // ユーザー一覧を取得する関数
   async function getUsersNotInChannel() {
     try {
-      const response = await httpClient.get(`/channels/${roomId}/usersNotInChannel`);
+      const response = await httpClient.get(`/channels/${roomId}/users/not-members`);
       console.log('response: ', response);
       setUsers(response.data);
     } catch (error) {
       console.error("An error occurred while fetching the users not in channel:", error);
     }
   }
-
+  
   const [search, setSearch] = useState('');  // 検索文字列の状態を追加
 
   // ユーザーをフィルタリングする関数
@@ -203,23 +210,92 @@ function ChatRoom() {
     user.username.toLowerCase().includes(search.toLowerCase())
   );
 
+  const [members, setMembers] = useState<Array<any>>([]);
+  
+  // channelのuser一覧を取得する関数
+  async function getMembers() {
+    try {
+      const response = await httpClient.get(`/channels/${roomId}/users/members`);
+      console.log('response: ', response);
+      setMembers(response.data);
+    } catch (error) {
+      console.error("An error occurred while fetching the users in channel:", error);
+    }
+  }
+
+  // memberをフィルタリングする関数
+  const filteredMembers = members.filter(member =>
+    member.username.toLowerCase().includes(search.toLowerCase())
+    );
+    
   const [page, setPage] = useState(0);  // 現在のページ番号の状態を追加
   const itemsPerPage = 10;  // 1ページあたりのアイテム数
+  
+  // メンバーをフィルタリングとページングする関数
+  const displayMembers = filteredMembers.slice(page * itemsPerPage, (page + 1) * itemsPerPage);
 
   // ユーザーをフィルタリングとページングする関数
   const displayedUsers = filteredUsers.slice(page * itemsPerPage, (page + 1) * itemsPerPage);
 
   // 選択されたユーザーを管理
   const [selectedUsers, setSelectedUsers] = useState<Array<any>>([]);
+  
+  // 選択されたmemberを管理
+  const [selectedMembers, setSelectedMembers] = useState<Array<any>>([]);
 
-// チェックボックスが変更されたときに選択されたユーザーを追加または削除
-const handleToggleUser = (user) => {
-  if (selectedUsers.includes(user)) {
-    setSelectedUsers(selectedUsers.filter((u) => u !== user));
-  } else {
-    setSelectedUsers([...selectedUsers, user]);
-  }
-};
+  const handleToggleMember = (member) => {
+    if (selectedMembers.includes(member)) {
+      setSelectedMembers(selectedMembers.filter((m) => m !== member));
+    } else {
+      setSelectedMembers([...selectedMembers, member]);
+    }
+  };
+
+  // チェックボックスが変更されたときに選択されたユーザーを追加または削除
+  const handleToggleUser = (user) => {
+    if (selectedUsers.includes(user)) {
+      setSelectedUsers(selectedUsers.filter((u) => u !== user));
+    } else {
+      setSelectedUsers([...selectedUsers, user]);
+    }
+  };
+
+  const closeMembers = () => {
+    setSelectedMembers([]);
+    setMembers([]);
+    setSearch('');
+    setPage(0);
+    setShowMembers(false);
+  };
+
+  const closeUsers = () => {
+    setSelectedUsers([]);
+    setUsers([]);
+    setSearch('');
+    setPage(0);
+    setShowUsers(false);
+  };
+
+  // チャンネルにadminを追加する関数
+  const handleAddAdmin = async () => {
+    // チャンネルにadminを追加
+    try {
+      await Promise.all(
+        selectedMembers.map((member) =>
+          httpClient.post(`/channels/${roomId}/users/admins`, {
+            username: member.username,
+          })
+        )
+      );
+
+      console.log("Admins added successfully.");
+      // 通知メッセージを表示するなど、ここで成功時の処理を追加できます。
+      // 状態をリセット
+      closeMembers();
+    } catch (error) {
+      console.error("An error occurred while adding the admins to the channel:", error);
+    }
+  };
 
   const handleAddUser = async () => {
     // チャンネルにユーザーを追加
@@ -234,11 +310,7 @@ const handleToggleUser = (user) => {
       console.log("Users added successfully.");
       // 通知メッセージを表示するなど、ここで成功時の処理を追加できます。
       // 状態をリセット
-      setSelectedUsers([]);
-      setUsers([]);
-      setSearch('');
-      setPage(0);
-      setShowUsers(false);
+      closeUsers();
     } catch (error) {
       console.error("An error occurred while adding the users to the channel:", error);
     }
@@ -323,7 +395,7 @@ const handleToggleUser = (user) => {
         </Grid>
 				</Box>
 			</Box>
-      <Dialog open={showUsers} onClose={() => setShowUsers(false)}>
+      <Dialog open={showUsers} onClose={() => closeUsers()}>
         <DialogTitle>Choose users to add</DialogTitle>
         <TextField
           placeholder="Search users"
@@ -348,7 +420,35 @@ const handleToggleUser = (user) => {
           disabled={selectedUsers.length === 0}
           sx={{ mt: 2, mb: 2 }}
         >
-          Add User
+          Add Users
+        </Button>
+      </Dialog>
+      <Dialog open={showMembers} onClose={() => closeMembers()}>
+        <DialogTitle>Choose users to add</DialogTitle>
+        <TextField
+          placeholder="Search users"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        {displayMembers.map((user, index) => (  // フィルタリングとページングされたユーザーを表示
+          <ListItem key={index}>
+            <Avatar src={import.meta.env.VITE_API_BASE_URL + "users/" + user.username + "/avatar"} sx={{ mr: 1 }} />
+            <ListItemText primary={user.username} />
+            <Checkbox color="primary" onChange={() => handleToggleMember(user)} />
+          </ListItem>
+        ))}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1 }}>
+          <Button onClick={() => setPage(page - 1)} disabled={page === 0}>Previous</Button>
+          <Button onClick={() => setPage(page + 1)} disabled={(page + 1) * itemsPerPage >= filteredUsers.length}>Next</Button>
+        </Box>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          onClick={handleAddAdmin} 
+          disabled={selectedMembers.length === 0}
+          sx={{ mt: 2, mb: 2 }}
+        >
+          Add Administrators
         </Button>
       </Dialog>
 		</>
