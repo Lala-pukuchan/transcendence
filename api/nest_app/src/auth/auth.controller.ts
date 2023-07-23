@@ -4,7 +4,9 @@ import { AuthenticatedGuard, FortyTwoOauthGuard } from './guards/fortytwo.guards
 import { JwtService } from '@nestjs/jwt';
 import { JwtAuthGuard } from './guards/jwt.guards';
 import { AuthService } from './auth.service';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
 

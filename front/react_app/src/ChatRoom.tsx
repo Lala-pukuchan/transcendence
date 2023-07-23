@@ -10,6 +10,13 @@ import ChatIcon from '@mui/icons-material/Chat';
 import { useNavigate } from 'react-router-dom';
 import IconButton from '@mui/material/IconButton';
 import SettingsIcon from '@mui/icons-material/Settings';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import Dialog from '@mui/material/Dialog';
+import ListItem from '@mui/material/ListItem';
+import Checkbox from '@mui/material/Checkbox';
+import ListItemText from '@mui/material/ListItemText';
+import DialogTitle from '@mui/material/DialogTitle';
 
 
 
@@ -28,6 +35,7 @@ function ChatRoom() {
   const decoded = decodeToken(getCookie("token"));
   console.log('decoded: ', decoded);
   const username = decoded.user.username;
+  const [avatarPath, setAvatarPath] = useState(import.meta.env.VITE_API_BASE_URL + "users/" + username + "/avatar");
 
 	// ルーム情報の取得
 	const location = useLocation();
@@ -45,23 +53,23 @@ function ChatRoom() {
       console.error("An error occurred while fetching the chat history:", error);
     }
   }
-
+  
   // ページロード時にチャットの履歴を取得します
   useEffect(() => {
     getChatHistory();
   }, []);
-
+  
 	// socket初回接続時の処理
 	useEffect(() => {
-		socket.on('connect', () => {
-			console.log('connected', socket.id);
+    socket.on('connect', () => {
+      console.log('connected', socket.id);
 		});
-
+    
 		// ルームへの参加
 		socket.emit('joinRoom', roomId);
 		
 	}, []);
-
+  
 	// メッセージ入力用
 	const inputRef = useRef(null);
 
@@ -69,11 +77,11 @@ function ChatRoom() {
   const submitMessage = useCallback(() => {
     if (inputRef.current.value === '')
       return;
-
-    // json形式で送信
-    const message = {
-      channelId: roomId,
-      content: inputRef.current.value,
+      
+      // json形式で送信
+      const message = {
+        channelId: roomId,
+        content: inputRef.current.value,
       username: username,
       createdAt: Date.now(),
       contents_path: ""
@@ -82,7 +90,7 @@ function ChatRoom() {
     inputRef.current.value = '';
     // メッセージ送信
     socket.emit('message', message);
-
+    
     // HTTP POSTリクエストでDBにメッセージを保存
     httpClient.post('/message', {
       username: username,
@@ -97,6 +105,23 @@ function ChatRoom() {
       console.error("An error occurred while saving the message:", error);
     });
   }, []);
+  
+  const [anchorEl, setAnchorEl] = useState(null);
+
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const [showUsers, setShowUsers] = useState(false);
+  
+  const handleClose = (event) => {
+    if (event.target.textContent === "Add Users") {
+      getUsersNotInChannel();
+      setShowUsers(true);
+    }
+  
+    setAnchorEl(null);
+  };
 
 
 	// メッセージ表示用
@@ -157,22 +182,93 @@ function ChatRoom() {
     }
   };
 
+  //User一覧
+  const [users, setUsers] = useState<Array<any>>([]);
+
+  // ユーザー一覧を取得する関数
+  async function getUsersNotInChannel() {
+    try {
+      const response = await httpClient.get(`/channels/${roomId}/usersNotInChannel`);
+      console.log('response: ', response);
+      setUsers(response.data);
+    } catch (error) {
+      console.error("An error occurred while fetching the users not in channel:", error);
+    }
+  }
+
+  const [search, setSearch] = useState('');  // 検索文字列の状態を追加
+
+  // ユーザーをフィルタリングする関数
+  const filteredUsers = users.filter(user => 
+    user.username.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const [page, setPage] = useState(0);  // 現在のページ番号の状態を追加
+  const itemsPerPage = 10;  // 1ページあたりのアイテム数
+
+  // ユーザーをフィルタリングとページングする関数
+  const displayedUsers = filteredUsers.slice(page * itemsPerPage, (page + 1) * itemsPerPage);
+
+  // 選択されたユーザーを管理
+  const [selectedUsers, setSelectedUsers] = useState<Array<any>>([]);
+
+// チェックボックスが変更されたときに選択されたユーザーを追加または削除
+const handleToggleUser = (user) => {
+  if (selectedUsers.includes(user)) {
+    setSelectedUsers(selectedUsers.filter((u) => u !== user));
+  } else {
+    setSelectedUsers([...selectedUsers, user]);
+  }
+};
+
+  const handleAddUser = async () => {
+    // チャンネルにユーザーを追加
+    try {
+      await Promise.all(
+        selectedUsers.map((user) =>
+          httpClient.post(`/channels/${roomId}/users`, {
+            username: user.username,
+          })
+        )
+      );
+      console.log("Users added successfully.");
+      // 通知メッセージを表示するなど、ここで成功時の処理を追加できます。
+      // 状態をリセット
+      setSelectedUsers([]);
+      setUsers([]);
+      setSearch('');
+      setPage(0);
+      setShowUsers(false);
+    } catch (error) {
+      console.error("An error occurred while adding the users to the channel:", error);
+    }
+  };
+
 	return (
 		<>
       <IconButton
-        edge="start"
-        color="inherit"
-        aria-label="settings"
-        sx={{
-          position: 'fixed',
-          left: 280, // 左端からの距離を20pxに設定
-          top: 70, // 上端からの距離を20pxに設定
-        }}
-        onClick={() => {
-        }}
-      >
+      edge="start"
+      color="inherit"
+      aria-label="settings"
+      sx={{
+        position: 'fixed',
+        left: 280, // 左端からの距離を280pxに設定
+        top: 70, // 上端からの距離を70pxに設定
+      }}
+      onClick={handleClick}
+    >
       <SettingsIcon />
     </IconButton>
+    <Menu
+      id="settings-menu"
+      anchorEl={anchorEl}
+      keepMounted
+      open={Boolean(anchorEl)}
+      onClose={handleClose}
+    >
+      <MenuItem onClick={handleClose}>Add Users</MenuItem>
+      <MenuItem onClick={handleClose}>Add Administrators</MenuItem>
+    </Menu>
 			<Box
 				sx={{
 					width: 800,
@@ -227,15 +323,53 @@ function ChatRoom() {
         </Grid>
 				</Box>
 			</Box>
+      <Dialog open={showUsers} onClose={() => setShowUsers(false)}>
+        <DialogTitle>Choose users to add</DialogTitle>
+        <TextField
+          placeholder="Search users"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        {displayedUsers.map((user, index) => (  // フィルタリングとページングされたユーザーを表示
+          <ListItem key={index}>
+            <Avatar src={import.meta.env.VITE_API_BASE_URL + "users/" + user.username + "/avatar"} sx={{ mr: 1 }} />
+            <ListItemText primary={user.username} />
+            <Checkbox color="primary" onChange={() => handleToggleUser(user)} />
+          </ListItem>
+        ))}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1 }}>
+          <Button onClick={() => setPage(page - 1)} disabled={page === 0}>Previous</Button>
+          <Button onClick={() => setPage(page + 1)} disabled={(page + 1) * itemsPerPage >= filteredUsers.length}>Next</Button>
+        </Box>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          onClick={handleAddUser} 
+          disabled={selectedUsers.length === 0}
+          sx={{ mt: 2, mb: 2 }}
+        >
+          Add User
+        </Button>
+      </Dialog>
 		</>
 	)
-
 }
 
 const Message = ({ message, myAccountUserId }) => {
+  const [avatarPath, setAvatarPath] = useState("");
+  
+  // 自分のメッセージかどうか
+  const isMine = message.username === myAccountUserId;
 
-	// 自分のメッセージかどうか
-	const isMine = message.username === myAccountUserId;
+  useEffect(() => {
+    const fetchAvatarPath = async () => {
+      const avatarURL = import.meta.env.VITE_API_BASE_URL + "users/" + message.username + "/avatar";
+      // avatarのpathを非同期で取得するロジックを書く
+      setAvatarPath(avatarURL);
+    };
+
+    fetchAvatarPath();
+  }, [message.username]);
 
 	return (
 		<>
@@ -253,9 +387,7 @@ const Message = ({ message, myAccountUserId }) => {
 					alignItems: "center",
 					}}
 				>
-					<Avatar sx={{ bgcolor: isMine ? "primary.main" : "secondary.main" }}>
-						{isMine ? "B" : "U"}
-					</Avatar>
+					<Avatar src={avatarPath} />
 					<Paper
 						variant="outlined"
 						sx={{
