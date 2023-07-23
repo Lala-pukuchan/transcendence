@@ -27,4 +27,37 @@ export class ChannelController {
 
     return this.channelService.verifyChannelPassword(channelIdNumber, password);
   }
+
+  @Get(':channelId/users')
+  async getUsersInChannel(@Param('channelId') channelId: string) {
+    const channelIdNumber = Number(channelId);
+
+    if (isNaN(channelIdNumber)) {
+      throw new BadRequestException('Invalid channel ID.');
+    }
+
+    return this.channelService.getUsersInChannel(channelIdNumber);
+  }
+
+  @Get(':channelId/usersNotInChannel')
+  async getUsersNotInChannel(@Param('channelId') channelId: string) {
+    const channelIdNumber = Number(channelId);
+
+    if (isNaN(channelIdNumber)) {
+      throw new BadRequestException('Invalid channel ID.');
+    }
+
+    return this.channelService.getUsersNotInChannel(channelIdNumber);
+  }
+
+  @Post(':channelId/users')
+  async addUserToChannel(@Param('channelId') channelId: string, @Body('username') username: string) {
+    const channelIdNumber = Number(channelId);
+
+    if (isNaN(channelIdNumber)) {
+      throw new BadRequestException('Invalid channel ID.');
+    }
+
+    return this.channelService.addUserToChannel(channelIdNumber, username);
+  }
 }
