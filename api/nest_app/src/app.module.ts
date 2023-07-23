@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app/app.controller';
 import { AppService } from './app/app.service';
-import { GateModule } from './chat/chat.module';
+import { ChatModule } from './chat/chat.module';
+import { GameModule } from './game/game.module';
 import { UsersController } from './user/users.controller';
 import { UsersService } from './user/users.service';
 import { PrismaService } from './prisma.service';
@@ -15,7 +16,8 @@ import { AvatarController } from './avatar/avatar.controller';
 
 @Module({
   imports: [
-    GateModule,
+    ChatModule,
+	GameModule,
     AuthModule,
     // 認証用セッション登録
     PassportModule.register({ session: true })

@@ -16,7 +16,7 @@ export class GameGateway {
   handleMessage(@MessageBody() message: string, @ConnectedSocket() socket: Socket): string {
 
     // ログ出力
-    this.logger.log("message received: " + JSON.stringify(message));
+    this.logger.log("paddle received: " + JSON.stringify(message));
 
     // クライアントにメッセージ送信
     // const rooms = [...socket.rooms].slice(0);

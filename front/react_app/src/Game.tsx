@@ -119,13 +119,18 @@ function Game() {
 	}, []);
 
 	const onClickSubmit = useCallback(() => {
+		socket.emit('message', 'hello', socket.id);
+	}, []);
+	const onClicPaddle = useCallback(() => {
 		socket.emit('paddle', 'hello', socket.id);
 	}, []);
-
 	return (
 		<>
 			<Button variant="contained" onClick={onClickSubmit} sx={{ m: 2 }}>
 				emit
+			</Button>
+			<Button variant="contained" onClick={onClicPaddle} sx={{ m: 2 }}>
+				paddle
 			</Button>
 		</>
 	);
