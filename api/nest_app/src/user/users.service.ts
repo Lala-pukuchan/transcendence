@@ -31,7 +31,6 @@ export class UsersService {
             select: {
                 id: true,
                 username: true,
-                avatar: true,
                 wins: true,
                 losses: true,
                 ladderLevel: true
