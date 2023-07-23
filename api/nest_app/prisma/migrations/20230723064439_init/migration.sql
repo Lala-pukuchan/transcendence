@@ -1,40 +1,11 @@
-/*
-  Warnings:
-
-  - You are about to drop the `chat_info` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `room_info` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `user_info` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `user_room_map` table. If the table is not empty, all the data it contains will be lost.
-
-*/
--- DropForeignKey
-ALTER TABLE "chat_info" DROP CONSTRAINT "chat_info_room_id_fkey";
-
--- DropForeignKey
-ALTER TABLE "chat_info" DROP CONSTRAINT "chat_info_user_id_fkey";
-
--- DropForeignKey
-ALTER TABLE "user_room_map" DROP CONSTRAINT "user_room_map_room_id_fkey";
-
--- DropForeignKey
-ALTER TABLE "user_room_map" DROP CONSTRAINT "user_room_map_user_id_fkey";
-
--- DropTable
-DROP TABLE "chat_info";
-
--- DropTable
-DROP TABLE "room_info";
-
--- DropTable
-DROP TABLE "user_info";
-
--- DropTable
-DROP TABLE "user_room_map";
-
 -- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
+    "fortyTwoId" TEXT NOT NULL,
+    "twoFactorSecret" TEXT,
+    "isEnabledTfa" BOOLEAN NOT NULL DEFAULT false,
     "username" TEXT NOT NULL,
+    "displayName" TEXT,
     "avatar" TEXT DEFAULT 'default.jpg',
     "wins" INTEGER NOT NULL DEFAULT 0,
     "losses" INTEGER NOT NULL DEFAULT 0,
@@ -50,6 +21,7 @@ CREATE TABLE "Channel" (
     "name" TEXT NOT NULL,
     "isDM" BOOLEAN NOT NULL DEFAULT false,
     "isPublic" BOOLEAN NOT NULL DEFAULT true,
+    "isProtected" BOOLEAN NOT NULL DEFAULT false,
     "password" TEXT,
     "ownerId" TEXT NOT NULL,
     "lastUpdated" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -62,7 +34,7 @@ CREATE TABLE "Message" (
     "id" SERIAL NOT NULL,
     "content" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "userId" TEXT NOT NULL,
+    "username" TEXT NOT NULL,
     "channelId" INTEGER NOT NULL,
 
     CONSTRAINT "Message_pkey" PRIMARY KEY ("id")
@@ -108,7 +80,13 @@ CREATE TABLE "_UserMatch" (
 );
 
 -- CreateIndex
+CREATE UNIQUE INDEX "User_fortyTwoId_key" ON "User"("fortyTwoId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "User_username_key" ON "User"("username");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_displayName_key" ON "User"("displayName");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "_UserFriends_AB_unique" ON "_UserFriends"("A", "B");
@@ -144,7 +122,7 @@ CREATE INDEX "_UserMatch_B_index" ON "_UserMatch"("B");
 ALTER TABLE "Channel" ADD CONSTRAINT "Channel_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Message" ADD CONSTRAINT "Message_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Message" ADD CONSTRAINT "Message_username_fkey" FOREIGN KEY ("username") REFERENCES "User"("username") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Message" ADD CONSTRAINT "Message_channelId_fkey" FOREIGN KEY ("channelId") REFERENCES "Channel"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
