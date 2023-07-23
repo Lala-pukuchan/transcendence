@@ -39,7 +39,7 @@ export class ChannelController {
     return this.channelService.getUsersInChannel(channelIdNumber);
   }
 
-  @Get(':channelId/usersNotInChannel')
+  @Get(':channelId/users/not-members')
   async getUsersNotInChannel(@Param('channelId') channelId: string) {
     const channelIdNumber = Number(channelId);
 
@@ -51,6 +51,7 @@ export class ChannelController {
   }
 
   @Post(':channelId/users')
+  @ApiResponse({ status: 200, description: 'Successfully added user to channel' })
   async addUserToChannel(@Param('channelId') channelId: string, @Body('username') username: string) {
     const channelIdNumber = Number(channelId);
 
@@ -59,5 +60,29 @@ export class ChannelController {
     }
 
     return this.channelService.addUserToChannel(channelIdNumber, username);
+  }
+
+  @Post(':channelId/users/admins')
+  @ApiResponse({ status: 200, description: 'Successfully returned admin users' })
+  async addUserToAdmins(@Param('channelId') channelId: string, @Body('username') username: string) {
+    const channelIdNumber = Number(channelId);
+
+    if (isNaN(channelIdNumber)) {
+      throw new BadRequestException('Invalid channel ID.');
+    }
+
+    return this.channelService.addUserToAdmins(channelIdNumber, username);
+  }
+
+  @Get(':channelId/users/members')
+  @ApiResponse({ status: 200, description: 'Successfully returned non-admin users' })
+  async getNonAdminUsersInChannel(@Param('channelId') channelId: string) {
+    const channelIdNumber = Number(channelId);
+
+    if (isNaN(channelIdNumber)) {
+      throw new BadRequestException('Invalid channel ID.');
+    }
+
+    return this.channelService.getNonAdminUsersInChannel(channelIdNumber);
   }
 }
