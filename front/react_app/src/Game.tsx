@@ -4,8 +4,8 @@ import UndoIcon from '@mui/icons-material/Undo';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 
-const paddleWidth: number = 20, paddleHeight: number = 360, ballWidth: number = 16, wallOffset: number = 20;
-
+const paddleWidth: number = 20, paddleHeight: number = 200, ballWidth: number = 16, wallOffset: number = 20;
+const MATCHPOINT: number = 2;
 class Position {
 	width: number;
 	height: number;
@@ -67,7 +67,7 @@ class Ball extends Position {
 		this.deltaY = 1;
 	}
 
-	update(player: Paddle, opponent: Paddle, canvas: HTMLCanvasElement) {
+	update(player: Paddle, opponent: Paddle, canvas: HTMLCanvasElement, setPlayerScore, setOpponentScore) {
 		// x, y is the top left corner of the ball
 		
 		//check top canvas bounds
@@ -85,14 +85,14 @@ class Ball extends Position {
 		if (this.x <= ballWidth / 4) {
 			this.x = canvas.width / 2 - this.width / 2;
 			this.deltaX *= -1;
-			// Game.computerScore += 1;
+			setOpponentScore(prevScore => prevScore + 1);
 		}
 
 		//check right canvas bounds
 		if (this.x + this.width >= canvas.width - ballWidth / 4) {
 			this.x = canvas.width / 2 - this.width / 2;
 			this.deltaX *= -1;
-			// Game.playerScore += 1;
+			setPlayerScore(prevScore => prevScore + 1);
 		}
 
 
@@ -124,8 +124,8 @@ function Game() {
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
 	const contextRef = useRef<CanvasRenderingContext2D | null>(null);
 	const animationIdRef = useRef<number | null>(null);
-	// const [playerScore, setPlayerScore] = useState(0);
-	// const [computerScore, setComputerScore] = useState(0);
+	const [playerScore, setPlayerScore] = useState(0);
+	const [opponentScore, setOpponentScore] = useState(0);
 	// const [player, setPlayer] = useState<Position>(new Position(paddleWidth,paddleHeight,wallOffset,canvas.height / 2 - paddleHeight / 2));
 	// const [computerPlayer, setComputerPlayer] = useState<Position>(new Position(paddleWidth,paddleHeight,canvas.width - (wallOffset + paddleWidth) ,canvas.height / 2 - paddleHeight / 2));
 	// const [ball, setBall] = useState<Position>(new Position(ballSWidth,ballSWidth,canvas.width / 2 - ballSWidth / 2, canvas.height / 2 - ballSWidth / 2));
@@ -154,8 +154,19 @@ function Game() {
 		const gameLoop = () => {
 			context.clearRect(0, 0, canvas.width, canvas.height);
 
-			ball.update(player, opponent, canvas);
-
+			ball.update(player, opponent, canvas, setPlayerScore, setOpponentScore);
+			setPlayerScore(prevScore => {
+				if (prevScore >= MATCHPOINT) {
+					setIsAnimating(false);
+				}
+				return prevScore;
+			});
+			setOpponentScore(prevScore => {
+				if (prevScore >= MATCHPOINT) {
+					setIsAnimating(false);
+				}
+				return prevScore;
+			});
 			// Draw game elements
 			context.fillStyle = '#429950';
 			context.fillRect(0, 0, canvas.width, canvas.height);
@@ -166,12 +177,21 @@ function Game() {
 		}
 		if (isAnimating) {
 			animationIdRef.current = requestAnimationFrame(gameLoop);
-		} else {
-			cancelAnimationFrame(animationIdRef.current);
 		}
-
+		else {
+			if (playerScore >= MATCHPOINT) {
+				alert("You Win!\n" + "Your Score: " + playerScore + " Opponent Score: " + opponentScore);
+			}
+			else if (opponentScore >= MATCHPOINT) {
+				alert("You Lose.\n" + "Your Score: " + playerScore + "  :  Opponent Score: " + opponentScore);
+			}
+		}
+		console.log(playerScore, opponentScore);
+		
 		return () => {
 			cancelAnimationFrame(animationIdRef.current);
+			setPlayerScore(0);
+			setOpponentScore(0);
 		};
 	}, [isAnimating]);
 
@@ -185,6 +205,7 @@ function Game() {
 			<div>
 				<h2>Game</h2>
 				{/* 他のコンポーネントやテキストなど */}
+				<h3>{playerScore} : {opponentScore}</h3>
 				<canvas ref={canvasRef}></canvas>
 				{/* 他のコンポーネントやテキストなど */}
 			</div>
