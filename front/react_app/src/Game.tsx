@@ -3,54 +3,8 @@ import { useRef, useEffect, useLayoutEffect, useCallback, useState } from 'react
 import UndoIcon from '@mui/icons-material/Undo';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-// function Game() {
 
-// 	const navigate = useNavigate();
-
-
-
-
-// 	const stopperRef = useRef(null);
-// 	function handleRestart() {
-// 		// if (stopperRef.current) {
-// 		// 	stopperRef.current.reset(); 
-// 		// 	console.log("restart");
-// 		// }
-// 		console.log("restart");
-// 	}
-
-// 	return (
-// 		<>
-// 			<h2>Game</h2>
-// 			<div className="App">
-// 				<h2>Pong</h2>
-
-// 				{/* <div className="result">{this.printResult()}</div> */}
-// 					<div className="container">
-// 						<div className="gameField">
-// 						{/* <div
-// 							className="ball"
-// 							style={{
-// 								top: this.state.ballPosition.y,
-// 								left: this.state.ballPosition.x
-// 							}}
-// 						/> */}
-// 						{/* <div className="midLine" /> */}
-// 						{/* <div className="player1" style={{ top: this.state.p1 }} />
-// 						<div className="player2" style={{ top: this.state.p2 }} /> */}
-
-// 						</div>
-// 					</div>
-// 					<Button variant="contained" endIcon={<UndoIcon />} onClick={() => navigate('/')} sx={{ m: 2 }}>
-// 						Return Back
-// 					</Button>
-// 					<Button variant="contained" endIcon={<UndoIcon />} onClick={handleRestart} sx={{ m: 2 }}>restart</Button>
-// 			</div>
-// 		</>
-// 	)
-// }
-
-const paddleWidth: number = 20, paddleHeight: number = 500, ballWidth: number = 16, wallOffset: number = 20;
+const paddleWidth: number = 20, paddleHeight: number = 360, ballWidth: number = 16, wallOffset: number = 20;
 
 class Position {
 	width: number;
@@ -126,6 +80,7 @@ class Ball extends Position {
 			this.deltaY = -1;
 		}
 
+		//TODO: すり抜けている感があるので, ボールの4角で判定するようにしてもいいいかも
 		//check left canvas bounds
 		if (this.x <= ballWidth / 4) {
 			this.x = canvas.width / 2 - this.width / 2;
@@ -134,9 +89,6 @@ class Ball extends Position {
 		}
 
 		//check right canvas bounds
-		// console.log("right canvas bounds");
-		// console.log("this.x is " + this.x);
-		// console.log("canvas.width is " + canvas.width);
 		if (this.x + this.width >= canvas.width - ballWidth / 4) {
 			this.x = canvas.width / 2 - this.width / 2;
 			this.deltaX *= -1;
@@ -171,16 +123,18 @@ function Game() {
 	const navigate = useNavigate();
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
 	const contextRef = useRef<CanvasRenderingContext2D | null>(null);
+	const animationIdRef = useRef<number | null>(null);
 	// const [playerScore, setPlayerScore] = useState(0);
 	// const [computerScore, setComputerScore] = useState(0);
 	// const [player, setPlayer] = useState<Position>(new Position(paddleWidth,paddleHeight,wallOffset,canvas.height / 2 - paddleHeight / 2));
 	// const [computerPlayer, setComputerPlayer] = useState<Position>(new Position(paddleWidth,paddleHeight,canvas.width - (wallOffset + paddleWidth) ,canvas.height / 2 - paddleHeight / 2));
 	// const [ball, setBall] = useState<Position>(new Position(ballSWidth,ballSWidth,canvas.width / 2 - ballSWidth / 2, canvas.height / 2 - ballSWidth / 2));
-	let canvas: any;
-	let context: any;
-	useLayoutEffect(() => {
-		canvas = canvasRef.current;
-		context = canvas.getContext('2d');
+
+	const [isAnimating, setIsAnimating] = useState(false);
+	
+	useLayoutEffect(() => { //FIXME: 事故ったら, useEffectに戻す
+		const canvas = canvasRef.current;
+		const context = canvas.getContext('2d');
 		contextRef.current = context;
 
 		canvas.width = 1200;
@@ -190,34 +144,16 @@ function Game() {
 		context.clearRect(0, 0, canvas.width, canvas.height);
 		context.fillStyle = '#429950';
 		context.fillRect(0, 0, canvas.width, canvas.height);
-		
-	}, []);
-	
-	useEffect(() => {
-		
-		//なくてもいいかも
-		// context.clearRect(0, 0, canvas.width, canvas.height);
-
-
-		// player = Paddle.new.call(this, 'left');
-		// paddle = Paddle.new.call(this, 'right');
-		// ball = Ball.new.call(this);
-
-		// paddle.speed = 8;
-		// running = over = false;
-		// turn = paddle;
-		// timer = round = 0;
-		
-		// player.draw(context);
-		// ball.draw(context);
-		// ball.update(player,player,canvas);
 		const player = new Position(paddleWidth, paddleHeight, wallOffset, canvas.height / 2 - paddleHeight / 2);
 		const opponent = new Position(paddleWidth, paddleHeight, canvas.width - wallOffset - paddleWidth, canvas.height / 2 - paddleHeight / 2);
 		const ball = new Ball(ballWidth, ballWidth, canvas.width / 2 - ballWidth / 2, canvas.height / 2 - ballWidth / 2);
-		function gameLoop() {
+		player.draw(context);
+		opponent.draw(context);
+		console.log("init game");
+
+		const gameLoop = () => {
 			context.clearRect(0, 0, canvas.width, canvas.height);
 
-			// Update game state
 			ball.update(player, opponent, canvas);
 
 			// Draw game elements
@@ -226,12 +162,22 @@ function Game() {
 			ball.draw(context);
 			player.draw(context);
 			opponent.draw(context);
-			requestAnimationFrame(gameLoop);
+			animationIdRef.current = requestAnimationFrame(gameLoop);
 		}
-		gameLoop();
-	}, []);
+		if (isAnimating) {
+			animationIdRef.current = requestAnimationFrame(gameLoop);
+		} else {
+			cancelAnimationFrame(animationIdRef.current);
+		}
 
-	// ここでcontextRef.currentを使用して描画ロジックを追加
+		return () => {
+			cancelAnimationFrame(animationIdRef.current);
+		};
+	}, [isAnimating]);
+
+	const handleStartStop = () => {
+		setIsAnimating(prevIsAnimating => !prevIsAnimating);
+	};
 
 	return (
 		<>
@@ -244,6 +190,9 @@ function Game() {
 			</div>
 			<Button variant="contained" endIcon={<UndoIcon />} onClick={() => navigate('/')} sx={{ m: 2 }}>
 				Return Back
+			</Button>
+			<Button variant={isAnimating ? "contained" : "outlined"} onClick={handleStartStop}>
+				{isAnimating ? 'Reset' : 'Start'}
 			</Button>
 		</>
 	);
