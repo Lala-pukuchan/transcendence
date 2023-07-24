@@ -121,7 +121,7 @@ function Game() {
 
 	useLayoutEffect(() => { //FIXME: 事故ったら, useEffectに戻す
 		socket.on('connect', () => {
-			// console.log('connection ID : ', socket.id);
+			console.log('connection ID : ', socket.id);
 		});
 		const canvas = canvasRef.current;
 		const context = canvas.getContext('2d');
