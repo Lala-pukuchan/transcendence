@@ -332,11 +332,10 @@ function ChatRoom() {
 
       console.log("Admins added successfully.");
       // 通知メッセージを表示するなど、ここで成功時の処理を追加できます。
-      // 状態をリセット
-      closeMembers();
     } catch (error) {
       console.error("An error occurred while adding the admins to the channel:", error);
     }
+    closeMembers();
   };
 
   // チャンネルに存在しないuserを追加
@@ -351,11 +350,10 @@ function ChatRoom() {
       );
       console.log("Users added successfully.");
       // 通知メッセージを表示するなど、ここで成功時の処理を追加できます。
-      // 状態をリセット
-      closeUsers();
     } catch (error) {
       console.error("An error occurred while adding the users to the channel:", error);
     }
+    closeUsers();
   };
 
   // チャンネルからmemberを削除する関数
@@ -368,12 +366,11 @@ function ChatRoom() {
       );
       console.log("Members removed successfully.");
       // 通知メッセージを表示するなど、ここで成功時の処理を追加できます。
-      // 状態をリセット
-      closeNotOwners();
     }
     catch (error) {
       console.error("An error occurred while removing the members from the channel:", error);
     }
+    closeNotOwners();
   };
 
 	return (
