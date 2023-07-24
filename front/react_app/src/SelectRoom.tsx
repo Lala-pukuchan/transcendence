@@ -18,6 +18,9 @@ import InputAdornment from '@mui/material/InputAdornment';
 import IconButton from '@mui/material/IconButton';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import Typography from '@mui/material/Typography';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
 
 function channelsToRows(response: any): GridRowsProp {
   return response.data.map((channel: any) => ({
@@ -35,6 +38,7 @@ function SelectRoom() {
   const [inputPassword, setInputPassword] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [notJoinedRows, setNotJoinedRows] = useState<GridRowsProp>([]);
 	
   const navigate = useNavigate();
 
@@ -49,23 +53,46 @@ function SelectRoom() {
   const username = decoded.user.username;
 
 	const cols: GridColDef[] = [
-		{
-			field: 'id',
-			headerName: '選択ルーム',
-		},
-		{
-			field: 'roomName',
-			width: 200,
-			headerName: 'ルーム名'
-		},
-	]
+    {
+      field: 'roomName',
+      width: 200,
+      headerName: 'ルーム名'
+    },
+    {
+      field: 'isProtected',
+      headerName: 'パスワード',
+      renderCell: (params) => {
+        if (params.value) {
+          // パスワードが設定されている（isProtectedがtrue）場合は、鍵閉まっているアイコンを表示
+          return <LockIcon />;
+        } else {
+          // パスワードが設定されていない（isProtectedがfalse）場合は、鍵開いているアイコンを表示
+          return <LockOpenIcon />;
+        }
+      }
+    }
+  ]  
 
-	useEffect(() => {
+  useEffect(() => {
+    // 参加しているチャンルーム一覧を取得
     httpClient
       .get(`/users/${username}/channels`)
       .then((response) => {
         console.log("response is ", response);
         setRows(channelsToRows(response));
+      })
+      .catch((error) => {
+        console.log("An error occurred:", error);
+      });
+  }, [username]);
+
+  useEffect(() => {
+    // 未参加のpublicチャンルーム一覧を取得
+    httpClient
+      .get(`/users/${username}/channels/not-members`)
+      .then((response) => {
+        console.log("response is ", response);
+        setNotJoinedRows(channelsToRows(response));  // 結果をnotJoinedRowsに保存
       })
       .catch((error) => {
         console.log("An error occurred:", error);
@@ -107,16 +134,65 @@ function SelectRoom() {
 
 	return (
 		<>
-			<DataGrid 
-				rows={rows} columns={cols}
-				initialState={{
-					pagination: {
-						paginationModel: { page: 0, pageSize: 10 },
-					},
-				}}
-				pageSizeOptions={[5, 10]}
-				onRowClick={handleEvent}
-			/>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <div style={{ width: '45%' }}>
+            <Typography variant="h6" component="div">
+              Joined Rooms
+            </Typography>
+            <DataGrid 
+              rows={rows} 
+              columns={cols}
+              initialState={{
+                pagination: {
+                  paginationModel: { page: 0, pageSize: 10 },
+                },
+              }}
+              pageSizeOptions={[5, 10]}
+              onRowClick={handleEvent}
+            />
+          </div>
+          <div style={{ width: '45%' }}>
+            <Typography variant="h6" component="div">
+              Not Joined Public Rooms
+            </Typography>
+            <DataGrid 
+              rows={notJoinedRows} 
+              columns={cols}
+              initialState={{
+                pagination: {
+                  paginationModel: { page: 0, pageSize: 10 },
+                },
+              }}
+              pageSizeOptions={[5, 10]}
+              onRowClick={handleEvent}
+            />
+          </div>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px' }}>
+          <Button variant="contained" endIcon={<UndoIcon />} onClick={() => navigate('/chat')} sx={{ m: 2, width: '25%' }}>
+            Back
+          </Button>
+          <Button variant="outlined" startIcon={<AddCommentIcon />} onClick={() => navigate('/createRoom')} sx={{ m: 2, width: '25%' }}>
+            Create Room
+          </Button>
+          <Button
+            variant="contained"
+            endIcon={<ChatIcon />}
+            onClick={() => {
+              if (selectedRoom.isProtected) {
+                setIsDialogOpen(true);
+              } else {
+                navigate('/chatRoom', { state: {room: roomId} });
+              }
+            }}
+            sx={{ m: 2, width: '25%' }}
+            disabled={roomId === 0}  // roomIdが0のとき、このボタンを無効化します
+          >
+            Start Chat
+          </Button>
+        </div>
+      </div>
       <Dialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)}>
       <DialogTitle>Password Required</DialogTitle>
       <DialogContent>
@@ -149,27 +225,6 @@ function SelectRoom() {
         </Button>
       </DialogActions>
     </Dialog>
-			<Button variant="contained" endIcon={<UndoIcon />} onClick={() => navigate('/chat')} sx={{ m: 2 }}>
-				Back
-			</Button>
-      <Button variant="outlined" startIcon={<AddCommentIcon />} onClick={() => navigate('/createRoom')}>
-        Create Room
-      </Button>
-      <Button
-        variant="contained"
-        endIcon={<ChatIcon />}
-        onClick={() => {
-          if (selectedRoom.isProtected) {
-            setIsDialogOpen(true);
-          } else {
-            navigate('/chatRoom', { state: {room: roomId} });
-          }
-        }}
-        sx={{ m: 2 }}
-        disabled={roomId === 0}  // roomIdが0のとき、このボタンを無効化します
-      >
-        Start Chat
-      </Button>
 		</>
 	)
 }
