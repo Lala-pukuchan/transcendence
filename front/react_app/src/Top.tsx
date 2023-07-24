@@ -5,6 +5,10 @@ import ListItemText from '@mui/material/ListItemText';
 import { useNavigate } from 'react-router-dom';
 import { getCookie } from './utils/HandleCookie.tsx';
 import { decodeToken } from "react-jwt";
+import { useState, useEffect } from 'react';
+import io from 'socket.io-client';
+
+const socket = io(import.meta.env.VITE_API_BASE_URL);
 
 function Top() {
 
@@ -28,6 +32,17 @@ function Top() {
     return null;
   }
 
+  // オンライン処理
+	const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
+	useEffect(() => {
+		socket.on('connect', () => {
+			socket.emit('online', decoded.user.username);
+			socket.on('onlineUsers', (message: string) => {
+				setOnlineUsers(message);
+			});
+		});
+	}, []);
+
   return (
     <>
       <Paper sx={{ width: 320, maxWidth: '100%' }}>
@@ -42,7 +57,7 @@ function Top() {
               Game
             </ListItemText>
           </MenuItem>
-          <MenuItem onClick={() => navigate('/account')}>
+          <MenuItem onClick={() => navigate('/account', { state: { onlineUsers: onlineUsers } })}>
             <ListItemText>
               Account Information
             </ListItemText>
