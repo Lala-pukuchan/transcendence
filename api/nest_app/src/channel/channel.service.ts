@@ -13,34 +13,86 @@ export class ChannelService {
     ) {}
 
     async createChannel(data: createChannelDto): Promise<Channel> {
-        const { name, owner, isDM, isPublic, isProtected, password } = data;
-
-        return await this.prisma.channel.create({
-            data: {
-                name: name,
-                owner: {
-                    connect: {
-                        username: owner,
+      const { name, owner, isDM, isPublic, isProtected, password, dmUser } = data;
+  
+      //ownerが存在するか確認
+      const user = await this.prisma.user.findUnique({
+          where: { username: owner },
+      });
+      if (!user) {
+          throw new NotFoundException(`User with username ${owner} not found.`);
+      }
+  
+      //dmUserが存在するか確認
+      let dmUserdetail;
+      if (isDM) {
+          dmUserdetail = await this.prisma.user.findUnique({
+            where: { username: dmUser },
+          });
+          if (!dmUserdetail) {
+              throw new NotFoundException(`User with username ${dmUser} not found.`);
+          }
+      }
+  
+      // If isDM is true, check if a DM room already exists
+      if (isDM) {
+        const existingDM = await this.prisma.channel.findFirst({
+            where: {
+                isDM: true,
+                AND: [
+                    {
+                        users: {
+                            some: { username: owner },
+                        },
                     },
-                },
-                users: {
-                    connect: {
-                        username: owner,
+                    {
+                        users: {
+                            some: { username: dmUser },
+                        },
                     },
-                },
-                admins: {
-                    connect: {
-                        username: owner,
-                    },
-                },
-                isDM: isDM,
-                isPublic: isPublic,
-                isProtected: isProtected,
-                password: password,
-                lastUpdated: new Date(),
+                ],
             },
         });
-    }
+  
+          // If a DM room already exists, return it
+          if (existingDM) {
+              return existingDM;
+          }
+      }
+  
+      // Initialize users array with the owner
+      let usersToConnect = [{username: owner}];
+  
+      // If dmUser is defined, add it to the users array
+      if(dmUser) {
+        usersToConnect.push({username: dmUser});
+      }
+  
+      // Create the new channel
+      return await this.prisma.channel.create({
+          data: {
+              name: name,
+              owner: {
+                  connect: {
+                      username: owner,
+                  },
+              },
+              users: {
+                connect: usersToConnect,
+              },
+              admins: {
+                  connect: {
+                      username: owner,
+                  },
+              },
+              isDM: isDM,
+              isPublic: isPublic,
+              isProtected: isProtected,
+              password: password,
+              lastUpdated: new Date(),
+          },
+      });
+  }  
 
     async verifyChannelPassword(channelId: number, password: string) {
       const channel = await this.prisma.channel.findUnique({

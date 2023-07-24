@@ -63,4 +63,10 @@ export class UsersController {
     {
         return this.usersService.updateUserDisplayName(username, displayName);
     }
+
+    @Get(':username/users')
+    @ApiResponse({ status: HttpStatus.OK, type: [GetUsersInfoResponse], description: 'Get a list of users without {username} user.'})
+    getOtherUsers(@Param('username') username: string) {
+        return this.usersService.getOtherUsers(username);
+    }
 }
