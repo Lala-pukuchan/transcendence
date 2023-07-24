@@ -54,7 +54,8 @@ function Account() {
 			.get("/users/" + username)
 			.then((response) => {
 				console.log("response: ", response);
-				setTfaEnabled(response.data.isEnabledTfa);
+				if (response.data.isEnabledTfa)
+					setTfaEnabled(response.data.isEnabledTfa);
 				setDisplayName(response.data.displayName);
 			})
 			.catch(() => {
