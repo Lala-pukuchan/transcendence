@@ -12,11 +12,13 @@ import { MessageService } from './message/message.service';
 import { AuthModule } from './auth/auth.module';
 import { PassportModule } from '@nestjs/passport';
 import { AvatarController } from './avatar/avatar.controller';
+import { StatusModule } from './status/status.module';
 
 @Module({
   imports: [
     ChatModule,
     AuthModule,
+    StatusModule,
     // 認証用セッション登録
     PassportModule.register({ session: true })
   ],

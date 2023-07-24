@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import TransferList from './TransferList.tsx';
 import { Divider, Avatar, FormControlLabel, Switch, Typography, Badge, Grid, Rating, IconButton, Button, Stack, Modal, Box, TextField, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 import { httpClient } from './httpClient.ts';
@@ -6,7 +7,10 @@ import PhotoCamera from "@mui/icons-material/PhotoCamera";
 import { getCookie } from './utils/HandleCookie.tsx';
 import { decodeToken } from "react-jwt";
 import EditIcon from '@mui/icons-material/Edit';
-import './App.css'
+import './App.css';
+import io from 'socket.io-client';
+
+const socket = io(import.meta.env.VITE_API_BASE_URL);
 
 function Account() {
 
@@ -31,6 +35,18 @@ function Account() {
 	// ディスプレイ名
 	const [displayName, setDisplayName] = useState('');
 
+	// オンラインユーザー一覧取得
+	const location = useLocation();
+	const [onlineUsers, setOnlineUsers] = useState<string[]>(location.state?.onlineUsers || []);
+	useEffect(() => {
+		socket.on('connect', () => {
+			socket.emit('online', username);
+			socket.on('onlineUsers', (message: string) => {
+				setOnlineUsers(message);
+			});
+		});
+	}, []);
+
 	// ユーザー情報取得
 	useEffect(() => {
 
@@ -38,7 +54,8 @@ function Account() {
 			.get("/users/" + username)
 			.then((response) => {
 				console.log("response: ", response);
-				setTfaEnabled(response.data.isEnabledTfa);
+				if (response.data.isEnabledTfa)
+					setTfaEnabled(response.data.isEnabledTfa);
 				setDisplayName(response.data.displayName);
 			})
 			.catch(() => {
@@ -294,6 +311,16 @@ function Account() {
 						<Badge color="secondary" overlap="circular" badgeContent=" " variant="dot">
 							<Avatar alt="Remy Sharp" src="/static/images/avatar/1.jpg" />
 						</Badge>
+						{onlineUsers && (
+							<div>
+							<h2>Online Users:</h2>
+							<ul>
+								{onlineUsers.map((username) => (
+									<li key={username}>{username}</li>
+								))}
+							</ul>
+							</div>
+						)}
 				</Grid>
 			</Grid>
 		</>
