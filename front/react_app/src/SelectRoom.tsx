@@ -21,12 +21,16 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import Typography from '@mui/material/Typography';
 import LockIcon from '@mui/icons-material/Lock';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
+import PersonIcon from '@mui/icons-material/Person';
+import GroupIcon from '@mui/icons-material/Group';
+
 
 function channelsToRows(response: any): GridRowsProp {
   return response.data.map((channel: any) => ({
     id: channel.id.toString(),
     roomName: channel.name,
     isProtected: channel.isProtected,
+    isDM: channel.isDM,
   }));
 }
 
@@ -55,12 +59,13 @@ function SelectRoom() {
 	const cols: GridColDef[] = [
     {
       field: 'roomName',
-      width: 200,
+      width: 150,
       headerName: 'ルーム名'
     },
     {
       field: 'isProtected',
       headerName: 'パスワード',
+      width: 150,
       renderCell: (params) => {
         if (params.value) {
           // パスワードが設定されている（isProtectedがtrue）場合は、鍵閉まっているアイコンを表示
@@ -70,8 +75,22 @@ function SelectRoom() {
           return <LockOpenIcon />;
         }
       }
+    },
+    {
+      field: 'isDM',
+      headerName: 'DM',
+      width: 150,
+      renderCell: (params) => {
+        if (params.value) {
+          // DMが設定されている（isDMがtrue）場合は、スピーチバブルのアイコンを表示
+          return <PersonIcon />;
+        } else {
+          // DMが設定されていない（isDMがfalse）場合は、エンベロープのアイコンを表示
+          return <GroupIcon />;
+        }
+      }
     }
-  ]  
+  ]
 
   useEffect(() => {
     // 参加しているチャンルーム一覧を取得
@@ -129,8 +148,6 @@ function SelectRoom() {
   const toggleShowPassword = () => {
     setShowPassword(!showPassword);
   };
-  
-
 
 	return (
 		<>
