@@ -35,7 +35,6 @@ function ChatRoom() {
   const decoded = decodeToken(getCookie("token"));
   console.log('decoded: ', decoded);
   const username = decoded.user.username;
-  const [avatarPath, setAvatarPath] = useState(import.meta.env.VITE_API_BASE_URL + "users/" + username + "/avatar");
 
 	// ルーム情報の取得
 	const location = useLocation();
@@ -322,7 +321,6 @@ function ChatRoom() {
   // member管理を行う関数
   // チャンネルにmemberからadminを追加する関数
   const handleAddAdmin = async () => {
-    // チャンネルにadminを追加
     try {
       await Promise.all(
         selectedMembers.map((member) =>
@@ -341,8 +339,8 @@ function ChatRoom() {
     }
   };
 
+  // チャンネルに存在しないuserを追加
   const handleAddUser = async () => {
-    // チャンネルに存在しないuserを追加
     try {
       await Promise.all(
         selectedUsers.map((user) =>
@@ -362,7 +360,6 @@ function ChatRoom() {
 
   // チャンネルからmemberを削除する関数
   const handleRemoveMember = async () => {
-    // チャンネルからmemberを削除
     try {
       await Promise.all(
         selectedNotOwners.map((notOwner) =>

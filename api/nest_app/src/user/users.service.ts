@@ -123,6 +123,8 @@ export class UsersService {
         const uniqueChannels = Array.from(new Set(channels.map(channel => channel.id)))
             .map(id => channels.find(channel => channel.id === id));
 
+        uniqueChannels.sort((a, b) => b.lastUpdated.getTime() - a.lastUpdated.getTime());
+
         // Return only the necessary channel information
         return uniqueChannels.map(channel => ({
             id: channel.id,
@@ -134,13 +136,56 @@ export class UsersService {
         }));
     }
 
+    async getPublicChannelsNotInUser(username: string) {
+      const user = await this.prisma.user.findUnique({
+        where: { username: username },
+        include: { 
+          channels: true,
+          createdChannels: true,
+          adminChannels: true
+        },
+     });
+
+      if (!user) {
+          throw new NotFoundException(`User with username ${username} not found.`);
+      }
+
+      // Channels the user is a part of
+      const joinedChannels = [...user.channels];
+
+      // Public channels
+      const publicChannels = await this.prisma.channel.findMany({
+        where: {
+          isPublic: true,
+        },
+      });
+
+      const notJoinedPublicChannels = publicChannels.filter(publicChannel => 
+        !joinedChannels.some(joinedChannel =>
+            joinedChannel.id === publicChannel.id
+        )
+      );
+
+      notJoinedPublicChannels.sort((a, b) => b.lastUpdated.getTime() - a.lastUpdated.getTime());
+
+      // Return only the necessary channel information
+      return notJoinedPublicChannels.map(channel => ({
+        id: channel.id,
+        name: channel.name,
+        isDM: channel.isDM,
+        isPublic: channel.isPublic,
+        isProtected: channel.isProtected,
+        lastUpdated: channel.lastUpdated,
+      }));
+    }
+
     async findUserByUsername(username: string) {
         return this.prisma.user.findUnique({
           where: {
             username: username,
           },
         });
-      }
+    }
 
     async updateUserDisplayName(userName: string, newDisplayName: string): Promise<User> {
         const user = await this.prisma.user.update({
