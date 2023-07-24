@@ -49,6 +49,12 @@ export class UsersController {
         return this.usersService.getUserChannels(username);
     }
 
+    @Get(':username/channels/not-members')
+    @ApiResponse({ status: HttpStatus.OK, type: [GetChannelsResponse], description: 'Get a list of public channels the user is not a part of.'})
+    getPublicChannelsNotInUser(@Param('username') username: string) {
+        return this.usersService.getPublicChannelsNotInUser(username);
+    }
+
     @Patch(':username')
     @ApiResponse({ status: HttpStatus.OK, type: DisplayNameClass, description: 'Update users displayname.'})
     updateUser(
