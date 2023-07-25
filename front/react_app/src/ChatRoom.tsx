@@ -43,6 +43,18 @@ function ChatRoom() {
 	// ルーム情報の取得
 	const location = useLocation();
 	const roomId = location.state.room;
+  const [room, setRoom] = useState<any>({});
+
+  // ルーム情報を取得する関数
+  async function getRoom() {
+    const res = await httpClient.get(`/channels/${roomId}/${username}/info`);
+    setRoom(res.data);
+  }
+
+  // ページロード時にルーム情報を取得します
+  useEffect(() => {
+    getRoom();
+  }, []);
 
   // メッセージ表示用
   const [chatLog, setChatLog] = useState<Array<any>>([]); // chatLogの型をstring[]からany[]に変更します
@@ -185,6 +197,8 @@ function ChatRoom() {
   const [inputOldPassword, setInputOldPassword] = useState(''); // パスワード入力欄の状態を管理
   const [showNewPassword, setShowNewPassword] = useState(false); // 新しいパスワードの表示状態を管理
   const [inputNewPassword, setInputNewPassword] = useState(''); // パスワード入力欄の状態を管理
+  const [createPassword, setCreatePassword] = useState(false); // パスワード設定の状態を管理
+  const [unsetPassword, setUnsetPassword] = useState(false); // パスワード削除の状態を管理
   const itemsPerPage = 10; // 1ページあたりのアイテム数
   const [anchorEl, setAnchorEl] = useState(null);
 
@@ -197,6 +211,8 @@ function ChatRoom() {
     closeUsers();
     closeNotOwners();
     closeChangePassword();
+    closeUnsetPassword();
+    closeCreatePassword();
 
     // Only handle click events from the MenuItems
     if (event.type === "click") {
@@ -214,6 +230,12 @@ function ChatRoom() {
       }
       else if (event.target.textContent === "Change Password") {
         setChangePassword(true);
+      }
+      else if (event.target.textContent === "Unset Password") {
+        setUnsetPassword(true);
+      }
+      else if (event.target.textContent === "Set Password") {
+        setCreatePassword(true);
       }
     }
 
@@ -343,6 +365,18 @@ function ChatRoom() {
     setInputNewPassword('');
   };
 
+  const closeUnsetPassword = () => {
+    setUnsetPassword(false);
+    setShowOldPassword(false);
+    setInputOldPassword('');
+  };
+
+  const closeCreatePassword = () => {
+    setCreatePassword(false);
+    setShowNewPassword(false);
+    setInputNewPassword('');
+  }
+
   // member管理を行う関数
   // チャンネルにmemberからadminを追加する関数
   const handleAddAdmin = async () => {
@@ -396,6 +430,7 @@ function ChatRoom() {
       console.error("An error occurred while removing the members from the channel:", error);
     }
     closeNotOwners();
+    getRoom();
   };
 
   const toggleShowPassword = () => {
@@ -414,10 +449,11 @@ function ChatRoom() {
         if (response.data.isValid) {
           // パスワードが正しい場合、ここでパスワードを変更します
           httpClient
-            .post(`/channels/${roomId}/password`, { oldPassword: inputOldPassword, newPassword: inputNewPassword })
+            .post(`/channels/${roomId}/change-password`, { oldPassword: inputOldPassword, newPassword: inputNewPassword })
             .then((response) => {
               console.log(response);  // レスポンスをログ出力
               alert("パスワードを変更しました");  // 成功メッセージを表示します
+              getRoom();
               closeChangePassword();  // ダイアログを閉じます
             })
             .catch((error) => {
@@ -432,6 +468,52 @@ function ChatRoom() {
       .catch((error) => {
         console.log("An error occurred:", error);
         alert("An error occurred while verifying the password");  // エラーメッセージを表示します
+      });
+      getRoom();
+  };
+
+  const handleUnsetPassword = () => {
+    httpClient
+      .post(`/channels/${roomId}/verifyPassword`, { password: inputOldPassword })
+      .then((response) => {
+        console.log(response);  // レスポンスをログ出力
+        if (response.data.isValid) {
+          // パスワードが正しい場合、ここでパスワードを削除します
+          httpClient
+            .patch(`/channels/${roomId}/unset-password`, { password: inputOldPassword})
+            .then((response) => {
+              console.log(response);
+              alert("パスワードを削除しました");  // 成功メッセージを表示します
+              getRoom();
+              closeUnsetPassword();  // ダイアログを閉じます
+            })
+            .catch((error) => {
+              console.log("An error occurred:", error);
+              alert("An error occurred while changing the password");  // エラーメッセージを表示します
+            });
+        } else {
+          // パスワードが間違っている場合、ここでエラーメッセージを表示します
+          alert("パスワードが間違っています");
+        }
+      })
+      .catch((error) => {
+        console.log("An error occurred:", error);
+        alert("An error occurred while verifying the password");  // エラーメッセージを表示します
+      });
+  };
+
+  const handleCreatePassword = () => {
+    httpClient
+      .patch(`/channels/${roomId}/set-password`, { password: inputNewPassword })
+      .then((response) => {
+        console.log(response);  // レスポンスをログ出力
+        alert("パスワードを設定しました");  // 成功メッセージを表示します
+        getRoom();
+        closeCreatePassword();  // ダイアログを閉じます
+      })
+      .catch((error) => {
+        console.log("An error occurred:", error);
+        alert("An error occurred while setting the password");  // エラーメッセージを表示します
       });
   };
 
@@ -457,10 +539,13 @@ function ChatRoom() {
       open={Boolean(anchorEl)}
       onClose={handleClose}
     >
-      <MenuItem onClick={handleClose}>Add Users</MenuItem>
-      <MenuItem onClick={handleClose}>Add Administrators</MenuItem>
-      <MenuItem onClick={handleClose}>Kick Members</MenuItem>
-      <MenuItem onClick={handleClose}>Change Password</MenuItem>
+      {room.isDM && <MenuItem onClick={handleClose}>Block User</MenuItem>}
+      {room.isAdmin && room.isPiblic && <MenuItem onClick={handleClose}>Add Users</MenuItem>}
+      {room.isAdmin && room.isPiblic && <MenuItem onClick={handleClose}>Add Administrators</MenuItem>}
+      {room.isAdmin && room.isPiblic && <MenuItem onClick={handleClose}>Kick Members</MenuItem>}
+      {room.isOwner && room.isProtected && <MenuItem onClick={handleClose}>Change Password</MenuItem>}
+      {room.isOwner && room.isPublic && room.isProtected && <MenuItem onClick={handleClose}>Unset Password</MenuItem>}
+      {room.isOwner && room.isPublic && !room.isProtected && <MenuItem onClick={handleClose}>Set Password</MenuItem>}
     </Menu>
 			<Box
 				sx={{
@@ -653,6 +738,76 @@ function ChatRoom() {
           disabled={!inputOldPassword || !inputNewPassword}
         >
           Change Password
+        </Button>
+      </DialogActions>
+    </Dialog>
+    <Dialog open={unsetPassword} onClose={() => setUnsetPassword(false)}>
+      <DialogTitle>Unset Password</DialogTitle>
+      <DialogContent>
+        <TextField
+          autoFocus
+          margin="dense"
+          label="Old password"
+          type={showOldPassword ? "text" : "password"}  // showPasswordの値によりタイプを動的に変更します
+          fullWidth
+          variant="standard"
+          value={inputOldPassword}
+          onChange={(e) => setInputOldPassword(e.target.value)}
+          InputProps={{  // このプロパティでエンドアドーンメントを追加します
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label="toggle password visibility"
+                  onClick={toggleShowPassword}
+                >
+                  {showOldPassword ? <Visibility /> : <VisibilityOff />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button
+          onClick={handleUnsetPassword}
+          disabled={!inputOldPassword}
+        >
+          Unset Password
+        </Button>
+      </DialogActions>
+    </Dialog>
+    <Dialog open={createPassword} onClose={() => setCreatePassword(false)}>
+      <DialogTitle>Set Password</DialogTitle>
+      <DialogContent>
+        <TextField
+          autoFocus
+          margin="dense"
+          label="password"
+          type={showNewPassword ? "text" : "password"}  // showPasswordの値によりタイプを動的に変更します
+          fullWidth
+          variant="standard"
+          value={inputNewPassword}
+          onChange={(e) => setInputNewPassword(e.target.value)}
+          InputProps={{  // このプロパティでエンドアドーンメントを追加します
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label="toggle password visibility"
+                  onClick={toggleShowNewPassword}
+                >
+                  {showNewPassword ? <Visibility /> : <VisibilityOff />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button
+          onClick={handleCreatePassword}
+          disabled={!inputNewPassword}
+        >
+          Set Password
         </Button>
       </DialogActions>
     </Dialog>
