@@ -292,4 +292,28 @@ export class ChannelService {
         });
       }
     }
+
+    async changeChannelPassword(channelId: number, oldPassword: string, newPassword: string) {
+      const channel = await this.prisma.channel.findUnique({
+        where: { id: channelId },
+      });
+
+      if (!channel) {
+        throw new NotFoundException(`Channel with ID ${channelId} not found`);
+      }
+
+      const isPasswordValid = await this.verifyChannelPassword(channelId, oldPassword);
+
+      if (!isPasswordValid.isValid) {
+        throw new BadRequestException('Invalid password');
+      }
+
+      await this.prisma.channel.update({
+        where: { id: channelId },
+        data: {
+          password: newPassword,
+        },
+      });
+      return { success: true };
+    }
 }

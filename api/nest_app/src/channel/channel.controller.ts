@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Body } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Patch, Body } from '@nestjs/common';
 import { ChannelService } from './channel.service';
 import { createChannelDto } from 'src/dto/channel.dto';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -110,5 +110,17 @@ export class ChannelController {
     }
 
     return this.channelService.removeUserFromChannel(channelIdNumber, username);
+  }
+
+  @Post(':channelId/password')
+  @ApiResponse({ status: 200, description: 'Successfully change channel password' })
+  async changeChannelPassword(@Param('channelId') channelId: string, @Body('oldPassword') oldPassword: string, @Body('newPassword') newPassword: string) {
+    const channelIdNumber = Number(channelId);
+
+    if (isNaN(channelIdNumber)) {
+      throw new BadRequestException('Invalid channel ID.');
+    }
+
+    return this.channelService.changeChannelPassword(channelIdNumber, oldPassword, newPassword);
   }
 }
