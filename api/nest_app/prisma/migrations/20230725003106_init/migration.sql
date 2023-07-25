@@ -50,6 +50,20 @@ CREATE TABLE "Match" (
 );
 
 -- CreateTable
+CREATE TABLE "Game" (
+    "id" TEXT NOT NULL,
+    "user1Id" TEXT NOT NULL,
+    "score1" INTEGER,
+    "status1" TEXT,
+    "user2Id" TEXT NOT NULL,
+    "score2" INTEGER,
+    "status2" TEXT,
+    "status" TEXT NOT NULL,
+
+    CONSTRAINT "Game_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "_UserFriends" (
     "A" TEXT NOT NULL,
     "B" TEXT NOT NULL
@@ -126,6 +140,12 @@ ALTER TABLE "Message" ADD CONSTRAINT "Message_username_fkey" FOREIGN KEY ("usern
 
 -- AddForeignKey
 ALTER TABLE "Message" ADD CONSTRAINT "Message_channelId_fkey" FOREIGN KEY ("channelId") REFERENCES "Channel"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Game" ADD CONSTRAINT "Game_user1Id_fkey" FOREIGN KEY ("user1Id") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Game" ADD CONSTRAINT "Game_user2Id_fkey" FOREIGN KEY ("user2Id") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "_UserFriends" ADD CONSTRAINT "_UserFriends_A_fkey" FOREIGN KEY ("A") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;

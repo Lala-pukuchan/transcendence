@@ -48,6 +48,12 @@ model User {
 
     // matches
     matches           Match[] @relation("UserMatch")
+
+    // Relationship for game matching history of user as player 1
+    gamesAsPlayer1 Game[] @relation("GamePlayer1")
+
+    // Relationship for game matching history of user as player 2
+    gamesAsPlayer2 Game[] @relation("GamePlayer2")
 }
 
 model Channel {
@@ -98,4 +104,24 @@ model Match {
 
     // relations
     users       User[]   @relation("UserMatch")
+}
+
+model Game {
+    id          String     @id @default(uuid())
+    createdAt   DateTime   @default(now())
+
+    // Relationships with unique constraint names
+    user1       User       @relation("GamePlayer1", fields: [user1Id], references: [id])
+    user2       User?      @relation("GamePlayer2", fields: [user2Id], references: [id])
+
+    // Fields
+    user1Id     String
+    score1      Int?
+    status1     String?    // win/lose/draw
+
+    user2Id     String?
+    score2      Int?
+    status2     String?    // win/lose/draw
+
+    status      String     // matchmaking/start/finish
 }
