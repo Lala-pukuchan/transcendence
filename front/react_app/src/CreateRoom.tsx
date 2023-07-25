@@ -86,7 +86,7 @@ function CreateRoom() {
       } else {
       alert("Passwords must be alphanumeric characters or some symbols");
       }
-    };
+  };
 
   const handleCreateRoom = async () => {
     // 入力値を含むオブジェクト
