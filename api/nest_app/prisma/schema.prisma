@@ -44,10 +44,7 @@ model User {
     wins              Int       @default(0)
     losses            Int       @default(0)
     ladderLevel       Int       @default(0)
-    achievements      String[]
 
-    // matches
-    matches           Match[] @relation("UserMatch")
 }
 
 model Channel {
@@ -89,13 +86,19 @@ model Message {
     channel   Channel  @relation(fields: [channelId], references: [id])
 }
 
-model Match {
-    id          Int      @id @default(autoincrement())
+model Game {
 
-    // basic info
-    result      String   // "win" or "loss"
-    createdAt   DateTime @default(now())
+    id            String       @id @default(uuid())
+    createdAt     DateTime     @default(now())
 
-    // relations
-    users       User[]   @relation("UserMatch")
+    user1Name     String
+    score1        Int?
+    result1       String?
+
+    user2Name     String?
+    score2        Int?
+    result2       String?
+
+    status        String
+
 }

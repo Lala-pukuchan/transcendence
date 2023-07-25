@@ -50,6 +50,21 @@ CREATE TABLE "Match" (
 );
 
 -- CreateTable
+CREATE TABLE "Game" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "user1Name" TEXT NOT NULL,
+    "score1" INTEGER,
+    "result1" TEXT,
+    "user2Name" TEXT,
+    "score2" INTEGER,
+    "result2" TEXT,
+    "status" TEXT NOT NULL,
+
+    CONSTRAINT "Game_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "_UserFriends" (
     "A" TEXT NOT NULL,
     "B" TEXT NOT NULL
