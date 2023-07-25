@@ -47,13 +47,7 @@ export class UsersService {
             },
             include: {
                 friends: true,
-                matches: {
-                    take: 5,
-                    orderBy: {
-                    createdAt: 'desc',
-                    },
-                },
-        },
+            },
         });
     }
 

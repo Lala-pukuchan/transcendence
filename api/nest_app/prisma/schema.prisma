@@ -44,16 +44,7 @@ model User {
     wins              Int       @default(0)
     losses            Int       @default(0)
     ladderLevel       Int       @default(0)
-    achievements      String[]
 
-    // matches
-    matches           Match[] @relation("UserMatch")
-
-    // Relationship for game matching history of user as player 1
-    gamesAsPlayer1 Game[] @relation("GamePlayer1")
-
-    // Relationship for game matching history of user as player 2
-    gamesAsPlayer2 Game[] @relation("GamePlayer2")
 }
 
 model Channel {
@@ -95,33 +86,19 @@ model Message {
     channel   Channel  @relation(fields: [channelId], references: [id])
 }
 
-model Match {
-    id          Int      @id @default(autoincrement())
-
-    // basic info
-    result      String   // "win" or "loss"
-    createdAt   DateTime @default(now())
-
-    // relations
-    users       User[]   @relation("UserMatch")
-}
-
 model Game {
-    id          String     @id @default(uuid())
-    createdAt   DateTime   @default(now())
 
-    // Relationships with unique constraint names
-    user1       User       @relation("GamePlayer1", fields: [user1Id], references: [id])
-    user2       User?      @relation("GamePlayer2", fields: [user2Id], references: [id])
+    id            String       @id @default(uuid())
+    createdAt     DateTime     @default(now())
 
-    // Fields
-    user1Id     String
-    score1      Int?
-    status1     String?    // win/lose/draw
+    user1Name     String
+    score1        Int?
+    result1       String?
 
-    user2Id     String?
-    score2      Int?
-    status2     String?    // win/lose/draw
+    user2Name     String?
+    score2        Int?
+    result2       String?
 
-    status      String     // matchmaking/start/finish
+    status        String
+
 }
