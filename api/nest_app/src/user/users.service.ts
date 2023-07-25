@@ -3,6 +3,7 @@ import { Prisma, User, Channel } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 import { CreateUserDto } from '../dto/user.dto';
 import { GetUsersInfoResponse } from '../dto/user.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -93,7 +94,8 @@ export class UsersService {
     
         // If the channel has a password, verify it.
         if (channel.password) {
-            if (channel.password !== password) {
+          const isPasswordValid = await bcrypt.compare(password, channel.password);
+            if (!isPasswordValid) {
                 throw new UnauthorizedException(`Invalid password for channel id ${channelId}.`);
             }
         }

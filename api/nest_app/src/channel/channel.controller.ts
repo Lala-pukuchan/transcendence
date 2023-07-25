@@ -112,7 +112,7 @@ export class ChannelController {
     return this.channelService.removeUserFromChannel(channelIdNumber, username);
   }
 
-  @Post(':channelId/password')
+  @Patch(':channelId/change-password')
   @ApiResponse({ status: 200, description: 'Successfully change channel password' })
   async changeChannelPassword(@Param('channelId') channelId: string, @Body('oldPassword') oldPassword: string, @Body('newPassword') newPassword: string) {
     const channelIdNumber = Number(channelId);
@@ -122,5 +122,39 @@ export class ChannelController {
     }
 
     return this.channelService.changeChannelPassword(channelIdNumber, oldPassword, newPassword);
+  }
+
+  @Patch(':channelId/unset-password')
+  @ApiResponse({ status: 200, description: 'Successfully unset channel password' })
+  async unsetChannelPassword(@Param('channelId') channelId: string, @Body('password') password: string) {
+    const channelIdNumber = Number(channelId);
+
+    if (isNaN(channelIdNumber)) {
+      throw new BadRequestException('Invalid channel ID.');
+    }
+
+    return this.channelService.unsetChannelPassword(channelIdNumber, password);
+  }
+
+  @Patch(':channelId/set-password')
+  @ApiResponse({ status: 200, description: 'Successfully set channel password' })
+  async setChannelPassword(@Param('channelId') channelId: string, @Body('password') password: string) {
+    const channelIdNumber = Number(channelId);
+
+    if (isNaN(channelIdNumber)) {
+      throw new BadRequestException('Invalid channel ID.');
+    }
+    return this.channelService.setChannelPassword(channelIdNumber, password);
+  }
+
+  @Get(':channelId/:username/info')
+  @ApiResponse({ status: 200, description: 'Successfully returned channel info' })
+  async getChannelInfo(@Param('channelId') channelId: string, @Param('username') username: string) {
+    const channelIdNumber = Number(channelId);
+
+    if (isNaN(channelIdNumber)) {
+      throw new BadRequestException('Invalid channel ID.');
+    }
+    return this.channelService.getChannelInfo(channelIdNumber, username);
   }
 }
