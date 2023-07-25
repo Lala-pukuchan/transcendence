@@ -126,6 +126,15 @@ function SelectRoom() {
     setRoomId(parseInt(params.id));
   };
 
+  const handlePasswordChange = (event) => {
+    const newValue = event.target.value;
+     if (/^[a-zA-Z0-9!@#\$%\^\&*\)\(+=._-]*$/.test(newValue)) {
+    setInputPassword(newValue);
+    } else {
+    alert("Passwords must be alphanumeric characters or some symbols");
+    }
+};
+
   const handlePasswordSubmit = () => {
     httpClient
       .post(`/channels/${selectedRoom.id}/verifyPassword`, { password: inputPassword })
@@ -221,7 +230,7 @@ function SelectRoom() {
           fullWidth
           variant="standard"
           value={inputPassword}
-          onChange={(e) => setInputPassword(e.target.value)}
+          onChange={handlePasswordChange}
           InputProps={{  // このプロパティでエンドアドーンメントを追加します
             endAdornment: (
               <InputAdornment position="end">
