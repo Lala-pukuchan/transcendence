@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app/app.controller';
 import { AppService } from './app/app.service';
 import { ChatModule } from './chat/chat.module';
+import { GameModule } from './game/game.module';
 import { UsersController } from './user/users.controller';
 import { UsersService } from './user/users.service';
 import { PrismaService } from './prisma.service';
@@ -19,6 +20,7 @@ import { GameController } from './game/game.controller';
 @Module({
   imports: [
     ChatModule,
+	GameModule,
     AuthModule,
     StatusModule,
     // 認証用セッション登録
