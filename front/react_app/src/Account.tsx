@@ -48,16 +48,26 @@ function Account() {
 		});
 	}, []);
 
+	// ゲーム情報
+	const [level, setLevel] = useState(0);
+	const [star, setStar] = useState(0);
+	const [win, setWin] = useState(0);
+	const [lose, setLose] = useState(0);
+
 	// ユーザー情報取得
 	useEffect(() => {
 
 		httpClient
 			.get("/users/" + username)
 			.then((response) => {
-				console.log("response: ", response);
+				console.log("users response: ", response);
 				if (response.data.isEnabledTfa)
 					setTfaEnabled(response.data.isEnabledTfa);
 				setDisplayName(response.data.displayName);
+				setLevel(response.data.ladderLevel / 100);
+				setStar(response.data.ladderLevel / 100);
+				setWin(response.data.wins);
+				setLose(response.data.losses);
 			})
 			.catch(() => {
 				console.log("error");
@@ -320,12 +330,23 @@ function Account() {
 							</Box>
 						</Modal>
 					<Divider sx={{ m:3 }}>Pong Game</Divider>
-						<Typography component="legend">Game Rating</Typography>
-						<Rating name="no-value" value={3} />
-						<p>Win x/y</p>
-						<Typography component="legend">Match History</Typography>
-						<div style={{ height: 400, width: '100%' }}>
+						<Box sx={{ m:3 }}>
+							<Typography component="legend">- Ladder Level -</Typography>
+							<Typography component="legend">Lv. {level}</Typography>
+						</Box>
+						<Box sx={{ m:3 }}>
+							<Typography component="legend">- Achievement -</Typography>
+							<Rating name="no-value" value={star} />
+						</Box>
+						<Box sx={{ m:3 }}>
+							<Typography component="legend">- Count -</Typography>
+							<Typography component="legend">win: {win}</Typography>
+							<Typography component="legend">lose: {lose}</Typography>
+						</Box>
+						<Box sx={{ m:3 }}>
+							<Typography component="legend">- Match History -</Typography>
 							<DataGrid
+							 	sx={{ m:3 }}
 								rows={rows}
 								columns={columns}
 								initialState={{
@@ -335,7 +356,7 @@ function Account() {
 								}}
 								pageSizeOptions={[5, 10]}
 							/>
-						</div>
+						</Box>
 					<Divider sx={{ m:3 }}>Add Friends</Divider>
 						<TransferList sx={{ m:3 }}></TransferList>
 					<Divider sx={{ m:3 }}>Friends List</Divider>	
