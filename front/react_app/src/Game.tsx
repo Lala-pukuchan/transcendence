@@ -5,7 +5,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import io from 'socket.io-client';
 
 const paddleWidth: number = 20, paddleHeight: number = 200, ballWidth: number = 16, wallOffset: number = 20;
-const MATCHPOINT: number = 2;
+const MATCHPOINT: number = 15;
 class Position {
 	width: number;
 	height: number;
@@ -123,6 +123,7 @@ function Game() {
 		socket.on('connect', () => {
 			console.log('connection ID : ', socket.id);
 		});
+		socket.emit('joinRoom', 1);
 		const canvas = canvasRef.current;
 		const context = canvas.getContext('2d');
 		contextRef.current = context;
@@ -156,7 +157,7 @@ function Game() {
 			socket.emit('paddle', player.y, socket.id);
 			socket.on('update', (message: string) => {
 				// console.log('recieved : ', message);
-				// if (socket.id != message[1])
+				if (socket.id != message[1])
 					opponent.y = parseInt(message[0]);
 			});
 			ball.update(player, opponent, canvas, setPlayerScore, setOpponentScore);
