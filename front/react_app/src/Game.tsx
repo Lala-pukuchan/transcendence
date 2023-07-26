@@ -5,7 +5,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import io from 'socket.io-client';
 
 const paddleWidth: number = 20, paddleHeight: number = 200, ballWidth: number = 16, wallOffset: number = 20;
-const MATCHPOINT: number = 15;
+const MATCHPOINT: number = 3;
 class Position {
 	width: number;
 	height: number;
@@ -49,13 +49,6 @@ class Ball extends Position {
 
 	constructor(w: number, h: number, x: number, y: number) {
 		super(w, h, x, y, 5);
-		var randomDirection = Math.floor(Math.random() * 2) + 1;
-		if (randomDirection % 2) {
-			this.deltaX = 1;
-		}
-		else {
-			this.deltaX = -1;
-		}
 		this.deltaY = 1;
 	}
 
@@ -74,19 +67,15 @@ class Ball extends Position {
 
 		//TODO: すり抜けている感があるので, ボールの4角で判定するようにしてもいいいかも
 		//check left canvas bounds
-		if (this.x <= ballWidth / 4) {
-			this.x = canvas.width / 2 - this.width / 2;
-			this.deltaX *= -1;
-			setOpponentScore(prevScore => prevScore + 1);
+		if (this.x <= 1) {
+			console.log("left ball emit");
+			// 左に抜けたときだけ見ればよい
+			// 自分にとっての左に抜けたときは，相手にとっての右に抜けたときであるため
+			// 壁を抜けたときに，リクエストを送り，その先でballの位置を初期化することで両者の遅延をほぼなくすことができる
+			setOpponentScore((prevScore: number) => {
+				socket.emit('ball', 'left', prevScore + 1, socket.id);
+			});
 		}
-
-		//check right canvas bounds
-		if (this.x + this.width >= canvas.width - ballWidth / 4) {
-			this.x = canvas.width / 2 - this.width / 2;
-			this.deltaX *= -1;
-			setPlayerScore(prevScore => prevScore + 1);
-		}
-
 
 		//check player collision
 		if (this.x <= player.x + player.width) {
@@ -109,6 +98,7 @@ class Ball extends Position {
 
 const socket = io('http://localhost:3000');
 
+//TODO: ブラウザが非アクティブになったとき，どうするか考える
 function Game() {
 	const navigate = useNavigate();
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -116,18 +106,16 @@ function Game() {
 	const animationIdRef = useRef<number | null>(null);
 	const [playerScore, setPlayerScore] = useState(0);
 	const [opponentScore, setOpponentScore] = useState(0);
-
+	const [deltaX, setDeltaX] = useState(0);
 	const [isAnimating, setIsAnimating] = useState(false);
 
-	useLayoutEffect(() => { //FIXME: 事故ったら, useEffectに戻す
-		socket.on('connect', () => {
-			console.log('connection ID : ', socket.id);
-		});
+	useEffect(() => { //FIXME: 事故ったら, useEffectに戻す
+		
+		//初期化
 		socket.emit('joinRoom', 1);
 		const canvas = canvasRef.current;
 		const context = canvas.getContext('2d');
 		contextRef.current = context;
-
 		canvas.width = 1200;
 		canvas.height = 800;
 		canvas.style.width = (canvas.width / 2) + 'px';
@@ -142,39 +130,75 @@ function Game() {
 		opponent.draw(context);
 		console.log("init game");
 
+		//socket.on
+		const handleConnect = () => {
+			console.log('connection ID : ', socket.id);
+		};
+		const handleOpponetPaddle = (message: string) => {
+			console.log('opponent paddle : ', message);
+			if (socket.id != message[1])
+				opponent.update(canvas, parseInt(message[0]));
+		};
+		const handleGameStatus = (message: string) => {
+			console.log('GameStatus : ', message);
+			if (message[2] === socket.id)
+				setDeltaX(parseInt(message[1]));
+			else
+				setDeltaX(parseInt(message[1]) * -1);
+			setIsAnimating(message[0]);
+		};
+		const handleBall = (message: string) => {
+			console.log('init ball', message);
+			// ball.y = canvas.height / 2 - ball.width / 2;
+			if (message[0] === 'left') {
+				if (message[2] === socket.id)
+					setOpponentScore(parseInt(message[1]));
+				else
+					setPlayerScore(parseInt(message[1]));
+			}
+			ball.deltaX *= -1;
+			ball.x = canvas.width / 2 - ball.width / 2;
+			if (parseInt(message[1]) >= MATCHPOINT)
+				ball.y = canvas.height / 2 - ball.width / 2;
+		};
+
+		socket.on('connect', handleConnect);
+		socket.on('opponentPaddle', handleOpponetPaddle);
+		socket.on('GameStatus', handleGameStatus);
+		socket.on('centerball', handleBall);
+		
 		const handleKeyDown = (event) => {
 			if (event.key === 'ArrowUp') {
+				socket.emit('paddle', -1, socket.id);
+				console.log('ArrowUp : ', socket.id);
 				player.update(canvas, -1);
 			}
 			else if (event.key === 'ArrowDown') {
+				socket.emit('paddle', 1, socket.id);
+				console.log('ArrowDown : ', socket.id);
 				player.update(canvas, 1);
 			}
 		};
 
+		ball.deltaX = deltaX;
 		const gameLoop = () => {
-			context.clearRect(0, 0, canvas.width, canvas.height);
 
-			socket.emit('paddle', player.y, socket.id);
-			socket.on('update', (message: string) => {
-				// console.log('recieved : ', message);
-				if (socket.id != message[1])
-					opponent.y = parseInt(message[0]);
-			});
 			ball.update(player, opponent, canvas, setPlayerScore, setOpponentScore);
 			player.update(canvas, 0);
-			setPlayerScore(prevScore => {
-				if (prevScore >= MATCHPOINT) {
+			opponent.update(canvas, 0);
+			setPlayerScore((prevScore: number) => {
+				if (prevScore >= MATCHPOINT)
 					setIsAnimating(false);
-				}
 				return prevScore;
 			});
-			setOpponentScore(prevScore => {
-				if (prevScore >= MATCHPOINT) {
+			setOpponentScore((prevScore: number) => {
+				if (prevScore >= MATCHPOINT)
 					setIsAnimating(false);
-				}
 				return prevScore;
 			});
+
 			// Draw game elements
+			context.clearRect(0, 0, canvas.width, canvas.height);
 			context.fillStyle = '#429950';
 			context.fillRect(0, 0, canvas.width, canvas.height);
 			ball.draw(context);
@@ -192,8 +216,10 @@ function Game() {
 			else if (opponentScore >= MATCHPOINT) {
 				alert("You Lose.\n" + "Your Score: " + playerScore + "  :  Opponent Score: " + opponentScore);
 			}
+			setPlayerScore(0);
+			setOpponentScore(0);
 		}
-		console.log(playerScore, opponentScore);
+
 		document.addEventListener('keydown', handleKeyDown);
 
 		return () => {
@@ -201,20 +227,30 @@ function Game() {
 			cancelAnimationFrame(animationIdRef.current);
 			setPlayerScore(0);
 			setOpponentScore(0);
+			socket.off('connect', handleConnect);
+			socket.off('opponentPaddle', handleOpponetPaddle);
+			socket.off('GameStatus', handleGameStatus);
+			socket.off('centerball', handleBall);
 		};
-	}, [isAnimating]);
+	}, [isAnimating, socket, deltaX]);
 
 	const handleStartStop = () => {
-		setIsAnimating(prevIsAnimating => !prevIsAnimating);
+		var randomDirection = Math.floor(Math.random() * 2);
+		if (randomDirection === 0)
+			randomDirection = -1;
+		console.log('randomDirection : ', randomDirection);
+		setIsAnimating((prevIsAnimating: Boolean) => {
+			socket.emit('changeGameStatus', !prevIsAnimating, randomDirection, socket.id);
+			console.log('changeGameStatus : ', !prevIsAnimating);
+			return !prevIsAnimating
+		});
 	};
 
-		const onClickSubmit = useCallback(() => {
-			socket.emit('message', 'hello', socket.id);
-	}, []);
-	// const onClicPaddle = useCallback(() => {
-	// 	socket.emit('paddle', 'hello', socket.id);
+	// const onClickSubmit = useCallback(() => {
+	// 	socket.emit('ball', socket.id);
+	// 	console.log("ball emit");
 	// }, []);
-	
+
 	return (
 		<>
 			{/* <h2>Game</h2> */}
@@ -231,11 +267,8 @@ function Game() {
 			<Button variant={isAnimating ? "contained" : "outlined"} onClick={handleStartStop}>
 				{isAnimating ? 'Reset' : 'Start'}
 			</Button>
-			<Button variant="contained" onClick={onClickSubmit} sx={{ m: 2 }}>
+			{/* <Button variant="contained" onClick={onClickSubmit} sx={{ m: 2 }}>
 				emit
-			</Button>
-			{/* <Button variant="contained" onClick={onClicPaddle} sx={{ m: 2 }}>
-				paddle
 			</Button> */}
 		</>
 	);

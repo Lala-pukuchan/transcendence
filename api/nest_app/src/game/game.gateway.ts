@@ -12,16 +12,15 @@ export class GameGateway {
 	private logger: Logger = new Logger('GameGateway');	
 	// クライアントからメッセージ受信時の処理
 	@SubscribeMessage('paddle')
-	handleMessage(@MessageBody() message: string, @ConnectedSocket() socket: Socket): string {
+	handlePaddle(@MessageBody() message: string, @ConnectedSocket() socket: Socket) {
 		// ログ出力
 		// this.logger.log("paddle received: " + JSON.stringify(message));	
 		// クライアントにメッセージ送信
 		// const rooms = [...socket.rooms].slice(0);
 		// this.server.to(rooms[1]).emit('update', message);
-		this.server.emit('update', message);
-		return 'Hello world!';
-	
-	}	
+		this.server.emit('opponentPaddle', message);
+	}
+
 	@SubscribeMessage('joinRoom')
 	joinOrUpdateRoom(@MessageBody() roomId: string, @ConnectedSocket() socket: Socket) {	
 		// ログ出力
@@ -32,4 +31,20 @@ export class GameGateway {
 		socket.join(roomId);	
 	}
 
+	@SubscribeMessage('changeGameStatus')
+	handleGameOn(@MessageBody() message: string, @ConnectedSocket() socket: Socket) {
+		// ログ出力
+		// this.logger.log("paddle received: " + JSON.stringify(message));	
+		// クライアントにメッセージ送信
+		// const rooms = [...socket.rooms].slice(0);
+		// this.server.to(rooms[1]).emit('update', message);
+		// this.server.emit('initialball', message);
+		this.server.emit('GameStatus', message);
+	}
+
+	@SubscribeMessage('ball')
+	handleBall(@MessageBody() message: string, @ConnectedSocket() socket: Socket) {
+		this.logger.log("ball loggggg");
+		this.server.emit('centerball', message);
+	}
 }
