@@ -164,11 +164,18 @@ export class GameService {
 	}
 
 	async getUserMatchHistory(username: string): Promise<Game[]> {
+	  
+		// ユーザーの詳細情報を追加して、対戦履歴を返却(displayNameが必要な為)
 		return this.prisma.game.findMany({
 			where: {
-				OR: [{ user1Name: username }, { user2Name: username }],
-				status: 'finish',
+			  OR: [{ user1Name: username }, { user2Name: username }],
+			  status: 'finish',
+			},
+			include: {
+			  user1: true,
+			  user2: true,
 			},
 		});
-	}
+		
+	  }
 }

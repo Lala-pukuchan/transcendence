@@ -40,10 +40,12 @@ model User {
     // messages
     messages          Message[] @relation("ChannelAuthor")
 
-    // stats
+    // game
     wins              Int       @default(0)
     losses            Int       @default(0)
     ladderLevel       Int       @default(0)
+    gamesAsPlayer1   Game[]    @relation("GamePlayer1")
+    gamesAsPlayer2   Game[]    @relation("GamePlayer2")
 
 }
 
@@ -90,6 +92,9 @@ model Game {
 
     id            String       @id @default(uuid())
     createdAt     DateTime     @default(now())
+
+    user1         User     @relation("GamePlayer1", fields: [user1Name], references: [username])
+    user2         User?    @relation("GamePlayer2", fields: [user2Name], references: [username])
 
     user1Name     String
     score1        Int?

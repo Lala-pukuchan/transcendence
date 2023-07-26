@@ -9,6 +9,7 @@ import { decodeToken } from "react-jwt";
 import EditIcon from '@mui/icons-material/Edit';
 import './App.css';
 import io from 'socket.io-client';
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
 
 const socket = io(import.meta.env.VITE_API_BASE_URL);
 
@@ -220,6 +221,29 @@ function Account() {
 			});
 	};
 
+	// 対戦履歴
+	const columns: GridColDef[] = [
+		{ field: 'createdAt', headerName: 'createdAt' },
+		{ field: 'user1.displayName', headerName: 'user1', valueGetter: (params) => params.row.user1?.displayName || 'N/A' },
+		{ field: 'score1', headerName: 'score1', type: 'number'},
+		{ field: 'result1', headerName: 'result1' },
+		{ field: 'user2.displayName', headerName: 'user2', valueGetter: (params) => params.row.user2?.displayName || 'N/A' },
+		{ field: 'score2', headerName: 'score2', type: 'number' },
+		{ field: 'result2', headerName: 'result2' },
+	];
+	const [rows, setRows] = useState([]);
+	useEffect(() => {
+		httpClient
+			.get("/games/user/" + username + "/match-history")
+			.then((response) => {
+				console.log("response: ", response);
+				setRows(response.data);
+			})
+			.catch(() => {
+				console.log("error");
+			});
+	}, []);
+
 	return (
 		<>
 			<Grid
@@ -299,6 +323,19 @@ function Account() {
 						<Typography component="legend">Game Rating</Typography>
 						<Rating name="no-value" value={3} />
 						<p>Win x/y</p>
+						<Typography component="legend">Match History</Typography>
+						<div style={{ height: 400, width: '100%' }}>
+							<DataGrid
+								rows={rows}
+								columns={columns}
+								initialState={{
+									pagination: {
+										paginationModel: { page: 0, pageSize: 5 },
+									},
+								}}
+								pageSizeOptions={[5, 10]}
+							/>
+						</div>
 					<Divider sx={{ m:3 }}>Add Friends</Divider>
 						<TransferList sx={{ m:3 }}></TransferList>
 					<Divider sx={{ m:3 }}>Friends List</Divider>	
