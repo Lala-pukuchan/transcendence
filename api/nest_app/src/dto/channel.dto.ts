@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, IsInt, IsBoolean } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsInt, IsBoolean, IsArray } from 'class-validator';
 import { Room } from '../model/room.model';
 
 export class createChannelDto {
@@ -31,6 +31,11 @@ export class createChannelDto {
     @IsString()
     @IsOptional()
     password: string;
+
+    @ApiProperty({ description: 'dm user of the channel.'})
+    @IsString()
+    @IsOptional()
+    dmUser: string;
 }
 
 export class GetRoomsResponse {

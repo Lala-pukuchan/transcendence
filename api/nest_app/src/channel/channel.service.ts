@@ -5,6 +5,7 @@ import { Channel } from '@prisma/client';
 import { NotFoundException } from '@nestjs/common';
 import { UsersService } from '../user/users.service';
 import { BadRequestException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class ChannelService {
@@ -12,30 +13,105 @@ export class ChannelService {
       private readonly prisma : PrismaService,
     ) {}
 
-    async createChannel(data: createChannelDto): Promise<Channel> {
-        const { name, owner, isDM, isPublic, isProtected, password } = data;
-
-        return await this.prisma.channel.create({
-            data: {
-                name: name,
-                owner: {
-                    connect: {
-                        username: owner,
+    async createChannel(data: createChannelDto) {
+      const { name, owner, isDM, isPublic, isProtected, password, dmUser } = data;
+  
+      //ownerが存在するか確認
+      const user = await this.prisma.user.findUnique({
+          where: { username: owner },
+      });
+      if (!user) {
+          throw new NotFoundException(`User with username ${owner} not found.`);
+      }
+  
+      //dmUserが存在するか確認
+      let dmUserdetail;
+      if (isDM) {
+          dmUserdetail = await this.prisma.user.findUnique({
+            where: { username: dmUser },
+          });
+          if (!dmUserdetail) {
+              throw new NotFoundException(`User with username ${dmUser} not found.`);
+          }
+      }
+  
+      // If isDM is true, check if a DM room already exists
+      if (isDM) {
+        const existingDM = await this.prisma.channel.findFirst({
+            where: {
+                isDM: true,
+                AND: [
+                    {
+                        users: {
+                            some: { username: owner },
+                        },
                     },
-                },
-                users: {
-                    connect: {
-                        username: owner,
+                    {
+                        users: {
+                            some: { username: dmUser },
+                        },
                     },
-                },
-                isDM: isDM,
-                isPublic: isPublic,
-                isProtected: isProtected,
-                password: password,
-                lastUpdated: new Date(),
+                ],
             },
         });
-    }
+  
+          // If a DM room already exists, return it
+          if (existingDM) {
+              return existingDM;
+          }
+      }
+  
+      // Initialize users array with the owner
+      let usersToConnect = [{username: owner}];
+  
+      // If dmUser is defined, add it to the users array
+      if(dmUser) {
+        usersToConnect.push({username: dmUser});
+      }
+
+      let passwordHash: string | null;
+      if (isProtected && password) {
+        passwordHash = await bcrypt.hash(password, 10); // 10 is the number of salt rounds
+      }
+      else {
+        passwordHash = null;
+      }
+
+      const newChannel = await this.prisma.channel.create({
+        data: {
+          name: name,
+          owner: {
+            connect: {
+              username: owner,
+            },
+          },
+          users: {
+            connect: usersToConnect,
+          },
+          admins: {
+            connect: {
+              username: owner,
+            },
+          },
+          isDM: isDM,
+          isPublic: isPublic,
+          isProtected: isProtected,
+          password: passwordHash,
+          lastUpdated: new Date(),
+        },
+        select: { // selectを使ってpasswordを除外
+          id: true,
+          name: true,
+          owner: true,
+          isDM: true,
+          isPublic: true,
+          isProtected: true,
+          password: false,
+          // 他の必要なフィールドを選択
+        },
+      });
+      return newChannel;
+  }
 
     async verifyChannelPassword(channelId: number, password: string) {
       const channel = await this.prisma.channel.findUnique({
@@ -46,7 +122,7 @@ export class ChannelService {
         throw new NotFoundException(`Channel with id ${channelId} not found.`);
       }
     
-      const isPasswordValid = channel.password === password;
+      const isPasswordValid = await bcrypt.compare(password, channel.password);
       return { isValid: isPasswordValid };
     }
 
@@ -126,5 +202,221 @@ export class ChannelService {
           },
         },
       });
+    }
+
+    async addUserToAdmins(channelId: number, username: string) {
+      const user = await this.prisma.user.findUnique({ where: { username: username } });
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+    
+      const channel = await this.prisma.channel.findUnique({ where: { id: channelId }, include: { users: true } });
+      if (!channel) {
+        throw new NotFoundException('Channel not found');
+      }
+    
+      if (!channel.users.find(u => u.username === username)) {
+        throw new BadRequestException('User not in the channel');
+      }
+
+      await this.prisma.channel.update({
+        where: { id: channelId },
+        data: {
+          admins: {
+            connect: { id: user.id },
+          },
+        },
+      });
+    }
+
+    async getNonAdminUsersInChannel(channelId: number) {
+      const channel = await this.prisma.channel.findUnique({
+        where: { id: channelId },
+        include: {
+          admins: true,
+          users: true
+        }
+      })
+  
+      if (!channel) {
+        throw new NotFoundException(`Channel with ID ${channelId} not found`);
+      }
+  
+      const adminIds = new Set(channel.admins.map(admin => admin.id));
+      const nonAdminUsers = channel.users.filter(user => !adminIds.has(user.id));
+  
+      return nonAdminUsers;
+    }
+
+    async getUsersInChannelWithoutOwner(channelId: number) {
+      const channel = await this.prisma.channel.findUnique({
+        where: { id: channelId },
+        include: {
+          owner: true,
+          users: true,
+        },
+      });
+    
+      if (!channel) {
+        throw new NotFoundException(`Channel with ID ${channelId} not found`);
+      }
+    
+      const owner = channel.owner;
+      const users = channel.users.filter((user) => user.id !== owner.id);
+    
+      return users;
+    }
+
+    async removeUserFromChannel(channelId: number, username: string) {
+      const channel = await this.prisma.channel.findUnique({
+        where: { id: channelId },
+        include: {
+          owner: true,
+          admins: true,
+          users: true,
+        },
+      });
+    
+      if (!channel) {
+        throw new NotFoundException(`Channel with ID ${channelId} not found`);
+      }
+    
+      const user = channel.users.find((user) => user.username === username);
+    
+      if (!user) {
+        throw new NotFoundException(`User with username ${username} not found in channel with ID ${channelId}`);
+      }
+
+      if (user === channel.owner) {
+        throw new BadRequestException('Cannot remove owner from channel');
+      }
+    
+      await this.prisma.channel.update({
+        where: { id: channelId },
+        data: {
+          users: {
+            disconnect: { id: user.id },
+          },
+        },
+      });
+
+      if (channel.admins.find((admin) => admin.username === username)) {
+        await this.prisma.channel.update({
+          where: { id: channelId },
+          data: {
+            admins: {
+              disconnect: { id: user.id },
+            },
+          },
+        });
+      }
+    }
+
+    async changeChannelPassword(channelId: number, oldPassword: string, newPassword: string) {
+      const channel = await this.prisma.channel.findUnique({
+        where: { id: channelId },
+      });
+
+      if (!channel) {
+        throw new NotFoundException(`Channel with ID ${channelId} not found`);
+      }
+
+      const isPasswordValid = await this.verifyChannelPassword(channelId, oldPassword);
+
+      if (!isPasswordValid.isValid) {
+        throw new BadRequestException('Invalid password');
+      }
+
+      const passwordHash = await bcrypt.hash(newPassword, 10); // 10 is the number of salt rounds
+
+      await this.prisma.channel.update({
+        where: { id: channelId },
+        data: {
+          password: passwordHash,
+        },
+      });
+      return { success: true };
+    }
+
+    async unsetChannelPassword(channelId: number, password: string) {
+      const channel = await this.prisma.channel.findUnique({
+        where: { id: channelId },
+      });
+
+      if (!channel) {
+        throw new NotFoundException(`Channel with ID ${channelId} not found`);
+      }
+
+      const isPasswordValid = await this.verifyChannelPassword(channelId, password);
+
+      if (!isPasswordValid.isValid) {
+        throw new BadRequestException('Invalid password');
+      }
+
+      await this.prisma.channel.update({
+        where: { id: channelId },
+        data: {
+          password: null,
+          isProtected: false,
+        },
+      });
+      return { success: true };
+    }
+
+    async setChannelPassword(channelId: number, password: string) {
+      const channel = await this.prisma.channel.findUnique({
+        where: { id: channelId },
+      });
+
+      if (!channel) {
+        throw new NotFoundException(`Channel with ID ${channelId} not found`);
+      }
+
+      if (!channel.isPublic) {
+        throw new BadRequestException('Cannot set password on private channel');
+      }
+
+      const passwordHash = await bcrypt.hash(password, 10); // 10 is the number of salt rounds
+
+      await this.prisma.channel.update({
+        where: { id: channelId },
+        data: {
+          password: passwordHash,
+          isProtected: true,
+        },
+      });
+      return { success: true };
+    }
+
+    async getChannelInfo(channelId: number, username: string) {
+      const channel = await this.prisma.channel.findUnique({
+        where: { id: channelId },
+        include: {
+          owner: true,
+          admins: true,
+          users: true,
+        },
+      });
+
+      if (!channel) {
+        throw new NotFoundException(`Channel with ID ${channelId} not found`);
+      }
+
+      // const user = channel.users.find((user) => user.username === username);
+
+      // if (!user) {
+      //   throw new BadRequestException(`User with username ${username} not found in channel with ID ${channelId}`);
+      // }
+
+      const isOwner = channel.owner.username === username;
+      const isAdmin = channel.admins.some((admin) => admin.username === username);
+
+      return {
+        isOwner: isOwner,
+        isAdmin: isAdmin,
+        isPublic: channel.isPublic,
+        isProtected: channel.isProtected,
+        isDM: channel.isDM,
+      };
     }
 }

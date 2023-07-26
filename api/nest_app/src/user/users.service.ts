@@ -2,6 +2,8 @@ import { Injectable, ConflictException, InternalServerErrorException, NotFoundEx
 import { Prisma, User, Channel } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 import { CreateUserDto } from '../dto/user.dto';
+import { GetUsersInfoResponse } from '../dto/user.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -46,13 +48,7 @@ export class UsersService {
             },
             include: {
                 friends: true,
-                matches: {
-                    take: 5,
-                    orderBy: {
-                    createdAt: 'desc',
-                    },
-                },
-        },
+            },
         });
     }
 
@@ -92,7 +88,8 @@ export class UsersService {
     
         // If the channel has a password, verify it.
         if (channel.password) {
-            if (channel.password !== password) {
+          const isPasswordValid = await bcrypt.compare(password, channel.password);
+            if (!isPasswordValid) {
                 throw new UnauthorizedException(`Invalid password for channel id ${channelId}.`);
             }
         }
@@ -123,6 +120,8 @@ export class UsersService {
         const uniqueChannels = Array.from(new Set(channels.map(channel => channel.id)))
             .map(id => channels.find(channel => channel.id === id));
 
+        uniqueChannels.sort((a, b) => b.lastUpdated.getTime() - a.lastUpdated.getTime());
+
         // Return only the necessary channel information
         return uniqueChannels.map(channel => ({
             id: channel.id,
@@ -134,13 +133,56 @@ export class UsersService {
         }));
     }
 
+    async getPublicChannelsNotInUser(username: string) {
+      const user = await this.prisma.user.findUnique({
+        where: { username: username },
+        include: { 
+          channels: true,
+          createdChannels: true,
+          adminChannels: true
+        },
+     });
+
+      if (!user) {
+          throw new NotFoundException(`User with username ${username} not found.`);
+      }
+
+      // Channels the user is a part of
+      const joinedChannels = [...user.channels];
+
+      // Public channels
+      const publicChannels = await this.prisma.channel.findMany({
+        where: {
+          isPublic: true,
+        },
+      });
+
+      const notJoinedPublicChannels = publicChannels.filter(publicChannel => 
+        !joinedChannels.some(joinedChannel =>
+            joinedChannel.id === publicChannel.id
+        )
+      );
+
+      notJoinedPublicChannels.sort((a, b) => b.lastUpdated.getTime() - a.lastUpdated.getTime());
+
+      // Return only the necessary channel information
+      return notJoinedPublicChannels.map(channel => ({
+        id: channel.id,
+        name: channel.name,
+        isDM: channel.isDM,
+        isPublic: channel.isPublic,
+        isProtected: channel.isProtected,
+        lastUpdated: channel.lastUpdated,
+      }));
+    }
+
     async findUserByUsername(username: string) {
         return this.prisma.user.findUnique({
           where: {
             username: username,
           },
         });
-      }
+    }
 
     async updateUserDisplayName(userName: string, newDisplayName: string): Promise<User> {
         const user = await this.prisma.user.update({
@@ -148,5 +190,38 @@ export class UsersService {
             data: { displayName: newDisplayName },
         });
         return user;
+    }
+
+    async getOtherUsers(username: string): Promise<GetUsersInfoResponse[]> {
+      // 全てのユーザーを取得します
+      const allUsers = await this.prisma.user.findMany();
+      
+      // usernameのユーザーを取得します
+      const currentUser = await this.prisma.user.findUnique({ where: { username }, include: { friends: true }});
+      
+      if (!currentUser) {
+        throw new NotFoundException(`User with username ${username} not found`);
+      }
+  
+      // フレンドとそうでないユーザーを分けます
+      const friends = currentUser.friends.map(friend => friend.username);
+      const sortedUsers = allUsers.sort((a, b) => {
+        if (friends.includes(a.username) && !friends.includes(b.username)) return -1;
+        if (!friends.includes(a.username) && friends.includes(b.username)) return 1;
+        return 0;
+      });
+    
+      // 自分自身を除く他のユーザー
+      const otherUsers = sortedUsers.filter(user => user.username !== username);
+  
+      // レスポンスオブジェクトにマッピング
+      return otherUsers.map(user => ({
+        user_id: user.id,
+        username: user.username,
+        avatar: user.avatar,
+        wins: user.wins,
+        losses: user.losses,
+        ladderLevel: user.ladderLevel,
+      }));
     }
 }

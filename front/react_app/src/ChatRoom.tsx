@@ -17,7 +17,11 @@ import ListItem from '@mui/material/ListItem';
 import Checkbox from '@mui/material/Checkbox';
 import ListItemText from '@mui/material/ListItemText';
 import DialogTitle from '@mui/material/DialogTitle';
-
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import InputAdornment from '@mui/material/InputAdornment';
 
 
 // socket.ioの初期化(socketをどのタイミングで作成するかは要検討)
@@ -35,11 +39,22 @@ function ChatRoom() {
   const decoded = decodeToken(getCookie("token"));
   console.log('decoded: ', decoded);
   const username = decoded.user.username;
-  const [avatarPath, setAvatarPath] = useState(import.meta.env.VITE_API_BASE_URL + "users/" + username + "/avatar");
 
 	// ルーム情報の取得
 	const location = useLocation();
 	const roomId = location.state.room;
+  const [room, setRoom] = useState<any>({});
+
+  // ルーム情報を取得する関数
+  async function getRoom() {
+    const res = await httpClient.get(`/channels/${roomId}/${username}/info`);
+    setRoom(res.data);
+  }
+
+  // ページロード時にルーム情報を取得します
+  useEffect(() => {
+    getRoom();
+  }, []);
 
   // メッセージ表示用
   const [chatLog, setChatLog] = useState<Array<any>>([]); // chatLogの型をstring[]からany[]に変更します
@@ -105,23 +120,6 @@ function ChatRoom() {
       console.error("An error occurred while saving the message:", error);
     });
   }, []);
-  
-  const [anchorEl, setAnchorEl] = useState(null);
-
-  const handleClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const [showUsers, setShowUsers] = useState(false);
-  
-  const handleClose = (event) => {
-    if (event.target.textContent === "Add Users") {
-      getUsersNotInChannel();
-      setShowUsers(true);
-    }
-  
-    setAnchorEl(null);
-  };
 
 
 	// メッセージ表示用
@@ -182,13 +180,73 @@ function ChatRoom() {
     }
   };
 
-  //User一覧
-  const [users, setUsers] = useState<Array<any>>([]);
+  //以下はsubjectの機能を満たすためのchannel編集機能
+  const [users, setUsers] = useState<Array<any>>([]); //User一覧
+  const [selectedUsers, setSelectedUsers] = useState<Array<any>>([]); // 選択されたchannelに存在しないユーザーの状態を管理
+  const [showUsers, setShowUsers] = useState(false);
+  const [members, setMembers] = useState<Array<any>>([]); // チャンネルのmember一覧(adminは含まない)
+  const [selectedMembers, setSelectedMembers] = useState<Array<any>>([]); // 選択されたmemberの状態を管理
+  const [showMembers, setShowMembers] = useState(false);
+  const [notOwners, setNotOwners] = useState<Array<any>>([]); // owner以外のchannel参加者一覧
+  const [selectedNotOwners, setSelectedNotOwners] = useState<Array<any>>([]); // 選択されたowner以外のchannel参加者の状態を管理
+  const [showNotOwners, setShowNotOwners] = useState(false);
+  const [changePassword, setChangePassword] = useState(false); // パスワード変更の状態を管理s
+  const [search, setSearch] = useState(''); // 検索文字列の状態を管理
+  const [page, setPage] = useState(0);  // 現在のページ番号の状態を追加
+  const [showOldPassword, setShowOldPassword] = useState(false); // 古いパスワードの表示状態を管理
+  const [inputOldPassword, setInputOldPassword] = useState(''); // パスワード入力欄の状態を管理
+  const [showNewPassword, setShowNewPassword] = useState(false); // 新しいパスワードの表示状態を管理
+  const [inputNewPassword, setInputNewPassword] = useState(''); // パスワード入力欄の状態を管理
+  const [createPassword, setCreatePassword] = useState(false); // パスワード設定の状態を管理
+  const [unsetPassword, setUnsetPassword] = useState(false); // パスワード削除の状態を管理
+  const itemsPerPage = 10; // 1ページあたりのアイテム数
+  const [anchorEl, setAnchorEl] = useState(null);
 
-  // ユーザー一覧を取得する関数
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+  
+  const handleClose = (event) => {
+    closeMembers();
+    closeUsers();
+    closeNotOwners();
+    closeChangePassword();
+    closeUnsetPassword();
+    closeCreatePassword();
+
+    // Only handle click events from the MenuItems
+    if (event.type === "click") {
+      if (event.target.textContent === "Add Users") {
+        getUsersNotInChannel();
+        setShowUsers(true);
+      }
+      else if (event.target.textContent === "Add Administrators") {
+        getMembers();
+        setShowMembers(true);
+      }
+      else if (event.target.textContent === "Kick Members") {
+        getNotOwners();
+        setShowNotOwners(true);
+      }
+      else if (event.target.textContent === "Change Password") {
+        setChangePassword(true);
+      }
+      else if (event.target.textContent === "Unset Password") {
+        setUnsetPassword(true);
+      }
+      else if (event.target.textContent === "Set Password") {
+        setCreatePassword(true);
+      }
+    }
+
+    setAnchorEl(null);
+  };
+
+  // 特定のuserを取得する関数
+  // channelに存在しないユーザー一覧を取得する関数
   async function getUsersNotInChannel() {
     try {
-      const response = await httpClient.get(`/channels/${roomId}/usersNotInChannel`);
+      const response = await httpClient.get(`/channels/${roomId}/users/not-members`);
       console.log('response: ', response);
       setUsers(response.data);
     } catch (error) {
@@ -196,33 +254,151 @@ function ChatRoom() {
     }
   }
 
-  const [search, setSearch] = useState('');  // 検索文字列の状態を追加
+  // channelのmember一覧を取得する関数
+  async function getMembers() {
+    try {
+      const response = await httpClient.get(`/channels/${roomId}/users/members`);
+      console.log('response: ', response);
+      setMembers(response.data);
+    } catch (error) {
+      console.error("An error occurred while fetching the users in channel:", error);
+    }
+  }
 
-  // ユーザーをフィルタリングする関数
+  //owner以外のchannel参加者一覧を取得する関数
+  async function getNotOwners() {
+    try {
+      const response = await httpClient.get(`/channels/${roomId}/users/not-owners`);
+      console.log('response: ', response);
+      setNotOwners(response.data);
+    } catch (error) {
+      console.error("An error occurred while fetching the users in channel:", error);
+    }
+  }
+
+  // 特定のuserをフィルタリングする関数
+  // channelに存在しないユーザーをフィルタリングする関数
   const filteredUsers = users.filter(user => 
     user.username.toLowerCase().includes(search.toLowerCase())
   );
 
-  const [page, setPage] = useState(0);  // 現在のページ番号の状態を追加
-  const itemsPerPage = 10;  // 1ページあたりのアイテム数
+  // memberをフィルタリングする関数
+  const filteredMembers = members.filter(member =>
+    member.username.toLowerCase().includes(search.toLowerCase())
+  );
 
-  // ユーザーをフィルタリングとページングする関数
+  const filteredNotOwners = notOwners.filter(notOwner =>
+    notOwner.username.toLowerCase().includes(search.toLowerCase())
+  );
+  
+  //特定のuserをページングする関数
+  // メンバーをフィルタリングとページングする関数
+  const displayMembers = filteredMembers.slice(page * itemsPerPage, (page + 1) * itemsPerPage);
+
+  // channelに存在しないユーザーをフィルタリングとページングする関数
   const displayedUsers = filteredUsers.slice(page * itemsPerPage, (page + 1) * itemsPerPage);
 
-  // 選択されたユーザーを管理
-  const [selectedUsers, setSelectedUsers] = useState<Array<any>>([]);
+  // owner以外のchannel参加者をフィルタリングとページングする関数
+  const displayedNotOwners = filteredNotOwners.slice(page * itemsPerPage, (page + 1) * itemsPerPage);
 
-// チェックボックスが変更されたときに選択されたユーザーを追加または削除
-const handleToggleUser = (user) => {
-  if (selectedUsers.includes(user)) {
-    setSelectedUsers(selectedUsers.filter((u) => u !== user));
-  } else {
-    setSelectedUsers([...selectedUsers, user]);
+  // チェックボックスが変更されたときに選択されたuserを追加または削除する関数
+  // チェックボックスが変更されたときに選択されたmemberを追加または削除
+  const handleToggleMember = (member) => {
+    if (selectedMembers.includes(member)) {
+      setSelectedMembers(selectedMembers.filter((m) => m !== member));
+    } else {
+      setSelectedMembers([...selectedMembers, member]);
+    }
+  };
+
+  // チェックボックスが変更されたときに選択されたchannelに存在しないユーザーを追加または削除
+  const handleToggleUser = (user) => {
+    if (selectedUsers.includes(user)) {
+      setSelectedUsers(selectedUsers.filter((u) => u !== user));
+    } else {
+      setSelectedUsers([...selectedUsers, user]);
+    }
+  };
+
+  // チェックボックスが変更されたときに選択されたowner以外のchannel参加者を追加または削除
+  const handleToggleNotOwner = (notOwner) => {
+    if (selectedNotOwners.includes(notOwner)) {
+      setSelectedNotOwners(selectedNotOwners.filter((n) => n !== notOwner));
+    } else {
+      setSelectedNotOwners([...selectedNotOwners, notOwner]);
+    }
+  };
+
+  // ダイアログを閉じる関数
+  // ダイアログを閉じる関数(member)
+  const closeMembers = () => {
+    setSelectedMembers([]);
+    setMembers([]);
+    setSearch('');
+    setPage(0);
+    setShowMembers(false);
+  };
+
+  // ダイアログを閉じる関数(channelに存在しないuser)
+  const closeUsers = () => {
+    setSelectedUsers([]);
+    setUsers([]);
+    setSearch('');
+    setPage(0);
+    setShowUsers(false);
+  };
+
+  // ダイアログを閉じる関数(owner以外のchannel参加者)
+  const closeNotOwners = () => {
+    setSelectedNotOwners([]);
+    setNotOwners([]);
+    setSearch('');
+    setPage(0);
+    setShowNotOwners(false);
+  };
+
+  const closeChangePassword = () => {
+    setChangePassword(false);
+    setShowOldPassword(false);
+    setShowNewPassword(false);
+    setInputOldPassword('');
+    setInputNewPassword('');
+  };
+
+  const closeUnsetPassword = () => {
+    setUnsetPassword(false);
+    setShowOldPassword(false);
+    setInputOldPassword('');
+  };
+
+  const closeCreatePassword = () => {
+    setCreatePassword(false);
+    setShowNewPassword(false);
+    setInputNewPassword('');
   }
-};
 
+  // member管理を行う関数
+  // チャンネルにmemberからadminを追加する関数
+  const handleAddAdmin = async () => {
+    try {
+      await Promise.all(
+        selectedMembers.map((member) =>
+          httpClient.post(`/channels/${roomId}/users/admins`, {
+            username: member.username,
+          })
+        )
+      );
+
+      console.log("Admins added successfully.");
+      // 通知メッセージを表示するなど、ここで成功時の処理を追加できます。
+    } catch (error) {
+      console.error("An error occurred while adding the admins to the channel:", error);
+    }
+    closeMembers();
+  };
+
+  // チャンネルに存在しないuserを追加
   const handleAddUser = async () => {
-    // チャンネルにユーザーを追加
     try {
       await Promise.all(
         selectedUsers.map((user) =>
@@ -233,15 +409,112 @@ const handleToggleUser = (user) => {
       );
       console.log("Users added successfully.");
       // 通知メッセージを表示するなど、ここで成功時の処理を追加できます。
-      // 状態をリセット
-      setSelectedUsers([]);
-      setUsers([]);
-      setSearch('');
-      setPage(0);
-      setShowUsers(false);
     } catch (error) {
       console.error("An error occurred while adding the users to the channel:", error);
     }
+    closeUsers();
+  };
+
+  // チャンネルからmemberを削除する関数
+  const handleRemoveMember = async () => {
+    try {
+      await Promise.all(
+        selectedNotOwners.map((notOwner) =>
+          httpClient.delete(`/channels/${roomId}/users/${notOwner.username}`)
+        )
+      );
+      console.log("Members removed successfully.");
+      // 通知メッセージを表示するなど、ここで成功時の処理を追加できます。
+    }
+    catch (error) {
+      console.error("An error occurred while removing the members from the channel:", error);
+    }
+    closeNotOwners();
+    getRoom();
+  };
+
+  const toggleShowPassword = () => {
+    setShowOldPassword(!showOldPassword);
+  };
+
+  const toggleShowNewPassword = () => {
+    setShowNewPassword(!showNewPassword);
+  };
+
+  const handlePasswordSubmit = () => {
+    httpClient
+      .post(`/channels/${roomId}/verifyPassword`, { password: inputOldPassword })
+      .then((response) => {
+        console.log(response);  // レスポンスをログ出力
+        if (response.data.isValid) {
+          // パスワードが正しい場合、ここでパスワードを変更します
+          httpClient
+            .post(`/channels/${roomId}/change-password`, { oldPassword: inputOldPassword, newPassword: inputNewPassword })
+            .then((response) => {
+              console.log(response);  // レスポンスをログ出力
+              alert("パスワードを変更しました");  // 成功メッセージを表示します
+              getRoom();
+              closeChangePassword();  // ダイアログを閉じます
+            })
+            .catch((error) => {
+              console.log("An error occurred:", error);
+              alert("An error occurred while changing the password");  // エラーメッセージを表示します
+            });
+        } else {
+          // パスワードが間違っている場合、ここでエラーメッセージを表示します
+          alert("パスワードが間違っています");
+        }
+      })
+      .catch((error) => {
+        console.log("An error occurred:", error);
+        alert("An error occurred while verifying the password");  // エラーメッセージを表示します
+      });
+      getRoom();
+  };
+
+  const handleUnsetPassword = () => {
+    httpClient
+      .post(`/channels/${roomId}/verifyPassword`, { password: inputOldPassword })
+      .then((response) => {
+        console.log(response);  // レスポンスをログ出力
+        if (response.data.isValid) {
+          // パスワードが正しい場合、ここでパスワードを削除します
+          httpClient
+            .patch(`/channels/${roomId}/unset-password`, { password: inputOldPassword})
+            .then((response) => {
+              console.log(response);
+              alert("パスワードを削除しました");  // 成功メッセージを表示します
+              getRoom();
+              closeUnsetPassword();  // ダイアログを閉じます
+            })
+            .catch((error) => {
+              console.log("An error occurred:", error);
+              alert("An error occurred while changing the password");  // エラーメッセージを表示します
+            });
+        } else {
+          // パスワードが間違っている場合、ここでエラーメッセージを表示します
+          alert("パスワードが間違っています");
+        }
+      })
+      .catch((error) => {
+        console.log("An error occurred:", error);
+        alert("An error occurred while verifying the password");  // エラーメッセージを表示します
+      });
+  };
+
+  const handleCreatePassword = () => {
+    httpClient
+      .patch(`/channels/${roomId}/set-password`, { password: inputNewPassword })
+      .then((response) => {
+        console.log(response);  // レスポンスをログ出力
+        alert("パスワードを設定しました");  // 成功メッセージを表示します
+        getRoom();
+        closeCreatePassword();  // ダイアログを閉じます
+      })
+      .catch((error) => {
+        console.log("An error occurred:", error);
+        alert("An error occurred while setting the password");  // エラーメッセージを表示します
+      });
   };
 
 	return (
@@ -266,8 +539,13 @@ const handleToggleUser = (user) => {
       open={Boolean(anchorEl)}
       onClose={handleClose}
     >
-      <MenuItem onClick={handleClose}>Add Users</MenuItem>
-      <MenuItem onClick={handleClose}>Add Administrators</MenuItem>
+      {room.isDM && <MenuItem onClick={handleClose}>Block User</MenuItem>}
+      {room.isAdmin && room.isPiblic && <MenuItem onClick={handleClose}>Add Users</MenuItem>}
+      {room.isAdmin && room.isPiblic && <MenuItem onClick={handleClose}>Add Administrators</MenuItem>}
+      {room.isAdmin && room.isPiblic && <MenuItem onClick={handleClose}>Kick Members</MenuItem>}
+      {room.isOwner && room.isProtected && <MenuItem onClick={handleClose}>Change Password</MenuItem>}
+      {room.isOwner && room.isPublic && room.isProtected && <MenuItem onClick={handleClose}>Unset Password</MenuItem>}
+      {room.isOwner && room.isPublic && !room.isProtected && <MenuItem onClick={handleClose}>Set Password</MenuItem>}
     </Menu>
 			<Box
 				sx={{
@@ -323,7 +601,7 @@ const handleToggleUser = (user) => {
         </Grid>
 				</Box>
 			</Box>
-      <Dialog open={showUsers} onClose={() => setShowUsers(false)}>
+      <Dialog open={showUsers} onClose={() => closeUsers()}>
         <DialogTitle>Choose users to add</DialogTitle>
         <TextField
           placeholder="Search users"
@@ -348,9 +626,191 @@ const handleToggleUser = (user) => {
           disabled={selectedUsers.length === 0}
           sx={{ mt: 2, mb: 2 }}
         >
-          Add User
+          Add Users
         </Button>
       </Dialog>
+      <Dialog open={showMembers} onClose={() => closeMembers()}>
+        <DialogTitle>Choose users to add</DialogTitle>
+        <TextField
+          placeholder="Search users"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        {displayMembers.map((user, index) => (  // フィルタリングとページングされたユーザーを表示
+          <ListItem key={index}>
+            <Avatar src={import.meta.env.VITE_API_BASE_URL + "users/" + user.username + "/avatar"} sx={{ mr: 1 }} />
+            <ListItemText primary={user.username} />
+            <Checkbox color="primary" onChange={() => handleToggleMember(user)} />
+          </ListItem>
+        ))}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1 }}>
+          <Button onClick={() => setPage(page - 1)} disabled={page === 0}>Previous</Button>
+          <Button onClick={() => setPage(page + 1)} disabled={(page + 1) * itemsPerPage >= filteredUsers.length}>Next</Button>
+        </Box>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          onClick={handleAddAdmin} 
+          disabled={selectedMembers.length === 0}
+          sx={{ mt: 2, mb: 2 }}
+        >
+          Add Administrators
+        </Button>
+      </Dialog>
+      <Dialog open={showNotOwners} onClose={() => closeNotOwners()}>
+        <DialogTitle>Choose users to kick</DialogTitle>
+        <TextField
+          placeholder="Search users"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        {displayedNotOwners.map((user, index) => (  // フィルタリングとページングされたユーザーを表示
+          <ListItem key={index}>
+            <Avatar src={import.meta.env.VITE_API_BASE_URL + "users/" + user.username + "/avatar"} sx={{ mr: 1 }} />
+            <ListItemText primary={user.username} />
+            <Checkbox color="primary" onChange={() => handleToggleNotOwner(user)} />
+          </ListItem>
+        ))}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1 }}>
+          <Button onClick={() => setPage(page - 1)} disabled={page === 0}>Previous</Button>
+          <Button onClick={() => setPage(page + 1)} disabled={(page + 1) * itemsPerPage >= filteredUsers.length}>Next</Button>
+        </Box>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          onClick={handleRemoveMember} 
+          disabled={selectedNotOwners.length === 0}
+          sx={{ mt: 2, mb: 2 }}
+        >
+          Kick Members
+        </Button>
+      </Dialog>
+      <Dialog open={changePassword} onClose={() => setChangePassword(false)}>
+      <DialogTitle>Change Password</DialogTitle>
+      <DialogContent>
+        <TextField
+          autoFocus
+          margin="dense"
+          label="Old password"
+          type={showOldPassword ? "text" : "password"}  // showPasswordの値によりタイプを動的に変更します
+          fullWidth
+          variant="standard"
+          value={inputOldPassword}
+          onChange={(e) => setInputOldPassword(e.target.value)}
+          InputProps={{  // このプロパティでエンドアドーンメントを追加します
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label="toggle password visibility"
+                  onClick={toggleShowPassword}
+                >
+                  {showOldPassword ? <Visibility /> : <VisibilityOff />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+        />
+        <TextField
+          margin="dense"
+          label="New password"
+          type={showNewPassword ? "text" : "password"} // showNewPasswordの値によりタイプを動的に変更します
+          fullWidth
+          variant="standard"
+          value={inputNewPassword}
+          onChange={(e) => setInputNewPassword(e.target.value)}
+          InputProps={{ // このプロパティでエンドアドーンメントを追加します
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label="toggle password visibility"
+                  onClick={toggleShowNewPassword}
+                >
+                  {showNewPassword ? <Visibility /> : <VisibilityOff />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button
+          onClick={handlePasswordSubmit}
+          disabled={!inputOldPassword || !inputNewPassword}
+        >
+          Change Password
+        </Button>
+      </DialogActions>
+    </Dialog>
+    <Dialog open={unsetPassword} onClose={() => setUnsetPassword(false)}>
+      <DialogTitle>Unset Password</DialogTitle>
+      <DialogContent>
+        <TextField
+          autoFocus
+          margin="dense"
+          label="Old password"
+          type={showOldPassword ? "text" : "password"}  // showPasswordの値によりタイプを動的に変更します
+          fullWidth
+          variant="standard"
+          value={inputOldPassword}
+          onChange={(e) => setInputOldPassword(e.target.value)}
+          InputProps={{  // このプロパティでエンドアドーンメントを追加します
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label="toggle password visibility"
+                  onClick={toggleShowPassword}
+                >
+                  {showOldPassword ? <Visibility /> : <VisibilityOff />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button
+          onClick={handleUnsetPassword}
+          disabled={!inputOldPassword}
+        >
+          Unset Password
+        </Button>
+      </DialogActions>
+    </Dialog>
+    <Dialog open={createPassword} onClose={() => setCreatePassword(false)}>
+      <DialogTitle>Set Password</DialogTitle>
+      <DialogContent>
+        <TextField
+          autoFocus
+          margin="dense"
+          label="password"
+          type={showNewPassword ? "text" : "password"}  // showPasswordの値によりタイプを動的に変更します
+          fullWidth
+          variant="standard"
+          value={inputNewPassword}
+          onChange={(e) => setInputNewPassword(e.target.value)}
+          InputProps={{  // このプロパティでエンドアドーンメントを追加します
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label="toggle password visibility"
+                  onClick={toggleShowNewPassword}
+                >
+                  {showNewPassword ? <Visibility /> : <VisibilityOff />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button
+          onClick={handleCreatePassword}
+          disabled={!inputNewPassword}
+        >
+          Set Password
+        </Button>
+      </DialogActions>
+    </Dialog>
 		</>
 	)
 }
