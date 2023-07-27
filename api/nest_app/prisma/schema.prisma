@@ -91,6 +91,7 @@ model Message {
 model Game {
 
     id            String       @id @default(uuid())
+	roomId        Int          @default(autoincrement())
     createdAt     DateTime     @default(now())
 
     user1         User     @relation("GamePlayer1", fields: [user1Name], references: [username])
