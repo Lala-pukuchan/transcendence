@@ -128,19 +128,18 @@ function Game() {
 		const ball = new Ball(ballWidth, ballWidth, canvas.width / 2 - ballWidth / 2, canvas.height / 2 - ballWidth / 2);
 		player.draw(context);
 		opponent.draw(context);
-		console.log("init game");
 
 		//socket.on
 		const handleConnect = () => {
 			console.log('connection ID : ', socket.id);
 		};
 		const handleOpponetPaddle = (message: string) => {
-			console.log('opponent paddle : ', message);
+			// console.log('opponent paddle : ', message);
 			if (socket.id != message[1])
 				opponent.update(canvas, parseInt(message[0]));
 		};
 		const handleGameStatus = (message: string) => {
-			console.log('GameStatus : ', message);
+			// console.log('GameStatus : ', message);
 			if (message[2] === socket.id)
 				setDeltaX(parseInt(message[1]));
 			else
@@ -148,7 +147,7 @@ function Game() {
 			setIsAnimating(message[0]);
 		};
 		const handleBall = (message: string) => {
-			console.log('init ball', message);
+			// console.log('init ball', message);
 			// ball.y = canvas.height / 2 - ball.width / 2;
 			if (message[0] === 'left') {
 				if (message[2] === socket.id)
@@ -170,12 +169,12 @@ function Game() {
 		const handleKeyDown = (event) => {
 			if (event.key === 'ArrowUp') {
 				socket.emit('paddle', -1, socket.id);
-				console.log('ArrowUp : ', socket.id);
+				// console.log('ArrowUp : ', socket.id);
 				player.update(canvas, -1);
 			}
 			else if (event.key === 'ArrowDown') {
 				socket.emit('paddle', 1, socket.id);
-				console.log('ArrowDown : ', socket.id);
+				// console.log('ArrowDown : ', socket.id);
 				player.update(canvas, 1);
 			}
 		};
@@ -238,17 +237,17 @@ function Game() {
 		var randomDirection = Math.floor(Math.random() * 2);
 		if (randomDirection === 0)
 			randomDirection = -1;
-		console.log('randomDirection : ', randomDirection);
+		// console.log('randomDirection : ', randomDirection);
 		setIsAnimating((prevIsAnimating: Boolean) => {
 			socket.emit('changeGameStatus', !prevIsAnimating, randomDirection, socket.id);
-			console.log('changeGameStatus : ', !prevIsAnimating);
+			// console.log('changeGameStatus : ', !prevIsAnimating);
 			return !prevIsAnimating
 		});
 	};
 
 	// const onClickSubmit = useCallback(() => {
 	// 	socket.emit('ball', socket.id);
-	// 	console.log("ball emit");
+		// console.log("ball emit");
 	// }, []);
 
 	return (
