@@ -99,26 +99,26 @@ class Ball extends Position {
 	}
 }
 
-// async function createGame() {
-// 	if (!getCookie("token")) {
-// 		window.location.href = "login";
-// 		return null;
-// 	}
-// 	// tokenデコード
-// 	const decoded = decodeToken(getCookie("token"));
-// 	console.log('decoded: ', decoded);
-// 	const username = decoded.user.username;
-// 	try {
-// 		const response = await httpClient.post('/games/' , {
-// 			// username: username  TODO:usernameに直す
-// 			username: "testusername"
-// 		});
-// 		console.log('response: ', response);
-// 		return response.data;
-// 	} catch (error) {
-// 		console.error("エラーが発生しました:", error);
-// 	}
-// }
+async function createGame() {
+	if (!getCookie("token")) {
+		window.location.href = "login";
+		return null;
+	}
+	// tokenデコード
+	const decoded = decodeToken(getCookie("token"));
+	console.log('decoded: ', decoded);
+	const username = decoded.user.username;
+	try {
+		const response = await httpClient.post('/games/' , {
+			// username: username  TODO:usernameに直す
+			username: "testusername"
+		});
+		console.log('response: ', response);
+		return response.data;
+	} catch (error) {
+		console.error("エラーが発生しました:", error);
+	}
+}
 
 async function fetchAndProcessMatchmakingGame() {
 	try {
@@ -153,17 +153,17 @@ function Game() {
 				
 				if (game.length === 0) {
 					console.log("マッチメイキング中のゲームは見つかりませんでした。");
-					// const createdGame = await createGame();
-					// console.log("createdGame", createdGame);
+					const createdGame = await createGame();
+					console.log("createdGame", createdGame);
 					// socket.emit('joinRoom', createdGame.roomId);
 				} else {
 					console.log("本当にマッチメイキング中のゲームが見つかりました。");
 					console.log("matching game : ", game);
 					try {
-						// const response = await httpClient.put(`/games/${game[0].id}/join`);
-						// console.log(response.data); // レスポンスデータをログに表示
+						const response = await httpClient.put(`/games/${game[0].id}/join`);
+						console.log(response.data); // レスポンスデータをログに表示
+						console.log("joined game : ", game);
 						// socket.emit('joinRoom', game[0].roomId);
-						// console.log("joined game : ", game);
 					}
 					catch (error) {
 						console.error("エラーが発生しました:", error);
