@@ -36,29 +36,29 @@ export class GameService {
 	}
 
 	async joinGame(data: CreateGameDto, gameId: string): Promise<Game> {
-
+		//TODO:後で，　comment out 直す
 		// ユーザーがいない場合、エラー
-		const user = await this.prisma.user.findUnique({
-			where: {
-				username: data.username,
-			}
-		});
-		if (!user) {
-			throw new NotFoundException('User not found');
-		}
+		// const user = await this.prisma.user.findUnique({
+		// 	where: {
+		// 		username: data.username,
+		// 	}
+		// });
+		// if (!user) {
+		// 	throw new NotFoundException('User not found');
+		// }
 
-		// ゲームがない場合、エラー
-		const game = await this.prisma.game.findUnique({
-			where: { id: gameId }
-		});
-		if (!game) {
-			throw new NotFoundException('Game not found');
-		}
+		// // ゲームがない場合、エラー
+		// const game = await this.prisma.game.findUnique({
+		// 	where: { id: gameId }
+		// });
+		// if (!game) {
+		// 	throw new NotFoundException('Game not found');
+		// }
 	
-		// ユーザー1とユーザー2が同一の場合、エラー
-		if (game.user1Name == data.username) {
-			throw new Error('Username1 and Username2 cannot be the same.');
-		}
+		// // ユーザー1とユーザー2が同一の場合、エラー
+		// if (game.user1Name == data.username) {
+		// 	throw new Error('Username1 and Username2 cannot be the same.');
+		// }
 
 		// ユーザー情報とスコアを更新
 		return this.prisma.game.update({
@@ -179,3 +179,6 @@ export class GameService {
 		
 	  }
 }
+
+
+
