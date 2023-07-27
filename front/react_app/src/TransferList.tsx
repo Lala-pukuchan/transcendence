@@ -10,22 +10,35 @@ import Checkbox from '@mui/material/Checkbox';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 
-function not(a: readonly number[], b: readonly number[]) {
+function not(a: readonly { username: string, diplayName: string }[], b: readonly { username: string, diplayName: string }[]) {
   return a.filter((value) => b.indexOf(value) === -1);
 }
 
-function intersection(a: readonly number[], b: readonly number[]) {
+function intersection(a: readonly { username: string, diplayName: string }[], b: readonly { username: string, diplayName: string }[]) {
   return a.filter((value) => b.indexOf(value) !== -1);
 }
 
-function union(a: readonly number[], b: readonly number[]) {
+function union(a: readonly { username: string, diplayName: string }[], b: readonly { username: string, diplayName: string }[]) {
   return [...a, ...not(b, a)];
 }
 
-export default function TransferList() {
-  const [checked, setChecked] = React.useState<readonly number[]>([]);
-  const [left, setLeft] = React.useState<readonly number[]>([0, 1, 2, 3]);
-  const [right, setRight] = React.useState<readonly number[]>([4, 5, 6, 7]);
+const TransferList = (props) => {
+
+	// フレンズ情報
+  const { friendsList } = props;
+  console.log('friendsList: ', friendsList);
+
+  const [checked, setChecked] = React.useState<readonly { username: string, diplayName: string }[]>([]);
+  const [left, setLeft] = React.useState<readonly { username: string, diplayName: string }[]>([
+    { username: 'user1', displayName: 'userA' },
+    { username: 'user2', displayName: 'userB' },
+    { username: 'user3', displayName: 'userC' },
+  ]);
+  const [right, setRight] = React.useState<readonly { username: string, diplayName: string }[]>([
+    { username: 'user4', displayName: 'userD' },
+    { username: 'user5', displayName: 'userE' },
+    { username: 'user6', displayName: 'userF' },
+  ]);
 
   const leftChecked = intersection(checked, left);
   const rightChecked = intersection(checked, right);
@@ -43,10 +56,10 @@ export default function TransferList() {
     setChecked(newChecked);
   };
 
-  const numberOfChecked = (items: readonly number[]) =>
+  const numberOfChecked = (items: readonly { username: string, diplayName: string }[]) =>
     intersection(checked, items).length;
 
-  const handleToggleAll = (items: readonly number[]) => () => {
+  const handleToggleAll = (items: readonly { username: string, diplayName: string }[]) => () => {
     if (numberOfChecked(items) === items.length) {
       setChecked(not(checked, items));
     } else {
@@ -66,7 +79,7 @@ export default function TransferList() {
     setChecked(not(checked, rightChecked));
   };
 
-  const customList = (title: React.ReactNode, items: readonly number[]) => (
+  const customList = (title: React.ReactNode, items: readonly { username: string, displayName: string }[]) => (
     <Card>
       <CardHeader
         sx={{ px: 2, py: 1 }}
@@ -98,19 +111,19 @@ export default function TransferList() {
         component="div"
         role="list"
       >
-        {items.map((value: number) => {
-          const labelId = `transfer-list-all-item-${value}-label`;
+        {items.map((item) => {
+        const labelId = `transfer-list-item-${item.username}-label`;
 
-          return (
-            <ListItem
-              key={value}
+        return (
+          <ListItem
+              key={item.username}
               role="listitem"
               button
-              onClick={handleToggle(value)}
+              onClick={handleToggle(item)}
             >
               <ListItemIcon>
                 <Checkbox
-                  checked={checked.indexOf(value) !== -1}
+                  checked={checked.indexOf(item) !== -1}
                   tabIndex={-1}
                   disableRipple
                   inputProps={{
@@ -118,17 +131,17 @@ export default function TransferList() {
                   }}
                 />
               </ListItemIcon>
-              <ListItemText id={labelId} primary={`List item ${value + 1}`} />
-            </ListItem>
-          );
-        })}
+              <ListItemText id={labelId} primary={`List item ${item.displayName}`} />
+          </ListItem>
+        );
+      })}
       </List>
     </Card>
   );
 
   return (
     <Grid container spacing={2} justifyContent="center" alignItems="center">
-      <Grid item>{customList('Choices', left)}</Grid>
+      <Grid item>{customList('Not Friends', left)}</Grid>
       <Grid item>
         <Grid container direction="column" alignItems="center">
           <Button
@@ -153,7 +166,9 @@ export default function TransferList() {
           </Button>
         </Grid>
       </Grid>
-      <Grid item>{customList('Chosen', right)}</Grid>
+      <Grid item>{customList('Friends', right)}</Grid>
     </Grid>
   );
 }
+
+export default TransferList;

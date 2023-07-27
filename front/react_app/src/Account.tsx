@@ -364,7 +364,7 @@ function Account() {
 						</Box>
 					<Divider sx={{ m:3 }}>Friends</Divider>
 						<Typography component="legend" sx={{ m:3 }}>- Add/Remove Friends -</Typography>	
-							<TransferList sx={{ m:3 }}></TransferList>
+							<TransferList sx={{ m:3 }} friendsList={friendsList}></TransferList>
 						<Typography component="legend" sx={{ m:3 }}>- Friends Online/Offline Status -</Typography>
 							<Box>
 								{friendsList.map((friend) => (
