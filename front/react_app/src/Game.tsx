@@ -145,6 +145,7 @@ function Game() {
 	const [isAnimating, setIsAnimating] = useState(false);
 
 	const [isLoading, setIsLoading] = useState(true);
+	const [isMatching, setIsMatching] = useState(true);
 
 	useEffect(() => {
 		const fetchData = async () => {
@@ -323,6 +324,15 @@ function Game() {
 		// console.log("ball emit");
 	// }, []);
 
+	let buttonText;
+	if (isMatching) {
+		buttonText = 'Match Making';
+	} else if (isAnimating) {
+		buttonText = 'Reset';
+	} else {
+		buttonText = 'Start';
+	}
+
 	return (
 		<>
 			{/* <h2>Game</h2> */}
@@ -336,8 +346,8 @@ function Game() {
 			<Button variant="contained" endIcon={<UndoIcon />} onClick={() => navigate('/')} sx={{ m: 2 }}>
 				Return Back
 			</Button>
-			<Button variant={isAnimating ? "contained" : "outlined"} onClick={handleStartStop}>
-				{isAnimating ? 'Reset' : 'Start'}
+			<Button variant={isAnimating ? "contained" : "outlined"} onClick={handleStartStop} disabled={isMatching}>
+				{buttonText}
 			</Button>
 			{/* <Button variant="contained" onClick={onClickSubmit} sx={{ m: 2 }}>
 				emit
