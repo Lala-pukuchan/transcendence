@@ -155,7 +155,7 @@ function Game() {
 					console.log("マッチメイキング中のゲームは見つかりませんでした。");
 					const createdGame = await createGame();
 					console.log("createdGame", createdGame);
-					// socket.emit('joinRoom', createdGame.roomId);
+					socket.emit('joinRoom', createdGame.roomId);
 				} else {
 					console.log("本当にマッチメイキング中のゲームが見つかりました。");
 					console.log("matching game : ", game);
@@ -163,7 +163,7 @@ function Game() {
 						const response = await httpClient.put(`/games/${game[0].id}/join`);
 						console.log(response.data); // レスポンスデータをログに表示
 						console.log("joined game : ", game);
-						// socket.emit('joinRoom', game[0].roomId);
+						socket.emit('joinRoom', game[0].roomId);
 					}
 					catch (error) {
 						console.error("エラーが発生しました:", error);
