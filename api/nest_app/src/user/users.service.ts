@@ -72,6 +72,18 @@ export class UsersService {
         return updatedUser;
     }
 
+    async removeFriend(userName: string, deleteUsername: string): Promise<User> {
+        const friend = await this.prisma.user.findUnique({ where: { username: deleteUsername } });
+        if (!friend) {
+            throw new NotFoundException(`User with username ${deleteUsername} not found.`);
+        }
+        const updatedUser = await this.prisma.user.update({
+            where: { username: userName },
+            data: { friends: { disconnect: { id: friend.id } } },
+        });
+        return updatedUser;
+    }
+
     async blockUser(userId: string, blockedUserId: string): Promise<User> {
         const updatedUser = await this.prisma.user.update({
             where: { id: userId },

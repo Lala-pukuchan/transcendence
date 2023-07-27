@@ -163,3 +163,10 @@ export class DisplayNameClass {
     @IsNotEmpty()
     displayName: string;
 }
+
+export class UserNameClass {
+    @ApiProperty({ description: 'The username of the user.' })
+    @IsString()
+    @IsNotEmpty()
+    username: string;
+}
