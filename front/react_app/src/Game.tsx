@@ -3,6 +3,9 @@ import { useRef, useEffect, useLayoutEffect, useCallback, useState } from 'react
 import UndoIcon from '@mui/icons-material/Undo';
 import { useNavigate, useLocation } from 'react-router-dom';
 import io from 'socket.io-client';
+import { httpClient } from './httpClient';
+import { getCookie } from './utils/HandleCookie.tsx';
+import { decodeToken } from "react-jwt";
 
 const paddleWidth: number = 20, paddleHeight: number = 200, ballWidth: number = 16, wallOffset: number = 20;
 const MATCHPOINT: number = 3;
@@ -96,6 +99,38 @@ class Ball extends Position {
 	}
 }
 
+// async function createGame() {
+// 	if (!getCookie("token")) {
+// 		window.location.href = "login";
+// 		return null;
+// 	}
+// 	// tokenデコード
+// 	const decoded = decodeToken(getCookie("token"));
+// 	console.log('decoded: ', decoded);
+// 	const username = decoded.user.username;
+// 	try {
+// 		const response = await httpClient.post('/games/' , {
+// 			// username: username  TODO:usernameに直す
+// 			username: "testusername"
+// 		});
+// 		console.log('response: ', response);
+// 		return response.data;
+// 	} catch (error) {
+// 		console.error("エラーが発生しました:", error);
+// 	}
+// }
+
+async function fetchAndProcessMatchmakingGame() {
+	try {
+		const response = await httpClient.get('/games/matchmaking');
+		const game = response.data;
+		return game;
+	} catch (error) {
+		console.error("エラーが発生しました:", error);
+	}
+}
+
+
 const socket = io('http://localhost:3000');
 
 //TODO: ブラウザが非アクティブになったとき，どうするか考える
@@ -109,10 +144,44 @@ function Game() {
 	const [deltaX, setDeltaX] = useState(0);
 	const [isAnimating, setIsAnimating] = useState(false);
 
+	const [isLoading, setIsLoading] = useState(true);
+
+	useEffect(() => {
+		const fetchData = async () => {
+			try {
+				const game = await fetchAndProcessMatchmakingGame();
+				
+				if (game.length === 0) {
+					console.log("マッチメイキング中のゲームは見つかりませんでした。");
+					// const createdGame = await createGame();
+					// console.log("createdGame", createdGame);
+					// socket.emit('joinRoom', createdGame.roomId);
+				} else {
+					console.log("本当にマッチメイキング中のゲームが見つかりました。");
+					console.log("matching game : ", game);
+					try {
+						// const response = await httpClient.put(`/games/${game[0].id}/join`);
+						// console.log(response.data); // レスポンスデータをログに表示
+						// socket.emit('joinRoom', game[0].roomId);
+						// console.log("joined game : ", game);
+					}
+					catch (error) {
+						console.error("エラーが発生しました:", error);
+					}
+				}
+				setIsLoading(false);
+			} catch (error) {
+				console.error("エラーが発生しました:", error);
+				setIsLoading(false);
+			}
+		};
+		fetchData();
+	}, []);
+
 	useEffect(() => { //FIXME: 事故ったら, useEffectに戻す
 		
 		//初期化
-		socket.emit('joinRoom', 1);
+		
 		const canvas = canvasRef.current;
 		const context = canvas.getContext('2d');
 		contextRef.current = context;
@@ -128,6 +197,10 @@ function Game() {
 		const ball = new Ball(ballWidth, ballWidth, canvas.width / 2 - ballWidth / 2, canvas.height / 2 - ballWidth / 2);
 		player.draw(context);
 		opponent.draw(context);
+		
+		
+
+		// socket.emit('joinRoom', 1);
 
 		//socket.on
 		const handleConnect = () => {
@@ -215,8 +288,8 @@ function Game() {
 			else if (opponentScore >= MATCHPOINT) {
 				alert("You Lose.\n" + "Your Score: " + playerScore + "  :  Opponent Score: " + opponentScore);
 			}
-			setPlayerScore(0);
-			setOpponentScore(0);
+			// setPlayerScore(0);
+			// setOpponentScore(0);
 		}
 
 		document.addEventListener('keydown', handleKeyDown);
@@ -231,7 +304,7 @@ function Game() {
 			socket.off('GameStatus', handleGameStatus);
 			socket.off('centerball', handleBall);
 		};
-	}, [isAnimating, socket, deltaX]);
+	}, [isAnimating, socket, deltaX, isLoading]);
 
 	const handleStartStop = () => {
 		var randomDirection = Math.floor(Math.random() * 2);
