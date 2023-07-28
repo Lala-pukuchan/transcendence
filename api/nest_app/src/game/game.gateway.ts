@@ -47,4 +47,11 @@ export class GameGateway {
 		this.server.to(rooms[1]).emit('centerball', message);
 		// this.server.emit('centerball', message);
 	}
+
+	@SubscribeMessage('matched')
+	handleMatch(@MessageBody() message: string, @ConnectedSocket() socket: Socket) {
+		const rooms = [...socket.rooms].slice(0);
+		this.server.to(rooms[1]).emit('matchedGame', message);
+		// this.server.emit('centerball', message);
+	}
 }

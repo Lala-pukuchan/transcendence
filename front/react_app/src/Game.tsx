@@ -165,6 +165,7 @@ function Game() {
 						console.log(response.data); // レスポンスデータをログに表示
 						console.log("joined game : ", game);
 						socket.emit('joinRoom', game[0].roomId);
+						socket.emit('matched', 'game[0].', socket.id);
 					}
 					catch (error) {
 						console.error("エラーが発生しました:", error);
@@ -234,11 +235,15 @@ function Game() {
 			if (parseInt(message[1]) >= MATCHPOINT)
 				ball.y = canvas.height / 2 - ball.width / 2;
 		};
+		const handleMatchMaking = (message: string) => {
+			setIsMatching(false);
+		};
 
 		socket.on('connect', handleConnect);
 		socket.on('opponentPaddle', handleOpponetPaddle);
 		socket.on('GameStatus', handleGameStatus);
 		socket.on('centerball', handleBall);
+		socket.on('matchedGame', handleMatchMaking);
 		
 		const handleKeyDown = (event) => {
 			if (event.key === 'ArrowUp') {
@@ -305,7 +310,7 @@ function Game() {
 			socket.off('GameStatus', handleGameStatus);
 			socket.off('centerball', handleBall);
 		};
-	}, [isAnimating, socket, deltaX, isLoading]);
+	}, [isAnimating, socket, deltaX, isLoading, isMatching]);
 
 	const handleStartStop = () => {
 		var randomDirection = Math.floor(Math.random() * 2);
