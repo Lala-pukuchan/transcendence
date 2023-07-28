@@ -1,4 +1,4 @@
-import * as React from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import Grid from '@mui/material/Grid';
 import List from '@mui/material/List';
 import Card from '@mui/material/Card';
@@ -10,35 +10,29 @@ import Checkbox from '@mui/material/Checkbox';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 
-function not(a: readonly { username: string, diplayName: string }[], b: readonly { username: string, diplayName: string }[]) {
+function not(a: readonly { username: string, displayName: string }[], b: readonly { username: string, displayName: string }[]) {
   return a.filter((value) => b.indexOf(value) === -1);
 }
 
-function intersection(a: readonly { username: string, diplayName: string }[], b: readonly { username: string, diplayName: string }[]) {
+function intersection(a: readonly { username: string, displayName: string }[], b: readonly { username: string, displayName: string }[]) {
   return a.filter((value) => b.indexOf(value) !== -1);
 }
 
-function union(a: readonly { username: string, diplayName: string }[], b: readonly { username: string, diplayName: string }[]) {
+function union(a: readonly { username: string, displayName: string }[], b: readonly { username: string, displayName: string }[]) {
   return [...a, ...not(b, a)];
 }
 
 const TransferList = (props) => {
 
-	// フレンズ情報
-  const { friendsList } = props;
-  console.log('friendsList: ', friendsList);
+  const [checked, setChecked] = useState<readonly { username: string, displayName: string }[]>([]);
+  const [left, setLeft] = useState<readonly { username: string, displayName: string }[]>([]);
 
-  const [checked, setChecked] = React.useState<readonly { username: string, diplayName: string }[]>([]);
-  const [left, setLeft] = React.useState<readonly { username: string, diplayName: string }[]>([
-    { username: 'user1', displayName: 'userA' },
-    { username: 'user2', displayName: 'userB' },
-    { username: 'user3', displayName: 'userC' },
-  ]);
-  const [right, setRight] = React.useState<readonly { username: string, diplayName: string }[]>([
-    { username: 'user4', displayName: 'userD' },
-    { username: 'user5', displayName: 'userE' },
-    { username: 'user6', displayName: 'userF' },
-  ]);
+  // フレンズ
+  const [right, setRight] = useState<readonly { username: string, displayName: string }[]>([]);
+  const { friendsList } = props;
+  useEffect(() => {
+		setRight(friendsList);
+	}, [friendsList]);
 
   const leftChecked = intersection(checked, left);
   const rightChecked = intersection(checked, right);
@@ -56,10 +50,10 @@ const TransferList = (props) => {
     setChecked(newChecked);
   };
 
-  const numberOfChecked = (items: readonly { username: string, diplayName: string }[]) =>
+  const numberOfChecked = (items: readonly { username: string, displayName: string }[]) =>
     intersection(checked, items).length;
 
-  const handleToggleAll = (items: readonly { username: string, diplayName: string }[]) => () => {
+  const handleToggleAll = (items: readonly { username: string, displayName: string }[]) => () => {
     if (numberOfChecked(items) === items.length) {
       setChecked(not(checked, items));
     } else {
@@ -79,7 +73,7 @@ const TransferList = (props) => {
     setChecked(not(checked, rightChecked));
   };
 
-  const customList = (title: React.ReactNode, items: readonly { username: string, displayName: string }[]) => (
+  const customList = (title: ReactNode, items: readonly { username: string, displayName: string }[]) => (
     <Card>
       <CardHeader
         sx={{ px: 2, py: 1 }}
