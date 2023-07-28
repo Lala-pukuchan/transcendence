@@ -16,9 +16,9 @@ export class GameGateway {
 		// ログ出力
 		// this.logger.log("paddle received: " + JSON.stringify(message));	
 		// クライアントにメッセージ送信
-		// const rooms = [...socket.rooms].slice(0);
-		// this.server.to(rooms[1]).emit('update', message);
-		this.server.emit('opponentPaddle', message);
+		const rooms = [...socket.rooms].slice(0);
+		this.server.to(rooms[1]).emit('opponentPaddle', message);
+		// this.server.emit('opponentPaddle', message);
 	}
 
 	@SubscribeMessage('joinRoom')
@@ -36,15 +36,22 @@ export class GameGateway {
 		// ログ出力
 		// this.logger.log("paddle received: " + JSON.stringify(message));	
 		// クライアントにメッセージ送信
-		// const rooms = [...socket.rooms].slice(0);
-		// this.server.to(rooms[1]).emit('update', message);
-		// this.server.emit('initialball', message);
-		this.server.emit('GameStatus', message);
+		const rooms = [...socket.rooms].slice(0);
+		this.server.to(rooms[1]).emit('GameStatus', message);
+		// this.server.emit('GameStatus', message);
 	}
 
 	@SubscribeMessage('ball')
 	handleBall(@MessageBody() message: string, @ConnectedSocket() socket: Socket) {
-		this.logger.log("ball loggggg");
-		this.server.emit('centerball', message);
+		const rooms = [...socket.rooms].slice(0);
+		this.server.to(rooms[1]).emit('centerball', message);
+		// this.server.emit('centerball', message);
+	}
+
+	@SubscribeMessage('matched')
+	handleMatch(@MessageBody() message: string, @ConnectedSocket() socket: Socket) {
+		const rooms = [...socket.rooms].slice(0);
+		this.server.to(rooms[1]).emit('matchedGame', message);
+		// this.server.emit('centerball', message);
 	}
 }

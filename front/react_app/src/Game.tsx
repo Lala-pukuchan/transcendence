@@ -3,6 +3,9 @@ import { useRef, useEffect, useLayoutEffect, useCallback, useState } from 'react
 import UndoIcon from '@mui/icons-material/Undo';
 import { useNavigate, useLocation } from 'react-router-dom';
 import io from 'socket.io-client';
+import { httpClient } from './httpClient';
+import { getCookie } from './utils/HandleCookie.tsx';
+import { decodeToken } from "react-jwt";
 
 const paddleWidth: number = 20, paddleHeight: number = 200, ballWidth: number = 16, wallOffset: number = 20;
 const MATCHPOINT: number = 3;
@@ -96,6 +99,38 @@ class Ball extends Position {
 	}
 }
 
+async function createGame() {
+	if (!getCookie("token")) {
+		window.location.href = "login";
+		return null;
+	}
+	// tokenデコード
+	const decoded = decodeToken(getCookie("token"));
+	console.log('decoded: ', decoded);
+	const username = decoded.user.username;
+	try {
+		const response = await httpClient.post('/games/' , {
+			// username: username  TODO:usernameに直す
+			username: "testusername"
+		});
+		console.log('response: ', response);
+		return response.data;
+	} catch (error) {
+		console.error("エラーが発生しました:", error);
+	}
+}
+
+async function fetchAndProcessMatchmakingGame() {
+	try {
+		const response = await httpClient.get('/games/matchmaking');
+		const game = response.data;
+		return game;
+	} catch (error) {
+		console.error("エラーが発生しました:", error);
+	}
+}
+
+
 const socket = io('http://localhost:3000');
 
 //TODO: ブラウザが非アクティブになったとき，どうするか考える
@@ -109,10 +144,49 @@ function Game() {
 	const [deltaX, setDeltaX] = useState(0);
 	const [isAnimating, setIsAnimating] = useState(false);
 
+	const [isLoading, setIsLoading] = useState(true);
+	const [isMatching, setIsMatching] = useState(true);
+	const [gameId, setGameId] = useState(0);
+
+	useEffect(() => {
+		const fetchData = async () => {
+			try {
+				const game = await fetchAndProcessMatchmakingGame();
+				
+				if (game.length === 0) {
+					console.log("マッチメイキング中のゲームは見つかりませんでした。");
+					const createdGame = await createGame();
+					console.log("createdGame", createdGame);
+					setGameId(createdGame.id);
+					socket.emit('joinRoom', createdGame.roomId);
+				} else {
+					console.log("本当にマッチメイキング中のゲームが見つかりました。");
+					console.log("matching game : ", game);
+					try {
+						const response = await httpClient.put(`/games/${game[0].id}/join`);
+						setGameId(game[0].id);
+						console.log(response.data); // レスポンスデータをログに表示
+						console.log("joined game : ", game);
+						socket.emit('joinRoom', game[0].roomId);
+						socket.emit('matched', 'game[0].', socket.id);
+					}
+					catch (error) {
+						console.error("エラーが発生しました:", error);
+					}
+				}
+				setIsLoading(false);
+			} catch (error) {
+				console.error("エラーが発生しました:", error);
+				setIsLoading(false);
+			}
+		};
+		fetchData();
+	}, []);
+
 	useEffect(() => { //FIXME: 事故ったら, useEffectに戻す
 		
 		//初期化
-		socket.emit('joinRoom', 1);
+		
 		const canvas = canvasRef.current;
 		const context = canvas.getContext('2d');
 		contextRef.current = context;
@@ -128,19 +202,22 @@ function Game() {
 		const ball = new Ball(ballWidth, ballWidth, canvas.width / 2 - ballWidth / 2, canvas.height / 2 - ballWidth / 2);
 		player.draw(context);
 		opponent.draw(context);
-		console.log("init game");
+		
+		
+
+		// socket.emit('joinRoom', 1);
 
 		//socket.on
 		const handleConnect = () => {
 			console.log('connection ID : ', socket.id);
 		};
 		const handleOpponetPaddle = (message: string) => {
-			console.log('opponent paddle : ', message);
+			// console.log('opponent paddle : ', message);
 			if (socket.id != message[1])
 				opponent.update(canvas, parseInt(message[0]));
 		};
 		const handleGameStatus = (message: string) => {
-			console.log('GameStatus : ', message);
+			// console.log('GameStatus : ', message);
 			if (message[2] === socket.id)
 				setDeltaX(parseInt(message[1]));
 			else
@@ -148,7 +225,7 @@ function Game() {
 			setIsAnimating(message[0]);
 		};
 		const handleBall = (message: string) => {
-			console.log('init ball', message);
+			// console.log('init ball', message);
 			// ball.y = canvas.height / 2 - ball.width / 2;
 			if (message[0] === 'left') {
 				if (message[2] === socket.id)
@@ -161,21 +238,25 @@ function Game() {
 			if (parseInt(message[1]) >= MATCHPOINT)
 				ball.y = canvas.height / 2 - ball.width / 2;
 		};
+		const handleMatchMaking = (message: string) => {
+			setIsMatching(false);
+		};
 
 		socket.on('connect', handleConnect);
 		socket.on('opponentPaddle', handleOpponetPaddle);
 		socket.on('GameStatus', handleGameStatus);
 		socket.on('centerball', handleBall);
+		socket.on('matchedGame', handleMatchMaking);
 		
 		const handleKeyDown = (event) => {
 			if (event.key === 'ArrowUp') {
 				socket.emit('paddle', -1, socket.id);
-				console.log('ArrowUp : ', socket.id);
+				// console.log('ArrowUp : ', socket.id);
 				player.update(canvas, -1);
 			}
 			else if (event.key === 'ArrowDown') {
 				socket.emit('paddle', 1, socket.id);
-				console.log('ArrowDown : ', socket.id);
+				// console.log('ArrowDown : ', socket.id);
 				player.update(canvas, 1);
 			}
 		};
@@ -212,12 +293,21 @@ function Game() {
 		else {
 			if (playerScore >= MATCHPOINT) {
 				alert("You Win!\n" + "Your Score: " + playerScore + " Opponent Score: " + opponentScore);
+				httpClient.put(`/games/${gameId}/score`, {
+					score1: playerScore,
+					score2: opponentScore
+				}).then((response) => {
+					console.log("score response : ", response);
+				}).catch((error) => {
+					console.log("score error : ", error);
+				});
+				  
 			}
 			else if (opponentScore >= MATCHPOINT) {
 				alert("You Lose.\n" + "Your Score: " + playerScore + "  :  Opponent Score: " + opponentScore);
 			}
-			setPlayerScore(0);
-			setOpponentScore(0);
+			// setPlayerScore(0);
+			// setOpponentScore(0);
 		}
 
 		document.addEventListener('keydown', handleKeyDown);
@@ -232,24 +322,33 @@ function Game() {
 			socket.off('GameStatus', handleGameStatus);
 			socket.off('centerball', handleBall);
 		};
-	}, [isAnimating, socket, deltaX]);
+	}, [isAnimating, socket, deltaX, isLoading, isMatching]);
 
 	const handleStartStop = () => {
 		var randomDirection = Math.floor(Math.random() * 2);
 		if (randomDirection === 0)
 			randomDirection = -1;
-		console.log('randomDirection : ', randomDirection);
+		// console.log('randomDirection : ', randomDirection);
 		setIsAnimating((prevIsAnimating: Boolean) => {
 			socket.emit('changeGameStatus', !prevIsAnimating, randomDirection, socket.id);
-			console.log('changeGameStatus : ', !prevIsAnimating);
+			// console.log('changeGameStatus : ', !prevIsAnimating);
 			return !prevIsAnimating
 		});
 	};
 
 	// const onClickSubmit = useCallback(() => {
 	// 	socket.emit('ball', socket.id);
-	// 	console.log("ball emit");
+		// console.log("ball emit");
 	// }, []);
+
+	let buttonText;
+	if (isMatching) {
+		buttonText = 'Match Making';
+	} else if (isAnimating) {
+		buttonText = 'Reset';
+	} else {
+		buttonText = 'Start';
+	}
 
 	return (
 		<>
@@ -264,8 +363,8 @@ function Game() {
 			<Button variant="contained" endIcon={<UndoIcon />} onClick={() => navigate('/')} sx={{ m: 2 }}>
 				Return Back
 			</Button>
-			<Button variant={isAnimating ? "contained" : "outlined"} onClick={handleStartStop}>
-				{isAnimating ? 'Reset' : 'Start'}
+			<Button variant={isAnimating ? "contained" : "outlined"} onClick={handleStartStop} disabled={isMatching}>
+				{buttonText}
 			</Button>
 			{/* <Button variant="contained" onClick={onClickSubmit} sx={{ m: 2 }}>
 				emit
