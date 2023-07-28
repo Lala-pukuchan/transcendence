@@ -74,7 +74,7 @@ export class GameService {
 
 	async updateGameScore(gameId: string, data: ScoreDto): Promise<Game> {
 
-		// 結果の更新
+		// // 結果の更新
 		if (data.score1 > data.score2) {
 			
 			// ゲーム更新
@@ -88,26 +88,27 @@ export class GameService {
 					status: 'finish'
 				},
 			});
-			// ユーザー更新
-			const user1 = await this.prisma.user.update({
-				where: { username: game.user1Name },
-				data: {
-					wins: {
-						increment: 1,
-					},
-					ladderLevel : {
-						increment: 10
-					}
-				},
-			});
-			const user2 = await this.prisma.user.update({
-				where: { username: game.user2Name },
-				data: {
-					losses: {
-						increment: 1,
-					},
-				},
-			});
+		//FIXME: ユーザ更新でバクる
+		// 	// ユーザー更新
+		// 	const user1 = await this.prisma.user.update({
+		// 		where: { username: game.user1Name },
+		// 		data: {
+		// 			wins: {
+		// 				increment: 1,
+		// 			},
+		// 			ladderLevel : {
+		// 				increment: 10
+		// 			}
+		// 		},
+		// 	});
+		// 	const user2 = await this.prisma.user.update({
+		// 		where: { username: game.user2Name },
+		// 		data: {
+		// 			losses: {
+		// 				increment: 1,
+		// 			},
+		// 		},
+			// });
 
 		} else if (data.score2 > data.score1) {
 			
@@ -122,27 +123,27 @@ export class GameService {
 					status: 'finish'
 				},
 			});
-
-			// ユーザー更新
-			const user1 = await this.prisma.user.update({
-				where: { username: game.user1Name },
-				data: {
-					losses: {
-						increment: 1,
-					},
-				},
-			});
-			const user2 = await this.prisma.user.update({
-				where: { username: game.user2Name },
-				data: {
-					wins: {
-						increment: 1,
-					},
-					ladderLevel : {
-						increment: 10
-					}
-				},
-			});
+		
+		// 	// ユーザー更新
+		// 	const user1 = await this.prisma.user.update({
+		// 		where: { username: game.user1Name },
+		// 		data: {
+		// 			losses: {
+		// 				increment: 1,
+		// 			},
+		// 		},
+		// 	});
+		// 	const user2 = await this.prisma.user.update({
+		// 		where: { username: game.user2Name },
+		// 		data: {
+		// 			wins: {
+		// 				increment: 1,
+		// 			},
+		// 			ladderLevel : {
+		// 				increment: 10
+		// 			}
+		// 		},
+		// 	});
 		} else {
 			const game = await this.prisma.game.update({
 				where: { id: gameId },
