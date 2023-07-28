@@ -9,6 +9,7 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import Checkbox from '@mui/material/Checkbox';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
+import { httpClient } from './httpClient.ts';
 
 function not(a: readonly { username: string, displayName: string }[], b: readonly { username: string, displayName: string }[]) {
   return a.filter((value) => b.indexOf(value) === -1);
@@ -25,14 +26,15 @@ function union(a: readonly { username: string, displayName: string }[], b: reado
 const TransferList = (props) => {
 
   const [checked, setChecked] = useState<readonly { username: string, displayName: string }[]>([]);
-  const [left, setLeft] = useState<readonly { username: string, displayName: string }[]>([]);
+  const { friendsList, notFriendsList, username } = props;
 
-  // フレンズ
+  // フレンズ初期代入
   const [right, setRight] = useState<readonly { username: string, displayName: string }[]>([]);
-  const { friendsList } = props;
+  const [left, setLeft] = useState<readonly { username: string, displayName: string }[]>([]);
   useEffect(() => {
 		setRight(friendsList);
-	}, [friendsList]);
+    setLeft(notFriendsList);
+	}, [friendsList, notFriendsList]);
 
   const leftChecked = intersection(checked, left);
   const rightChecked = intersection(checked, right);
@@ -61,10 +63,18 @@ const TransferList = (props) => {
     }
   };
 
-  const handleCheckedRight = () => {
-    setRight(right.concat(leftChecked));
-    setLeft(not(left, leftChecked));
-    setChecked(not(checked, leftChecked));
+  // フレンズ追加
+  const handleCheckedRight = async () => {
+    const addUserName = leftChecked.map((item) => item.username);
+    try {
+      const res = await httpClient.patch(`/users/${username}/friends`, { usernames: addUserName });
+      console.log('add friends res: ', res);
+      setRight(right.concat(leftChecked));
+      setLeft(not(left, leftChecked));
+      setChecked(not(checked, leftChecked));
+    } catch (error) {
+      console.log('Error adding friends:', error);
+    }
   };
 
   const handleCheckedLeft = () => {

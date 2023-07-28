@@ -75,15 +75,23 @@ export class UsersService {
         return user;
     }
 
-    async addFriend(userName: string, friendUsername: string): Promise<User> {
-        const friend = await this.prisma.user.findUnique({ where: { username: friendUsername } });
-        if (!friend) {
-            throw new NotFoundException(`User with username ${friendUsername} not found.`);
+    async addFriend(userName: string, friendUsernames: string[]): Promise<User> {
+
+        const friendPromises = friendUsernames.map((friendUsername) =>
+            this.prisma.user.findUnique({ where: { username: friendUsername } })
+        );
+        const friends = await Promise.all(friendPromises);
+        for (const friend of friends) {
+            if (!friend) {
+                throw new NotFoundException(`User with username ${friend.username} not found.`);
+            }
         }
+        const friendIds = friends.map((friend) => friend.id);
         const updatedUser = await this.prisma.user.update({
             where: { username: userName },
-            data: { friends: { connect: { id: friend.id } } },
+            data: { friends: { connect: friendIds.map((id) => ({ id })) } },
         });
+
         return updatedUser;
     }
 

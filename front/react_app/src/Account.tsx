@@ -56,6 +56,7 @@ function Account() {
 
 	// フレンズ情報
 	const [friendsList, setFriendsList] = useState([]);
+	const [notFriendsList, setNotFriendsList] = useState([]);
 
 	// ユーザー情報取得
 	useEffect(() => {
@@ -73,6 +74,8 @@ function Account() {
 				setLose(response.data.losses);
 				if (response.data.friends)
 					setFriendsList(response.data.friends);
+				if (response.data.notFriends)
+					setNotFriendsList(response.data.notFriends);
 			})
 			.catch(() => {
 				console.log("error");
@@ -364,7 +367,7 @@ function Account() {
 						</Box>
 					<Divider sx={{ m:3 }}>Friends</Divider>
 						<Typography component="legend" sx={{ m:3 }}>- Add/Remove Friends -</Typography>	
-							<TransferList sx={{ m:3 }} friendsList={friendsList}></TransferList>
+							<TransferList sx={{ m:3 }} friendsList={friendsList} notFriendsList={notFriendsList} username={username}></TransferList>
 						<Typography component="legend" sx={{ m:3 }}>- Friends Online/Offline Status -</Typography>
 							<Box>
 								{friendsList.map((friend) => (

@@ -28,8 +28,8 @@ export class UsersController {
 
     @Patch(':username/friends')
     @ApiResponse({ status: HttpStatus.OK, type: UserNameClass, description: 'Add friend.'})
-    addFriend(@Param('username') username: string, @Body() data: UserNameClass) {
-        return this.usersService.addFriend(username, data.username);
+    addFriend(@Param('username') username: string, @Body() data: { usernames: string[] }) {
+        return this.usersService.addFriend(username, data.usernames);
     }
 
     @Delete(':username/friends')
