@@ -146,6 +146,7 @@ function Game() {
 
 	const [isLoading, setIsLoading] = useState(true);
 	const [isMatching, setIsMatching] = useState(true);
+	const [gameId, setGameId] = useState(0);
 
 	useEffect(() => {
 		const fetchData = async () => {
@@ -156,12 +157,14 @@ function Game() {
 					console.log("マッチメイキング中のゲームは見つかりませんでした。");
 					const createdGame = await createGame();
 					console.log("createdGame", createdGame);
+					setGameId(createdGame.id);
 					socket.emit('joinRoom', createdGame.roomId);
 				} else {
 					console.log("本当にマッチメイキング中のゲームが見つかりました。");
 					console.log("matching game : ", game);
 					try {
 						const response = await httpClient.put(`/games/${game[0].id}/join`);
+						setGameId(game[0].id);
 						console.log(response.data); // レスポンスデータをログに表示
 						console.log("joined game : ", game);
 						socket.emit('joinRoom', game[0].roomId);
@@ -290,6 +293,15 @@ function Game() {
 		else {
 			if (playerScore >= MATCHPOINT) {
 				alert("You Win!\n" + "Your Score: " + playerScore + " Opponent Score: " + opponentScore);
+				httpClient.put(`/games/${gameId}/score`, {
+					score1: playerScore,
+					score2: opponentScore
+				}).then((response) => {
+					console.log("score response : ", response);
+				}).catch((error) => {
+					console.log("score error : ", error);
+				});
+				  
 			}
 			else if (opponentScore >= MATCHPOINT) {
 				alert("You Lose.\n" + "Your Score: " + playerScore + "  :  Opponent Score: " + opponentScore);
