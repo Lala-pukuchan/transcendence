@@ -4,6 +4,7 @@ import { PrismaService } from '../prisma.service';
 import { CreateUserDto } from '../dto/user.dto';
 import { GetUsersInfoResponse } from '../dto/user.dto';
 import * as bcrypt from 'bcrypt';
+import { ExtendedUser } from 'src/utils/types';
 
 @Injectable()
 export class UsersService {
@@ -41,8 +42,8 @@ export class UsersService {
     }
 
     //usernameが存在しない時のエラーハンドリング未対応
-    async getUserDetail(username: string) {
-        return this.prisma.user.findUnique({
+    async getUserDetail(username: string): Promise<ExtendedUser> {
+        const user = await this.prisma.user.findUnique({
             where: {
                 username: username,
             },
@@ -50,6 +51,20 @@ export class UsersService {
                 friends: true,
             },
         });
+
+        if (!user) {
+            throw new NotFoundException(`User with username ${username} not found.`);
+        }
+
+        const friendUsernames = user.friends.map(friend => friend.username);
+        const allUsers = await this.prisma.user.findMany();
+        const notFriends = allUsers.filter(u => u.username !== username && !friendUsernames.includes(u.username));
+        const extendedUser: ExtendedUser = {
+            ...user,
+            notFriends: notFriends,
+          };
+
+        return extendedUser;
     }
 
     async changeAvatar(userName: string, newAvatar: string): Promise<User> {
