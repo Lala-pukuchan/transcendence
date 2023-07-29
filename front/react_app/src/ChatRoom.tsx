@@ -585,7 +585,7 @@ function ChatRoom() {
       {room.isAdmin && !room.isDM && <MenuItem onClick={handleClose}>Kick Members</MenuItem>}
       {room.isOwner && room.isProtected && <MenuItem onClick={handleClose}>Change Password</MenuItem>}
       {room.isOwner && !room.isDM && room.isProtected && <MenuItem onClick={handleClose}>Unset Password</MenuItem>}
-      {room.isOwner && !room.isDM && !room.isProtected && <MenuItem onClick={handleClose}>Set Password</MenuItem>}
+      {room.isOwner && !room.isDM && room.isPublic && !room.isProtected && <MenuItem onClick={handleClose}>Set Password</MenuItem>}
     </Menu>
 			<Box
 				sx={{
