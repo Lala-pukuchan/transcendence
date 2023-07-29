@@ -157,4 +157,15 @@ export class ChannelController {
     }
     return this.channelService.getChannelInfo(channelIdNumber, username);
   }
+
+  @Get(":channelId/users/:username/dm-user")
+  @ApiResponse({ status: 200, description: 'Successfully returned dm user' })
+  async getDmUser(@Param('channelId') channelId: string, @Param('username') username: string) {
+    const channelIdNumber = Number(channelId);
+
+    if (isNaN(channelIdNumber)) {
+      throw new BadRequestException('Invalid channel ID.');
+    }
+    return this.channelService.getDmUser(channelIdNumber, username);
+  }
 }

@@ -93,7 +93,7 @@ function SelectRoom() {
   ]
 
   useEffect(() => {
-    // 参加しているチャンルーム一覧を取得
+    // 参加しているチャンネル一覧を取得
     httpClient
       .get(`/users/${username}/channels`)
       .then((response) => {
