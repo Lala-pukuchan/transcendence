@@ -69,4 +69,10 @@ export class UsersController {
     getOtherUsers(@Param('username') username: string) {
         return this.usersService.getOtherUsers(username);
     }
+    
+    @Post(':username/block-user')
+    @ApiResponse({ status: HttpStatus.OK, type: GetUserDetailResponse, description: 'Block a user.'})
+    blockUser(@Param('username') username: string, @Body('username') blocked_username: string) {
+        return this.usersService.blockUser(username, blocked_username);
+    }
 }

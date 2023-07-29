@@ -419,4 +419,35 @@ export class ChannelService {
         isDM: channel.isDM,
       };
     }
+
+    async getDmUser(channelId: number, username: string) {
+      const channel = await this.prisma.channel.findUnique({
+        where: { id: channelId },
+        include: {
+          users: true,
+        },
+      });
+
+      if (!channel) {
+        throw new NotFoundException(`Channel with ID ${channelId} not found`);
+      }
+
+      if (!channel.isDM) {
+        throw new BadRequestException(`Channel with ID ${channelId} is not a DM`);
+      }
+
+      const user = channel.users.find((user) => user.username === username);
+      const dmuser = channel.users.find((user) => user.username !== username);
+
+      if (!user) {
+        throw new BadRequestException(`User with username ${username} not found in channel with ID ${channelId}`);
+      }
+
+      if (!dmuser) {
+        throw new BadRequestException(`DM user not found in channel with ID ${channelId}`);
+      }
+
+
+      return dmuser;
+    }
 }

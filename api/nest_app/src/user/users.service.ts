@@ -72,10 +72,18 @@ export class UsersService {
         return updatedUser;
     }
 
-    async blockUser(userId: string, blockedUserId: string): Promise<User> {
+    async blockUser(username: string, blockedUserName: string): Promise<User> {
+        const user = this.prisma.user.findUnique({ where: { username: username } });
+        if (!user) {
+            throw new NotFoundException(`User with username ${username} not found.`);
+        }
+        const blockedUser = await this.prisma.user.findUnique({ where: { username: blockedUserName } });
+        if (!blockedUser) {
+            throw new NotFoundException(`User with username ${blockedUserName} not found.`);
+        }
         const updatedUser = await this.prisma.user.update({
-            where: { id: userId },
-            data: { blockedUsers: { connect: { id: blockedUserId } } },
+            where: { username: username },
+            data: { blockedUsers: { connect: { id: blockedUser.id } } },
         });
         return updatedUser;
     }
@@ -105,25 +113,47 @@ export class UsersService {
         const user = await this.prisma.user.findUnique({
             where: { username: username },
             include: { 
-                channels: true,
-                createdChannels: true,
-                adminChannels: true
+                channels: { include: { users: true } },
+                createdChannels: { include: { users: true } },
+                adminChannels: { include: { users: true } },
+                blockedUsers: true,
             },
         });
-
+    
         if (!user) {
             throw new NotFoundException(`User with username ${username} not found.`);
         }
-
+    
+        // Get IDs of blocked users
+        const blockedUserIds = user.blockedUsers.map((blockedUser) => blockedUser.id);
+    
         // Combine all channels arrays and remove duplicates
         const channels = [...user.channels, ...user.createdChannels, ...user.adminChannels];
         const uniqueChannels = Array.from(new Set(channels.map(channel => channel.id)))
             .map(id => channels.find(channel => channel.id === id));
-
-        uniqueChannels.sort((a, b) => b.lastUpdated.getTime() - a.lastUpdated.getTime());
-
+    
+        // Filter out DM channels with blocked users
+        const filteredChannels = uniqueChannels.filter((channel) => {
+            // If channel is not a DM, return true
+            if (!channel.isDM) {
+                return true;
+            }
+    
+            // If channel is a DM, check if the other user is blocked
+            const otherUser = channel.users.find((user) => user.username !== username);
+            if (otherUser && blockedUserIds.includes(otherUser.id)) {
+                // If the other user is blocked, return false
+                return false;
+            }
+    
+            // Otherwise, return true
+            return true;
+        });
+    
+        filteredChannels.sort((a, b) => b.lastUpdated.getTime() - a.lastUpdated.getTime());
+    
         // Return only the necessary channel information
-        return uniqueChannels.map(channel => ({
+        return filteredChannels.map(channel => ({
             id: channel.id,
             name: channel.name,
             isDM: channel.isDM,
@@ -132,6 +162,7 @@ export class UsersService {
             lastUpdated: channel.lastUpdated,
         }));
     }
+    
 
     async getPublicChannelsNotInUser(username: string) {
       const user = await this.prisma.user.findUnique({
