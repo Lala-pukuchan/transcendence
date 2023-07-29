@@ -164,9 +164,9 @@ export class DisplayNameClass {
     displayName: string;
 }
 
-export class UserNameClass {
-    @ApiProperty({ description: 'The username of the user.' })
+export class UserNamesClass {
+    @ApiProperty({ description: 'The usernames to be controlled.' })
     @IsString()
     @IsNotEmpty()
-    username: string;
+    usernames: string[];
 }

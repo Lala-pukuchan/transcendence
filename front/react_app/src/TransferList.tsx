@@ -67,7 +67,7 @@ const TransferList = (props) => {
   const handleCheckedRight = async () => {
     const addUserName = leftChecked.map((item) => item.username);
     try {
-      const res = await httpClient.patch(`/users/${username}/friends`, { usernames: addUserName });
+      const res = await httpClient.patch(`/users/${username}/addFriends`, { usernames: addUserName });
       console.log('add friends res: ', res);
       setRight(right.concat(leftChecked));
       setLeft(not(left, leftChecked));
@@ -77,10 +77,18 @@ const TransferList = (props) => {
     }
   };
 
-  const handleCheckedLeft = () => {
-    setLeft(left.concat(rightChecked));
-    setRight(not(right, rightChecked));
-    setChecked(not(checked, rightChecked));
+  // フレンズ削除
+  const handleCheckedLeft = async () => {
+    const deleteUserName = rightChecked.map((item) => item.username);
+    try {
+      const res = await httpClient.patch(`/users/${username}/deleteFriends`, { usernames: deleteUserName });
+      console.log('delete friends res: ', res);
+      setLeft(left.concat(rightChecked));
+      setRight(not(right, rightChecked));
+      setChecked(not(checked, rightChecked));
+    } catch (error) {
+      console.log('Error adding friends:', error);
+    }
   };
 
   const customList = (title: ReactNode, items: readonly { username: string, displayName: string }[]) => (
@@ -135,7 +143,7 @@ const TransferList = (props) => {
                   }}
                 />
               </ListItemIcon>
-              <ListItemText id={labelId} primary={`List item ${item.displayName}`} />
+              <ListItemText id={labelId} primary={`${item.displayName}`} />
           </ListItem>
         );
       })}

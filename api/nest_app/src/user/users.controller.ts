@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Patch, HttpStatus, Body, Param, Delete } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { CreateUserDto, GetUsersInfoResponse, GetUserDetailResponse, GetChannelsResponse, DisplayNameClass, UserNameClass } from '../dto/user.dto';
+import { CreateUserDto, GetUsersInfoResponse, GetUserDetailResponse, GetChannelsResponse, DisplayNameClass, UserNamesClass } from '../dto/user.dto';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('user')
@@ -26,16 +26,16 @@ export class UsersController {
      return this.usersService.createUser(createUserDto);
     }
 
-    @Patch(':username/friends')
-    @ApiResponse({ status: HttpStatus.OK, type: UserNameClass, description: 'Add friend.'})
-    addFriend(@Param('username') username: string, @Body() data: { usernames: string[] }) {
+    @Patch(':username/addFriends')
+    @ApiResponse({ status: HttpStatus.OK, type: UserNamesClass, description: 'Add friend.'})
+    addFriend(@Param('username') username: string, @Body() data: UserNamesClass) {
         return this.usersService.addFriend(username, data.usernames);
     }
 
-    @Delete(':username/friends')
-    @ApiResponse({ status: HttpStatus.OK, type: UserNameClass, description: 'Delete friend.'})
-    deleteFriend(@Param('username') username: string, @Body() data: UserNameClass) {
-        return this.usersService.removeFriend(username, data.username);
+    @Patch(':username/deleteFriends')
+    @ApiResponse({ status: HttpStatus.OK, type: UserNamesClass, description: 'Delete friend.'})
+    deleteFriend(@Param('username') username: string, @Body() data: UserNamesClass) {
+        return this.usersService.removeFriend(username, data.usernames);
     }
 
     @Patch(':username/channels')

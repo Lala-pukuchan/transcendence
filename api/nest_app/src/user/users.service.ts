@@ -95,14 +95,20 @@ export class UsersService {
         return updatedUser;
     }
 
-    async removeFriend(userName: string, deleteUsername: string): Promise<User> {
-        const friend = await this.prisma.user.findUnique({ where: { username: deleteUsername } });
-        if (!friend) {
-            throw new NotFoundException(`User with username ${deleteUsername} not found.`);
+    async removeFriend(userName: string, deleteUsernames: string[]): Promise<User> {
+        const friendPromises = deleteUsernames.map((friendUsername) =>
+            this.prisma.user.findUnique({ where: { username: friendUsername } })
+        );
+        const friends = await Promise.all(friendPromises);
+        for (const friend of friends) {
+            if (!friend) {
+                throw new NotFoundException(`User with username ${friend.username} not found.`);
+            }
         }
+        const friendIds = friends.map((friend) => friend.id);
         const updatedUser = await this.prisma.user.update({
             where: { username: userName },
-            data: { friends: { disconnect: { id: friend.id } } },
+            data: { friends: { disconnect: friendIds.map((id) => ({ id })) } },
         });
         return updatedUser;
     }
