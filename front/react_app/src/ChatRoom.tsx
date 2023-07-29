@@ -199,11 +199,15 @@ function ChatRoom() {
   const [inputNewPassword, setInputNewPassword] = useState(''); // パスワード入力欄の状態を管理
   const [createPassword, setCreatePassword] = useState(false); // パスワード設定の状態を管理
   const [unsetPassword, setUnsetPassword] = useState(false); // パスワード削除の状態を管理
+  const [blockUser, setBlockUser] = useState(false); // ユーザーブロックの状態を管理
+  const [dmUser, setDmUser] = useState(false); // DMの状態を管理
   const itemsPerPage = 10; // 1ページあたりのアイテム数
   const [anchorEl, setAnchorEl] = useState(null);
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
+    if (room.isDM)
+        getDmUser();
   };
   
   const handleClose = (event) => {
@@ -213,6 +217,7 @@ function ChatRoom() {
     closeChangePassword();
     closeUnsetPassword();
     closeCreatePassword();
+    closeBlockUser();
 
     // Only handle click events from the MenuItems
     if (event.type === "click") {
@@ -236,6 +241,9 @@ function ChatRoom() {
       }
       else if (event.target.textContent === "Set Password") {
         setCreatePassword(true);
+      }
+      else if (event.target.textContent === `Block ${dmUser.username}`) {
+        setBlockUser(true);
       }
     }
 
@@ -275,6 +283,18 @@ function ChatRoom() {
       console.error("An error occurred while fetching the users in channel:", error);
     }
   }
+
+  async function getDmUser()
+  {
+    try {
+        const response = await httpClient.get(`/channels/${roomId}/users/${username}/dm-user`);
+        console.log('response: ', response);
+        setDmUser(response.data);
+    } catch (error) {
+        console.error("An error occurred while fetching the users in channel:", error);
+    }
+  }
+  
 
   // 特定のuserをフィルタリングする関数
   // channelに存在しないユーザーをフィルタリングする関数
@@ -375,6 +395,10 @@ function ChatRoom() {
     setCreatePassword(false);
     setShowNewPassword(false);
     setInputNewPassword('');
+  }
+
+  const closeBlockUser = () => {
+    setBlockUser(false);
   }
 
   // member管理を行う関数
@@ -517,6 +541,22 @@ function ChatRoom() {
       });
   };
 
+  const handleBlockUser = () => {
+    httpClient
+        .post(`/users/${username}/block-user`, { username: dmUser.username })
+        .then((response) => {
+            console.log(response);  // レスポンスをログ出力
+            alert("ユーザーをブロックしました");  // 成功メッセージを表示します
+            getRoom();
+            closeBlockUser();  // ダイアログを閉じます
+            navigate('/selectRoom');
+        })
+        .catch((error) => {
+            console.log("An error occurred:", error);
+            alert("An error occurred while blocking the user");  // エラーメッセージを表示します
+        });
+  }
+
 	return (
 		<>
       <IconButton
@@ -539,7 +579,7 @@ function ChatRoom() {
       open={Boolean(anchorEl)}
       onClose={handleClose}
     >
-      {room.isDM && <MenuItem onClick={handleClose}>Block User</MenuItem>}
+      {room.isDM && <MenuItem onClick={handleClose}>Block {dmUser.username}</MenuItem>}
       {room.isAdmin && room.isPiblic && <MenuItem onClick={handleClose}>Add Users</MenuItem>}
       {room.isAdmin && room.isPiblic && <MenuItem onClick={handleClose}>Add Administrators</MenuItem>}
       {room.isAdmin && room.isPiblic && <MenuItem onClick={handleClose}>Kick Members</MenuItem>}
@@ -811,6 +851,48 @@ function ChatRoom() {
         </Button>
       </DialogActions>
     </Dialog>
+    <Dialog open={showMembers} onClose={() => closeMembers()}>
+        <DialogTitle>Choose users to add</DialogTitle>
+        <TextField
+          placeholder="Search users"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        {displayMembers.map((user, index) => (  // フィルタリングとページングされたユーザーを表示
+          <ListItem key={index}>
+            <Avatar src={import.meta.env.VITE_API_BASE_URL + "users/" + user.username + "/avatar"} sx={{ mr: 1 }} />
+            <ListItemText primary={user.username} />
+            <Checkbox color="primary" onChange={() => handleToggleMember(user)} />
+          </ListItem>
+        ))}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1 }}>
+          <Button onClick={() => setPage(page - 1)} disabled={page === 0}>Previous</Button>
+          <Button onClick={() => setPage(page + 1)} disabled={(page + 1) * itemsPerPage >= filteredUsers.length}>Next</Button>
+        </Box>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          onClick={handleAddAdmin} 
+          disabled={selectedMembers.length === 0}
+          sx={{ mt: 2, mb: 2 }}
+        >
+          Add Administrators
+        </Button>
+      </Dialog>
+      <Dialog open={blockUser} onClose={() => closeBlockUser()}>
+        <DialogTitle>Block {dmUser.username}</DialogTitle>
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+          <Avatar src={import.meta.env.VITE_API_BASE_URL + "/users/" + dmUser.username + "/avatar"} />
+        </Box>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          onClick={handleBlockUser} 
+          sx={{ mt: 2, mb: 2 }}
+        >
+          Block {dmUser.username}
+        </Button>
+      </Dialog>
 		</>
 	)
 }
