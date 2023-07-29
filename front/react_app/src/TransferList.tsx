@@ -1,4 +1,4 @@
-import * as React from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import Grid from '@mui/material/Grid';
 import List from '@mui/material/List';
 import Card from '@mui/material/Card';
@@ -9,23 +9,32 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import Checkbox from '@mui/material/Checkbox';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
+import { httpClient } from './httpClient.ts';
 
-function not(a: readonly number[], b: readonly number[]) {
+function not(a: readonly { username: string, displayName: string }[], b: readonly { username: string, displayName: string }[]) {
   return a.filter((value) => b.indexOf(value) === -1);
 }
 
-function intersection(a: readonly number[], b: readonly number[]) {
+function intersection(a: readonly { username: string, displayName: string }[], b: readonly { username: string, displayName: string }[]) {
   return a.filter((value) => b.indexOf(value) !== -1);
 }
 
-function union(a: readonly number[], b: readonly number[]) {
+function union(a: readonly { username: string, displayName: string }[], b: readonly { username: string, displayName: string }[]) {
   return [...a, ...not(b, a)];
 }
 
-export default function TransferList() {
-  const [checked, setChecked] = React.useState<readonly number[]>([]);
-  const [left, setLeft] = React.useState<readonly number[]>([0, 1, 2, 3]);
-  const [right, setRight] = React.useState<readonly number[]>([4, 5, 6, 7]);
+const TransferList = (props) => {
+
+  const [checked, setChecked] = useState<readonly { username: string, displayName: string }[]>([]);
+  const { friendsList, notFriendsList, username } = props;
+
+  // フレンズ初期代入
+  const [right, setRight] = useState<readonly { username: string, displayName: string }[]>([]);
+  const [left, setLeft] = useState<readonly { username: string, displayName: string }[]>([]);
+  useEffect(() => {
+		setRight(friendsList);
+    setLeft(notFriendsList);
+	}, [friendsList, notFriendsList]);
 
   const leftChecked = intersection(checked, left);
   const rightChecked = intersection(checked, right);
@@ -43,10 +52,10 @@ export default function TransferList() {
     setChecked(newChecked);
   };
 
-  const numberOfChecked = (items: readonly number[]) =>
+  const numberOfChecked = (items: readonly { username: string, displayName: string }[]) =>
     intersection(checked, items).length;
 
-  const handleToggleAll = (items: readonly number[]) => () => {
+  const handleToggleAll = (items: readonly { username: string, displayName: string }[]) => () => {
     if (numberOfChecked(items) === items.length) {
       setChecked(not(checked, items));
     } else {
@@ -54,19 +63,35 @@ export default function TransferList() {
     }
   };
 
-  const handleCheckedRight = () => {
-    setRight(right.concat(leftChecked));
-    setLeft(not(left, leftChecked));
-    setChecked(not(checked, leftChecked));
+  // フレンズ追加
+  const handleCheckedRight = async () => {
+    const addUserName = leftChecked.map((item) => item.username);
+    try {
+      const res = await httpClient.patch(`/users/${username}/addFriends`, { usernames: addUserName });
+      console.log('add friends res: ', res);
+      setRight(right.concat(leftChecked));
+      setLeft(not(left, leftChecked));
+      setChecked(not(checked, leftChecked));
+    } catch (error) {
+      console.log('Error adding friends:', error);
+    }
   };
 
-  const handleCheckedLeft = () => {
-    setLeft(left.concat(rightChecked));
-    setRight(not(right, rightChecked));
-    setChecked(not(checked, rightChecked));
+  // フレンズ削除
+  const handleCheckedLeft = async () => {
+    const deleteUserName = rightChecked.map((item) => item.username);
+    try {
+      const res = await httpClient.patch(`/users/${username}/deleteFriends`, { usernames: deleteUserName });
+      console.log('delete friends res: ', res);
+      setLeft(left.concat(rightChecked));
+      setRight(not(right, rightChecked));
+      setChecked(not(checked, rightChecked));
+    } catch (error) {
+      console.log('Error adding friends:', error);
+    }
   };
 
-  const customList = (title: React.ReactNode, items: readonly number[]) => (
+  const customList = (title: ReactNode, items: readonly { username: string, displayName: string }[]) => (
     <Card>
       <CardHeader
         sx={{ px: 2, py: 1 }}
@@ -98,19 +123,19 @@ export default function TransferList() {
         component="div"
         role="list"
       >
-        {items.map((value: number) => {
-          const labelId = `transfer-list-all-item-${value}-label`;
+        {items.map((item) => {
+        const labelId = `transfer-list-item-${item.username}-label`;
 
-          return (
-            <ListItem
-              key={value}
+        return (
+          <ListItem
+              key={item.username}
               role="listitem"
               button
-              onClick={handleToggle(value)}
+              onClick={handleToggle(item)}
             >
               <ListItemIcon>
                 <Checkbox
-                  checked={checked.indexOf(value) !== -1}
+                  checked={checked.indexOf(item) !== -1}
                   tabIndex={-1}
                   disableRipple
                   inputProps={{
@@ -118,17 +143,17 @@ export default function TransferList() {
                   }}
                 />
               </ListItemIcon>
-              <ListItemText id={labelId} primary={`List item ${value + 1}`} />
-            </ListItem>
-          );
-        })}
+              <ListItemText id={labelId} primary={`${item.displayName}`} />
+          </ListItem>
+        );
+      })}
       </List>
     </Card>
   );
 
   return (
     <Grid container spacing={2} justifyContent="center" alignItems="center">
-      <Grid item>{customList('Choices', left)}</Grid>
+      <Grid item>{customList('Not Friends', left)}</Grid>
       <Grid item>
         <Grid container direction="column" alignItems="center">
           <Button
@@ -153,7 +178,9 @@ export default function TransferList() {
           </Button>
         </Grid>
       </Grid>
-      <Grid item>{customList('Chosen', right)}</Grid>
+      <Grid item>{customList('Friends', right)}</Grid>
     </Grid>
   );
 }
+
+export default TransferList;

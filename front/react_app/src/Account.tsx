@@ -54,6 +54,10 @@ function Account() {
 	const [win, setWin] = useState(0);
 	const [lose, setLose] = useState(0);
 
+	// フレンズ情報
+	const [friendsList, setFriendsList] = useState([]);
+	const [notFriendsList, setNotFriendsList] = useState([]);
+
 	// ユーザー情報取得
 	useEffect(() => {
 
@@ -68,6 +72,10 @@ function Account() {
 				setStar(response.data.ladderLevel / 100);
 				setWin(response.data.wins);
 				setLose(response.data.losses);
+				if (response.data.friends)
+					setFriendsList(response.data.friends);
+				if (response.data.notFriends)
+					setNotFriendsList(response.data.notFriends);
 			})
 			.catch(() => {
 				console.log("error");
@@ -357,28 +365,28 @@ function Account() {
 								pageSizeOptions={[5, 10]}
 							/>
 						</Box>
-					<Divider sx={{ m:3 }}>Add Friends</Divider>
-						<TransferList sx={{ m:3 }}></TransferList>
-					<Divider sx={{ m:3 }}>Friends List</Divider>	
-						<Badge color="secondary" overlap="circular" badgeContent=" " variant="dot">
-							<Avatar alt="Remy Sharp" src="/static/images/avatar/1.jpg" />
-						</Badge>
-						<Badge color="secondary" overlap="circular" badgeContent=" " variant="dot">
-							<Avatar alt="Remy Sharp" src="/static/images/avatar/1.jpg" />
-						</Badge>
-						<Badge color="secondary" overlap="circular" badgeContent=" " variant="dot">
-							<Avatar alt="Remy Sharp" src="/static/images/avatar/1.jpg" />
-						</Badge>
-						{onlineUsers && (
-							<div>
-							<h2>Online Users:</h2>
-							<ul>
-								{onlineUsers.map((username) => (
-									<li key={username}>{username}</li>
+					<Divider sx={{ m:3 }}>Friends</Divider>
+						<Typography component="legend" sx={{ m:3 }}>- Add/Remove Friends -</Typography>	
+							<TransferList sx={{ m:3 }} friendsList={friendsList} notFriendsList={notFriendsList} username={username}></TransferList>
+						<Typography component="legend" sx={{ m:3 }}>- Friends Online/Offline Status -</Typography>
+							<Box>
+								{friendsList.map((friend) => (
+									<Badge
+										key={friend.username}
+										color="secondary"
+										overlap="circular"
+										badgeContent=" "
+										variant="dot"
+										sx={{
+											"& .MuiBadge-badge": {
+												backgroundColor: onlineUsers.includes(friend.username) ? 'green' : 'gray',
+											}
+										}}
+									>
+									<Avatar alt={friend.username} src={friend.avatar} sx={{ m:0.1 }}/>
+									</Badge>
 								))}
-							</ul>
-							</div>
-						)}
+							</Box>
 				</Grid>
 			</Grid>
 		</>
