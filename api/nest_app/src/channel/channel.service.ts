@@ -144,7 +144,7 @@ export class ChannelService {
     }
 
     async getUsersNotInChannel(channelId: number) {
-      // すべてのユーザーを取得
+      // Get all users
       const allUsers = await this.prisma.user.findMany({
         select: {
           id: true,
@@ -155,11 +155,16 @@ export class ChannelService {
         },
       });
     
-      // チャンネル内のユーザーを取得
+      // Get users in the channel
       const channelUsers = await this.prisma.channel.findUnique({
         where: { id: channelId },
         select: {
           users: {
+            select: {
+              id: true,
+            },
+          },
+          bannedUsers: {   //  Get banned users
             select: {
               id: true,
             },
@@ -171,9 +176,11 @@ export class ChannelService {
         throw new NotFoundException('Channel not found.');
       }
     
-      // チャンネルに参加していないユーザーをフィルタリング
+      // Filter out users who are in the channel or banned from the channel
       const notInChannelUsers = allUsers.filter(
-        (user) => !channelUsers.users.some((channelUser) => channelUser.id === user.id)
+        (user) => 
+          !channelUsers.users.some((channelUser) => channelUser.id === user.id) &&
+          !channelUsers.bannedUsers.some((bannedUser) => bannedUser.id === user.id)  // Exclude banned users
       );
     
       return notInChannelUsers;
@@ -494,6 +501,37 @@ export class ChannelService {
 
       await this.prisma.channel.delete({
         where: { id: channelId },
+      });
+      return { success: true };
+    }
+
+    async banUser(channelId: number, username: string) {
+      const channel = await this.prisma.channel.findUnique({
+        where: { id: channelId },
+        include: {
+          users: true,
+        },
+      });
+
+      if (!channel) {
+        throw new NotFoundException(`Channel with ID ${channelId} not found`);
+      }
+
+      const user = channel.users.find((user) => user.username === username);
+
+      if (!user) {
+        throw new BadRequestException(`User with username ${username} not found in channel with ID ${channelId}`);
+      }
+
+      await this.removeUserFromChannel(channelId, username);
+
+      await this.prisma.channel.update({
+        where: { id: channelId },
+        data: {
+          bannedUsers: {
+            connect: { id: user.id },
+          },
+        },
       });
       return { success: true };
     }

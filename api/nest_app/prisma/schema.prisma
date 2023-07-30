@@ -36,6 +36,7 @@ model User {
     channels          Channel[]
     createdChannels   Channel[] @relation("ChannelOwner")
     adminChannels     Channel[] @relation("ChannelAdmins")
+    bannedChannels    Channel[] @relation("BlockedUsers")
 
     // messages
     messages          Message[] @relation("ChannelAuthor")
@@ -66,6 +67,7 @@ model Channel {
     owner       User      @relation("ChannelOwner", fields: [ownerId], references: [id])
     admins      User[]    @relation("ChannelAdmins")
     users       User[]
+    bannedUsers User[]    @relation("BlockedUsers")
 
     // messages
     messages    Message[]

@@ -191,4 +191,16 @@ export class ChannelController {
     
     return this.channelService.deleteChannel(channelIdNumber);
   }
+
+  @Post(':channelId/users/ban')
+  @ApiResponse({ status: 200, description: 'Successfully banned user' })
+  async banUser(@Param('channelId') channelId: string, @Body('username') username: string) {
+    const channelIdNumber = Number(channelId);
+    
+    if (isNaN(channelIdNumber)) {
+      throw new BadRequestException('Invalid channel ID.');
+    }
+    return this.channelService.banUser(channelIdNumber, username);
+  }
+  
 }
