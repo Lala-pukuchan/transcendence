@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import TransferList from './TransferList.tsx';
 import { Divider, Avatar, FormControlLabel, Switch, Typography, Badge, Grid, Rating, IconButton, Button, Stack, Modal, Box, TextField, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 import { httpClient } from './httpClient.ts';
@@ -54,13 +54,17 @@ function Account() {
 	const [win, setWin] = useState(0);
 	const [lose, setLose] = useState(0);
 
+	// フレンズ情報
+	const [friendsList, setFriendsList] = useState([]);
+	const [notFriendsList, setNotFriendsList] = useState([]);
+
 	// ユーザー情報取得
 	useEffect(() => {
 
 		httpClient
 			.get("/users/" + username)
 			.then((response) => {
-				console.log("users response: ", response);
+				console.log("response(get userInfo): ", response);
 				if (response.data.isEnabledTfa)
 					setTfaEnabled(response.data.isEnabledTfa);
 				setDisplayName(response.data.displayName);
@@ -68,6 +72,10 @@ function Account() {
 				setStar(response.data.ladderLevel / 100);
 				setWin(response.data.wins);
 				setLose(response.data.losses);
+				if (response.data.friends)
+					setFriendsList(response.data.friends);
+				if (response.data.notFriends)
+					setNotFriendsList(response.data.notFriends);
 			})
 			.catch(() => {
 				console.log("error");
@@ -106,7 +114,7 @@ function Account() {
 			httpClient
 				.post("/auth/2fa/generate", null, { headers: { 'Authorization': 'Bearer ' + getCookie("token") }})
 				.then((response) => {
-					console.log("response: ", response);
+					console.log("response(generate 2fa qrcode): ", response);
 					setQrCode(response.data);
 				})
 				.catch(() => {
@@ -125,7 +133,7 @@ function Account() {
 				}
 			})
 			.then((response) => {
-				console.log("response: ", response);
+				console.log("response(turn off 2fa): ", response);
 				setTfaEnabled(false);
 			})
 			.catch(() => {
@@ -151,7 +159,7 @@ function Account() {
 				}
 			})
 			.then((response) => {
-				console.log("response: ", response);
+				console.log("response(turn on 2fa): ", response);
 				setOpen(false);
 				setTfaEnabled(true);
 				setErrorMessage('');
@@ -181,7 +189,7 @@ function Account() {
 					}
 				})
 			.then((response) => {
-				console.log("response: ", response);
+				console.log("response(upload avatar): ", response);
 			})
 			.catch(() => {
 				console.log("error");
@@ -220,7 +228,7 @@ function Account() {
 				}
 			})
 			.then((response) => {
-				console.log("response: ", response);
+				console.log("response(change displayname): ", response);
 				setOpenDn(false);
 				setDisplayName(newDisplayName);
 				setErrorMessageDn('');
@@ -234,10 +242,28 @@ function Account() {
 	// 対戦履歴
 	const columns: GridColDef[] = [
 		{ field: 'createdAt', headerName: 'createdAt' },
-		{ field: 'user1.displayName', headerName: 'user1', valueGetter: (params) => params.row.user1?.displayName || 'N/A' },
+		{
+			field: 'user1.displayName',
+			headerName: 'user1',
+			valueGetter: (params) => params.row.user1?.displayName || 'N/A',
+			renderCell: (params) => (
+			  <Link to={`/simpleAccount/${params.row.user1?.username}`}>
+				{params.row.user1?.displayName || 'N/A'}
+			  </Link>
+			),
+		},
 		{ field: 'score1', headerName: 'score1', type: 'number'},
 		{ field: 'result1', headerName: 'result1' },
-		{ field: 'user2.displayName', headerName: 'user2', valueGetter: (params) => params.row.user2?.displayName || 'N/A' },
+		{
+			field: 'user2.displayName',
+			headerName: 'user2',
+			valueGetter: (params) => params.row.user2?.displayName || 'N/A',
+			renderCell: (params) => (
+				<Link to={`/simpleAccount/${params.row.user2?.username}`}>
+				  {params.row.user2?.displayName || 'N/A'}
+				</Link>
+			),
+		},
 		{ field: 'score2', headerName: 'score2', type: 'number' },
 		{ field: 'result2', headerName: 'result2' },
 	];
@@ -246,7 +272,7 @@ function Account() {
 		httpClient
 			.get("/games/user/" + username + "/match-history")
 			.then((response) => {
-				console.log("response: ", response);
+				console.log("response(match history): ", response);
 				setRows(response.data);
 			})
 			.catch(() => {
@@ -357,28 +383,28 @@ function Account() {
 								pageSizeOptions={[5, 10]}
 							/>
 						</Box>
-					<Divider sx={{ m:3 }}>Add Friends</Divider>
-						<TransferList sx={{ m:3 }}></TransferList>
-					<Divider sx={{ m:3 }}>Friends List</Divider>	
-						<Badge color="secondary" overlap="circular" badgeContent=" " variant="dot">
-							<Avatar alt="Remy Sharp" src="/static/images/avatar/1.jpg" />
-						</Badge>
-						<Badge color="secondary" overlap="circular" badgeContent=" " variant="dot">
-							<Avatar alt="Remy Sharp" src="/static/images/avatar/1.jpg" />
-						</Badge>
-						<Badge color="secondary" overlap="circular" badgeContent=" " variant="dot">
-							<Avatar alt="Remy Sharp" src="/static/images/avatar/1.jpg" />
-						</Badge>
-						{onlineUsers && (
-							<div>
-							<h2>Online Users:</h2>
-							<ul>
-								{onlineUsers.map((username) => (
-									<li key={username}>{username}</li>
+					<Divider sx={{ m:3 }}>Friends</Divider>
+						<Typography component="legend" sx={{ m:3 }}>- Add/Remove Friends -</Typography>	
+							<TransferList sx={{ m:3 }} friendsList={friendsList} notFriendsList={notFriendsList} username={username}></TransferList>
+						<Typography component="legend" sx={{ m:3 }}>- Friends Online/Offline Status -</Typography>
+							<Box>
+								{friendsList.map((friend) => (
+									<Badge
+										key={friend.username}
+										color="secondary"
+										overlap="circular"
+										badgeContent=" "
+										variant="dot"
+										sx={{
+											"& .MuiBadge-badge": {
+												backgroundColor: onlineUsers.includes(friend.username) ? 'green' : 'gray',
+											}
+										}}
+									>
+									<Avatar alt={friend.username} src={friend.avatar} sx={{ m:0.1 }}/>
+									</Badge>
 								))}
-							</ul>
-							</div>
-						)}
+							</Box>
 				</Grid>
 			</Grid>
 		</>

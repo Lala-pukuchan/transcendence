@@ -23,7 +23,7 @@ model User {
     // basic info
     username          String    @unique
     displayName       String?   @unique
-    avatar            String?   @default("default.jpg") // Default avatar path
+    avatar            String?   @default("/uploads/default.jpg") // Default avatar path
 
     // relationships
     friends           User[]    @relation("UserFriends")

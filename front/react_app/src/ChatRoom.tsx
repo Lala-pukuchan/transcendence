@@ -518,7 +518,7 @@ function ChatRoom() {
         if (response.data.isValid) {
           // パスワードが正しい場合、ここでパスワードを変更します
           httpClient
-            .post(`/channels/${roomId}/change-password`, { oldPassword: inputOldPassword, newPassword: inputNewPassword })
+            .patch(`/channels/${roomId}/change-password`, { oldPassword: inputOldPassword, newPassword: inputNewPassword })
             .then((response) => {
               console.log(response);  // レスポンスをログ出力
               alert("パスワードを変更しました");  // 成功メッセージを表示します

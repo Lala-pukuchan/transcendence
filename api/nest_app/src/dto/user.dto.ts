@@ -163,3 +163,10 @@ export class DisplayNameClass {
     @IsNotEmpty()
     displayName: string;
 }
+
+export class UserNamesClass {
+    @ApiProperty({ description: 'The usernames to be controlled.' })
+    @IsString()
+    @IsNotEmpty()
+    usernames: string[];
+}
