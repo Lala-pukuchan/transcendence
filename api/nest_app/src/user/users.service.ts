@@ -165,47 +165,55 @@ export class UsersService {
     
 
     async getPublicChannelsNotInUser(username: string) {
-      const user = await this.prisma.user.findUnique({
-        where: { username: username },
-        include: { 
-          channels: true,
-          createdChannels: true,
-          adminChannels: true
-        },
-     });
-
-      if (!user) {
-          throw new NotFoundException(`User with username ${username} not found.`);
+        const user = await this.prisma.user.findUnique({
+          where: { username: username },
+          include: { 
+            channels: true,
+            createdChannels: true,
+            adminChannels: true,
+            bannedChannels: true  // Get banned channels
+          },
+        });
+      
+        if (!user) {
+            throw new NotFoundException(`User with username ${username} not found.`);
+        }
+      
+        // Channels the user is a part of
+        const joinedChannels = [...user.channels];
+      
+        // Channels the user is banned from
+        const bannedChannels = [...user.bannedChannels];
+      
+        // Public channels
+        const publicChannels = await this.prisma.channel.findMany({
+          where: {
+            isPublic: true,
+          },
+        });
+      
+        // Exclude channels the user has joined or is banned from
+        const notJoinedPublicChannels = publicChannels.filter(publicChannel => 
+          !joinedChannels.some(joinedChannel =>
+              joinedChannel.id === publicChannel.id
+          ) && 
+          !bannedChannels.some(bannedChannel =>
+              bannedChannel.id === publicChannel.id
+          )
+        );
+      
+        notJoinedPublicChannels.sort((a, b) => b.lastUpdated.getTime() - a.lastUpdated.getTime());
+      
+        // Return only the necessary channel information
+        return notJoinedPublicChannels.map(channel => ({
+          id: channel.id,
+          name: channel.name,
+          isDM: channel.isDM,
+          isPublic: channel.isPublic,
+          isProtected: channel.isProtected,
+          lastUpdated: channel.lastUpdated,
+        }));
       }
-
-      // Channels the user is a part of
-      const joinedChannels = [...user.channels];
-
-      // Public channels
-      const publicChannels = await this.prisma.channel.findMany({
-        where: {
-          isPublic: true,
-        },
-      });
-
-      const notJoinedPublicChannels = publicChannels.filter(publicChannel => 
-        !joinedChannels.some(joinedChannel =>
-            joinedChannel.id === publicChannel.id
-        )
-      );
-
-      notJoinedPublicChannels.sort((a, b) => b.lastUpdated.getTime() - a.lastUpdated.getTime());
-
-      // Return only the necessary channel information
-      return notJoinedPublicChannels.map(channel => ({
-        id: channel.id,
-        name: channel.name,
-        isDM: channel.isDM,
-        isPublic: channel.isPublic,
-        isProtected: channel.isProtected,
-        lastUpdated: channel.lastUpdated,
-      }));
-    }
 
     async findUserByUsername(username: string) {
         return this.prisma.user.findUnique({
