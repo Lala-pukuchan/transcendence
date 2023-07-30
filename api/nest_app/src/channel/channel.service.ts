@@ -450,4 +450,51 @@ export class ChannelService {
 
       return dmuser;
     }
+
+    async changeOwner(channelId: number, username: string) {
+      const channel = await this.prisma.channel.findUnique({
+        where: { id: channelId },
+        include: {
+          owner: true,
+          admins: true,
+          users: true,
+        },
+      });
+
+      if (!channel) {
+        throw new NotFoundException(`Channel with ID ${channelId} not found`);
+      }
+
+      const user = channel.users.find((user) => user.username === username);
+
+      if (!user) {
+        throw new BadRequestException(`User with username ${username} not found in channel with ID ${channelId}`);
+      }
+
+      await this.prisma.channel.update({
+        where: { id: channelId },
+        data: {
+          // ownerId: user.id,
+          owner: {
+            connect: { id: user.id },
+          },
+        },
+      });
+      return { success: true };
+    }
+
+    async deleteChannel(channelId: number) {
+      const channel = await this.prisma.channel.findUnique({
+        where: { id: channelId },
+      });
+
+      if (!channel) {
+        throw new NotFoundException(`Channel with ID ${channelId} not found`);
+      }
+
+      await this.prisma.channel.delete({
+        where: { id: channelId },
+      });
+      return { success: true };
+    }
 }

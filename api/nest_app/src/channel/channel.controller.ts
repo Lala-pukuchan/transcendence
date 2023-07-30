@@ -168,4 +168,27 @@ export class ChannelController {
     }
     return this.channelService.getDmUser(channelIdNumber, username);
   }
+
+  @Patch(":channelId/change-owner")
+  @ApiResponse({ status: 200, description: 'Successfully changed owner' })
+  async changeOwner(@Param('channelId') channelId: string, @Body('username') username: string) {
+    const channelIdNumber = Number(channelId);
+
+    if (isNaN(channelIdNumber)) {
+      throw new BadRequestException('Invalid channel ID.');
+    }
+    return this.channelService.changeOwner(channelIdNumber, username);
+  }
+
+  @Delete(':channelId')
+  @ApiResponse({ status: 200, description: 'Successfully deleted channel' })
+  async deleteChannel(@Param('channelId') channelId: string) {
+    const channelIdNumber = Number(channelId);
+
+    if (isNaN(channelIdNumber)) {
+      throw new BadRequestException('Invalid channel ID.');
+    }
+    
+    return this.channelService.deleteChannel(channelIdNumber);
+  }
 }
