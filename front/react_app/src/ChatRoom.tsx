@@ -22,6 +22,9 @@ import DialogActions from '@mui/material/DialogActions';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import InputAdornment from '@mui/material/InputAdornment';
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
+import FormControlLabel from '@mui/material/FormControlLabel';
 
 
 // socket.ioの初期化(socketをどのタイミングで作成するかは要検討)
@@ -41,8 +44,14 @@ function ChatRoom() {
   const username = decoded.user.username;
 
 	// ルーム情報の取得
-	const location = useLocation();
-	const roomId = location.state.room;
+  const location = useLocation();
+  let roomId: string | null = null;
+  if (location.state && location.state.room) {
+    roomId = location.state.room;
+  } else {
+    navigate('/selectRoom');
+    return null;
+  }
   const [room, setRoom] = useState<any>({});
 
   // ルーム情報を取得する関数
@@ -54,7 +63,7 @@ function ChatRoom() {
   // ページロード時にルーム情報を取得します
   useEffect(() => {
     getRoom();
-  }, []);
+  }, [roomId]);
 
   // メッセージ表示用
   const [chatLog, setChatLog] = useState<Array<any>>([]); // chatLogの型をstring[]からany[]に変更します
@@ -201,6 +210,8 @@ function ChatRoom() {
   const [unsetPassword, setUnsetPassword] = useState(false); // パスワード削除の状態を管理
   const [blockUser, setBlockUser] = useState(false); // ユーザーブロックの状態を管理
   const [dmUser, setDmUser] = useState(false); // DMの状態を管理
+  const [leaveChannel, setLeaveChannel] = useState(false); // チャンネル退出の状態を管理
+  const [selectedUser, setSelectedUser] = useState(null); // 選択されたユーザーの状態を管理
   const itemsPerPage = 10; // 1ページあたりのアイテム数
   const [anchorEl, setAnchorEl] = useState(null);
 
@@ -218,6 +229,7 @@ function ChatRoom() {
     closeUnsetPassword();
     closeCreatePassword();
     closeBlockUser();
+    closeLeaveChannel();
 
     // Only handle click events from the MenuItems
     if (event.type === "click") {
@@ -244,6 +256,12 @@ function ChatRoom() {
       }
       else if (event.target.textContent === `Block ${dmUser.username}`) {
         setBlockUser(true);
+      }
+      else if (event.target.textContent === "Leave Channel") {
+        if (room.isOwner) {
+          getNotOwners();
+        }
+        setLeaveChannel(true);
       }
     }
 
@@ -349,6 +367,14 @@ function ChatRoom() {
     }
   };
 
+  const handleToggleChangeOwner = (user) => {
+    if (selectedUser && selectedUser.username === user.username) {
+      setSelectedUser(null);  // すでに選択されているユーザーを再度クリックすると選択を解除
+    } else {
+      setSelectedUser(user);  // 新たなユーザーを選択
+    }
+  };
+
   // ダイアログを閉じる関数
   // ダイアログを閉じる関数(member)
   const closeMembers = () => {
@@ -399,6 +425,11 @@ function ChatRoom() {
 
   const closeBlockUser = () => {
     setBlockUser(false);
+  }
+
+  const closeLeaveChannel = () => {
+    setSelectedUser(null);
+    setLeaveChannel(false);
   }
 
   // member管理を行う関数
@@ -557,6 +588,67 @@ function ChatRoom() {
         });
   }
 
+  const handleLeaveChannel = () => {
+    if (room.isOwner) {
+      httpClient
+        .delete(`/channels/${roomId}`)
+        .then((response) => {
+            console.log(response);  // レスポンスをログ出力
+            alert("チャンネルを削除し、退出しました");  // 成功メッセージを表示します
+            closeLeaveChannel();  // ダイアログを閉じます
+            navigate('/selectRoom');
+            return;
+        })
+        .catch((error) => {
+            console.log("An error occurred:", error);
+            alert("An error occurred while deleting the channel");  // エラーメッセージを表示します
+            closeLeaveChannel();  // ダイアログを閉じます
+            return;
+        });
+    } else {
+      httpClient
+          .delete(`/channels/${roomId}/users/${username}`)
+          .then((response) => {
+              console.log(response);  // レスポンスをログ出力
+              alert("チャンネルから退出しました");  // 成功メッセージを表示します
+              closeLeaveChannel();  // ダイアログを閉じます
+              navigate('/selectRoom');
+          })
+          .catch((error) => {
+              console.log("An error occurred:", error);
+              alert("An error occurred while leaving the channel");  // エラーメッセージを表示します
+          });
+    }
+  }
+
+  const handleChangeOwner = () => {
+    httpClient
+      .patch(`/channels/${roomId}/change-owner`, { username: selectedUser.username })
+      .then((response) => {
+        console.log(response);  // レスポンスをログ出力
+        alert("オーナーを変更しました");  // 成功メッセージを表示します
+      })
+      .catch((error) => {
+        console.log("An error occurred:", error);
+        alert("An error occurred while changing the owner");  // エラーメッセージを表示します
+        closeLeaveChannel();  // ダイアログを閉じます
+        return;
+      });
+    httpClient
+      .delete(`/channels/${roomId}/users/${username}`)
+      .then((response) => {
+        console.log(response);  // レスポンスをログ出力
+        alert("チャンネルから退出しました");  // 成功メッセージを表示します
+        closeLeaveChannel();  // ダイアログを閉じます
+        navigate('/selectRoom');
+      })
+      .catch((error) => {
+        console.log("An error occurred:", error);
+        alert("An error occurred while leaving the channel");  // エラーメッセージを表示します
+        closeLeaveChannel();  // ダイアログを閉じます
+      });
+  }
+
 	return (
 		<>
       <IconButton
@@ -586,6 +678,7 @@ function ChatRoom() {
       {room.isOwner && room.isProtected && <MenuItem onClick={handleClose}>Change Password</MenuItem>}
       {room.isOwner && !room.isDM && room.isProtected && <MenuItem onClick={handleClose}>Unset Password</MenuItem>}
       {room.isOwner && !room.isDM && room.isPublic && !room.isProtected && <MenuItem onClick={handleClose}>Set Password</MenuItem>}
+      {!room.isDM && <MenuItem onClick={handleClose}>Leave Channel</MenuItem>}
     </Menu>
 			<Box
 				sx={{
@@ -892,6 +985,52 @@ function ChatRoom() {
         >
           Block {dmUser.username}
         </Button>
+      </Dialog>
+      <Dialog open={leaveChannel} onClose={closeLeaveChannel}>
+      <DialogTitle>Leave Channel</DialogTitle>
+
+      {displayedNotOwners.length > 0 && room.isOwner ? (
+            // Ownerを譲ってから退出する場合
+          <>
+              <RadioGroup value={selectedUser ? selectedUser.username : ""}>
+                  {displayedNotOwners.map((user, index) => (
+                      <ListItem key={index}>
+                          <Avatar src={import.meta.env.VITE_API_BASE_URL + "users/" + user.username + "/avatar"} sx={{ mr: 1 }} />
+                          <ListItemText primary={user.username} />
+                          <FormControlLabel 
+                              value={user.username} 
+                              control={<Radio color="primary" />} 
+                              onChange={() => handleToggleChangeOwner(user)}
+                              sx={{ mr: 0 }}
+                          />
+                      </ListItem>
+                  ))}
+              </RadioGroup>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1 }}>
+                  <Button onClick={() => setPage(page - 1)} disabled={page === 0}>Previous</Button>
+                  <Button onClick={() => setPage(page + 1)} disabled={(page + 1) * itemsPerPage >= filteredUsers.length}>Next</Button>
+              </Box>
+              <Button 
+                  variant="contained" 
+                  color="primary" 
+                  onClick={handleChangeOwner}
+                  disabled={selectedUser === null}
+                  sx={{ mt: 2, mb: 2 }}
+              >
+                  Give ownership and leave channel
+              </Button>
+          </>
+      ) : (
+          //Ownerではない or 自分が最後の1人である場合
+          <Button 
+              variant="contained" 
+              color="primary" 
+              onClick={handleLeaveChannel} 
+              sx={{ mt: 2, mb: 2 }}
+          >
+              Leave Channel
+          </Button>
+      )}
       </Dialog>
 		</>
 	)

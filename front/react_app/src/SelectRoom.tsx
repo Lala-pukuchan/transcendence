@@ -43,6 +43,7 @@ function SelectRoom() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [notJoinedRows, setNotJoinedRows] = useState<GridRowsProp>([]);
+  const [isJoined, setIsJoined] = useState(false);
 	
   const navigate = useNavigate();
 
@@ -124,6 +125,13 @@ function SelectRoom() {
   const handleEvent: GridEventListener<'rowClick'> = (params) => {
     setSelectedRoom(params.row);
     setRoomId(parseInt(params.id));
+    setIsJoined(true);
+  };
+
+  const handleEventNotJoined: GridEventListener<'rowClick'> = (params) => {
+    setSelectedRoom(params.row);
+    setRoomId(parseInt(params.id));
+    setIsJoined(false);
   };
 
   const handlePasswordChange = (event) => {
@@ -142,6 +150,18 @@ function SelectRoom() {
         console.log(response);  // レスポンスをログ出力
         if (response.data.isValid) {
           setOpenDialog(false);  // パスワードが検証された後にダイアログを閉じます
+          if (!isJoined) {
+            httpClient
+              .post(`/channels/${selectedRoom.id}/users`, { username: username })
+              .then((response) => {
+                console.log(response);  // レスポンスをログ出力
+              })
+            .catch((error) => {
+              console.log("An error occurred in joining room:", error);
+              alert("An error occurred in joining room");  // エラーメッセージを表示します
+              return;
+            });
+          }
           navigate('/chatRoom', { state: {room: roomId} });
         } else {
           // パスワードが間違っている場合、ここでエラーメッセージを表示します
@@ -156,6 +176,26 @@ function SelectRoom() {
 
   const toggleShowPassword = () => {
     setShowPassword(!showPassword);
+  };
+
+  const openChatRoom = () => {
+    if (selectedRoom.isProtected) {
+      setIsDialogOpen(true);
+    } else {
+      if (!isJoined) {
+        httpClient
+          .post(`/channels/${selectedRoom.id}/users`, { username: username })
+          .then((response) => {
+            console.log(response);  // レスポンスをログ出力
+          })
+        .catch((error) => {
+          console.log("An error occurred in joining room:", error);
+          alert("An error occurred in joining room");  // エラーメッセージを表示します
+          return;
+        });
+      }
+      navigate('/chatRoom', { state: {room: roomId} });
+    }
   };
 
 	return (
@@ -191,7 +231,7 @@ function SelectRoom() {
                 },
               }}
               pageSizeOptions={[5, 10]}
-              onRowClick={handleEvent}
+              onRowClick={handleEventNotJoined}
             />
           </div>
         </div>
@@ -205,13 +245,7 @@ function SelectRoom() {
           <Button
             variant="contained"
             endIcon={<ChatIcon />}
-            onClick={() => {
-              if (selectedRoom.isProtected) {
-                setIsDialogOpen(true);
-              } else {
-                navigate('/chatRoom', { state: {room: roomId} });
-              }
-            }}
+            onClick={openChatRoom}
             sx={{ m: 2, width: '25%' }}
             disabled={roomId === 0}  // roomIdが0のとき、このボタンを無効化します
           >

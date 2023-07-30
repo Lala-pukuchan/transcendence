@@ -85,7 +85,7 @@ model Message {
     username    String
     author    User     @relation("ChannelAuthor", fields: [username], references: [username])
     channelId Int
-    channel   Channel  @relation(fields: [channelId], references: [id])
+    channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
 }
 
 model Game {
