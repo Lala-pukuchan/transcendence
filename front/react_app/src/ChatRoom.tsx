@@ -504,7 +504,7 @@ function ChatRoom() {
         if (response.data.isValid) {
           // パスワードが正しい場合、ここでパスワードを変更します
           httpClient
-            .post(`/channels/${roomId}/change-password`, { oldPassword: inputOldPassword, newPassword: inputNewPassword })
+            .patch(`/channels/${roomId}/change-password`, { oldPassword: inputOldPassword, newPassword: inputNewPassword })
             .then((response) => {
               console.log(response);  // レスポンスをログ出力
               alert("パスワードを変更しました");  // 成功メッセージを表示します
@@ -672,9 +672,9 @@ function ChatRoom() {
       onClose={handleClose}
     >
       {room.isDM && <MenuItem onClick={handleClose}>Block {dmUser.username}</MenuItem>}
-      {room.isAdmin && room.isPiblic && <MenuItem onClick={handleClose}>Add Users</MenuItem>}
-      {room.isAdmin && room.isPiblic && <MenuItem onClick={handleClose}>Add Administrators</MenuItem>}
-      {room.isAdmin && room.isPiblic && <MenuItem onClick={handleClose}>Kick Members</MenuItem>}
+      {room.isAdmin && !room.isDM && <MenuItem onClick={handleClose}>Add Users</MenuItem>}
+      {room.isAdmin && !room.isDM && <MenuItem onClick={handleClose}>Add Administrators</MenuItem>}
+      {room.isAdmin && !room.isDM && <MenuItem onClick={handleClose}>Kick Members</MenuItem>}
       {room.isOwner && room.isProtected && <MenuItem onClick={handleClose}>Change Password</MenuItem>}
       {room.isOwner && !room.isDM && room.isProtected && <MenuItem onClick={handleClose}>Unset Password</MenuItem>}
       {room.isOwner && !room.isDM && room.isPublic && !room.isProtected && <MenuItem onClick={handleClose}>Set Password</MenuItem>}

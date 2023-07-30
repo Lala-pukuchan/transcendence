@@ -50,6 +50,7 @@ services:
     volumes:
       - .:/workspace
       - api_store:/workspace/api/$API_PROJ_NAME/node_modules
+      - ./api/nest_app/uploads:/uploads
     # NestJSは3000番ポートで起動するため、ローカル側のものをポートフォワード
     # また、Prisma Studioを使う際は5555番ポートで起動するため、ローカル側のものをポートフォワード
     ports:
