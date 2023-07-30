@@ -64,7 +64,7 @@ function Account() {
 		httpClient
 			.get("/users/" + username)
 			.then((response) => {
-				console.log("users response: ", response);
+				console.log("response(get userInfo): ", response);
 				if (response.data.isEnabledTfa)
 					setTfaEnabled(response.data.isEnabledTfa);
 				setDisplayName(response.data.displayName);
@@ -114,7 +114,7 @@ function Account() {
 			httpClient
 				.post("/auth/2fa/generate", null, { headers: { 'Authorization': 'Bearer ' + getCookie("token") }})
 				.then((response) => {
-					console.log("response: ", response);
+					console.log("response(generate 2fa qrcode): ", response);
 					setQrCode(response.data);
 				})
 				.catch(() => {
@@ -133,7 +133,7 @@ function Account() {
 				}
 			})
 			.then((response) => {
-				console.log("response: ", response);
+				console.log("response(turn off 2fa): ", response);
 				setTfaEnabled(false);
 			})
 			.catch(() => {
@@ -159,7 +159,7 @@ function Account() {
 				}
 			})
 			.then((response) => {
-				console.log("response: ", response);
+				console.log("response(turn on 2fa): ", response);
 				setOpen(false);
 				setTfaEnabled(true);
 				setErrorMessage('');
@@ -189,7 +189,7 @@ function Account() {
 					}
 				})
 			.then((response) => {
-				console.log("response: ", response);
+				console.log("response(upload avatar): ", response);
 			})
 			.catch(() => {
 				console.log("error");
@@ -228,7 +228,7 @@ function Account() {
 				}
 			})
 			.then((response) => {
-				console.log("response: ", response);
+				console.log("response(change displayname): ", response);
 				setOpenDn(false);
 				setDisplayName(newDisplayName);
 				setErrorMessageDn('');
@@ -254,7 +254,7 @@ function Account() {
 		httpClient
 			.get("/games/user/" + username + "/match-history")
 			.then((response) => {
-				console.log("response: ", response);
+				console.log("response(match history): ", response);
 				setRows(response.data);
 			})
 			.catch(() => {
