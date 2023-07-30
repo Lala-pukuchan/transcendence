@@ -14,6 +14,14 @@ function Chat() {
 
   return (
     <>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          onClick={() => navigate('/')}
+          sx={{ m:3 }}
+        >
+        Back Home
+        </Button>
         <Button variant="outlined" startIcon={<AddCommentIcon />} onClick={() => navigate('/createRoom', { state: userId })}>
             Create Room
         </Button>
