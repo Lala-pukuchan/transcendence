@@ -212,6 +212,7 @@ function ChatRoom() {
   const [dmUser, setDmUser] = useState(false); // DMの状態を管理
   const [leaveChannel, setLeaveChannel] = useState(false); // チャンネル退出の状態を管理
   const [selectedUser, setSelectedUser] = useState(null); // 選択されたユーザーの状態を管理
+  const [banMembers, setBanMembers] = useState(false); // チャンネル退出の状態を管理
   const itemsPerPage = 10; // 1ページあたりのアイテム数
   const [anchorEl, setAnchorEl] = useState(null);
 
@@ -230,6 +231,7 @@ function ChatRoom() {
     closeCreatePassword();
     closeBlockUser();
     closeLeaveChannel();
+    closeBanMembers();
 
     // Only handle click events from the MenuItems
     if (event.type === "click") {
@@ -262,6 +264,10 @@ function ChatRoom() {
           getNotOwners();
         }
         setLeaveChannel(true);
+      }
+      else if (event.target.textContent === "Ban Members") {
+        getNotOwners();
+        setBanMembers(true);
       }
     }
 
@@ -402,6 +408,14 @@ function ChatRoom() {
     setPage(0);
     setShowNotOwners(false);
   };
+
+  const closeBanMembers = () => {
+    setSelectedNotOwners([]);
+    setNotOwners([]);
+    setSearch('');
+    setPage(0);
+    setBanMembers(false);
+  }
 
   const closeChangePassword = () => {
     setChangePassword(false);
@@ -649,6 +663,22 @@ function ChatRoom() {
       });
   }
 
+  const handleBanMembers = async () => {
+    try {
+      await Promise.all(
+        selectedNotOwners.map((notOwner) =>
+          httpClient.post(`/channels/${roomId}/users/ban`, {
+            username: notOwner.username,
+          })
+        )
+      );
+    } catch (error) {
+      console.error("An error occurred while banning the members from the channel:", error);
+    }
+    closeBanMembers();
+    getRoom();
+  }
+
 	return (
 		<>
       <IconButton
@@ -672,9 +702,10 @@ function ChatRoom() {
       onClose={handleClose}
     >
       {room.isDM && <MenuItem onClick={handleClose}>Block {dmUser.username}</MenuItem>}
-      {room.isAdmin && room.isPiblic && <MenuItem onClick={handleClose}>Add Users</MenuItem>}
-      {room.isAdmin && room.isPiblic && <MenuItem onClick={handleClose}>Add Administrators</MenuItem>}
-      {room.isAdmin && room.isPiblic && <MenuItem onClick={handleClose}>Kick Members</MenuItem>}
+      {room.isAdmin && !room.isDM && <MenuItem onClick={handleClose}>Add Users</MenuItem>}
+      {room.isAdmin && !room.isDM && <MenuItem onClick={handleClose}>Add Administrators</MenuItem>}
+      {room.isAdmin && !room.isDM && <MenuItem onClick={handleClose}>Kick Members</MenuItem>}
+      {room.isAdmin && !room.isDM && <MenuItem onClick={handleClose}>Ban Members</MenuItem>}
       {room.isOwner && room.isProtected && <MenuItem onClick={handleClose}>Change Password</MenuItem>}
       {room.isOwner && !room.isDM && room.isProtected && <MenuItem onClick={handleClose}>Unset Password</MenuItem>}
       {room.isOwner && !room.isDM && room.isPublic && !room.isProtected && <MenuItem onClick={handleClose}>Set Password</MenuItem>}
@@ -816,6 +847,34 @@ function ChatRoom() {
           sx={{ mt: 2, mb: 2 }}
         >
           Kick Members
+        </Button>
+      </Dialog>
+      <Dialog open={banMembers} onClose={() => closeBanMembers()}>
+        <DialogTitle>Choose users to ban</DialogTitle>
+        <TextField
+          placeholder="Search users"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        {displayedNotOwners.map((user, index) => (  // フィルタリングとページングされたユーザーを表示
+          <ListItem key={index}>
+            <Avatar src={import.meta.env.VITE_API_BASE_URL + "users/" + user.username + "/avatar"} sx={{ mr: 1 }} />
+            <ListItemText primary={user.username} />
+            <Checkbox color="primary" onChange={() => handleToggleNotOwner(user)} />
+          </ListItem>
+        ))}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1 }}>
+          <Button onClick={() => setPage(page - 1)} disabled={page === 0}>Previous</Button>
+          <Button onClick={() => setPage(page + 1)} disabled={(page + 1) * itemsPerPage >= filteredUsers.length}>Next</Button>
+        </Box>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          onClick={handleBanMembers} 
+          disabled={selectedNotOwners.length === 0}
+          sx={{ mt: 2, mb: 2 }}
+        >
+          Ban Members
         </Button>
       </Dialog>
       <Dialog open={changePassword} onClose={() => setChangePassword(false)}>
