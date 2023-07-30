@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import TransferList from './TransferList.tsx';
 import { Divider, Avatar, FormControlLabel, Switch, Typography, Badge, Grid, Rating, IconButton, Button, Stack, Modal, Box, TextField, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 import { httpClient } from './httpClient.ts';
@@ -242,10 +242,28 @@ function Account() {
 	// 対戦履歴
 	const columns: GridColDef[] = [
 		{ field: 'createdAt', headerName: 'createdAt' },
-		{ field: 'user1.displayName', headerName: 'user1', valueGetter: (params) => params.row.user1?.displayName || 'N/A' },
+		{
+			field: 'user1.displayName',
+			headerName: 'user1',
+			valueGetter: (params) => params.row.user1?.displayName || 'N/A',
+			renderCell: (params) => (
+			  <Link to={`/simpleAccount/${params.row.user1?.username}`}>
+				{params.row.user1?.displayName || 'N/A'}
+			  </Link>
+			),
+		},
 		{ field: 'score1', headerName: 'score1', type: 'number'},
 		{ field: 'result1', headerName: 'result1' },
-		{ field: 'user2.displayName', headerName: 'user2', valueGetter: (params) => params.row.user2?.displayName || 'N/A' },
+		{
+			field: 'user2.displayName',
+			headerName: 'user2',
+			valueGetter: (params) => params.row.user2?.displayName || 'N/A',
+			renderCell: (params) => (
+				<Link to={`/simpleAccount/${params.row.user2?.username}`}>
+				  {params.row.user2?.displayName || 'N/A'}
+				</Link>
+			),
+		},
 		{ field: 'score2', headerName: 'score2', type: 'number' },
 		{ field: 'result2', headerName: 'result2' },
 	];
