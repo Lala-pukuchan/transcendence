@@ -101,6 +101,26 @@ function ChatRoom() {
   const submitMessage = useCallback(() => {
     if (inputRef.current.value === '')
       return;
+
+    if (room.isMuted) {
+      httpClient
+        .get(`/channels/${roomId}/users/${username}/is-muted`)
+        .then((response) => {
+          console.log(response);
+          if (response.data.isMuted) {
+            alert(`ミュートされているため残り${response.data.remainingMinutes}分メッセージを送信できません`);
+            return;
+          }
+          else {
+            getRoom();
+          }
+        })
+        .catch((error) => {
+          console.log("An error occurred:", error);
+          alert("An error occurred while verifying the mute status");  // エラーメッセージを表示します
+          return;
+        });
+    }
       
       // json形式で送信
       const message = {
@@ -213,6 +233,7 @@ function ChatRoom() {
   const [leaveChannel, setLeaveChannel] = useState(false); // チャンネル退出の状態を管理
   const [selectedUser, setSelectedUser] = useState(null); // 選択されたユーザーの状態を管理
   const [banMembers, setBanMembers] = useState(false); // チャンネル退出の状態を管理
+  const [muteMembers, setMuteMembers] = useState(false); // チャンネル退出の状態を管理
   const itemsPerPage = 10; // 1ページあたりのアイテム数
   const [anchorEl, setAnchorEl] = useState(null);
 
@@ -232,6 +253,7 @@ function ChatRoom() {
     closeBlockUser();
     closeLeaveChannel();
     closeBanMembers();
+    closeMuteMembers();
 
     // Only handle click events from the MenuItems
     if (event.type === "click") {
@@ -268,6 +290,10 @@ function ChatRoom() {
       else if (event.target.textContent === "Ban Members") {
         getNotOwners();
         setBanMembers(true);
+      }
+      else if (event.target.textContent === "Mute Members") {
+        getNotOwners();
+        setMuteMembers(true);
       }
     }
 
@@ -415,6 +441,14 @@ function ChatRoom() {
     setSearch('');
     setPage(0);
     setBanMembers(false);
+  }
+
+  const closeMuteMembers = () => {
+    setSelectedNotOwners([]);
+    setNotOwners([]);
+    setSearch('');
+    setPage(0);
+    setMuteMembers(false);
   }
 
   const closeChangePassword = () => {
@@ -679,6 +713,23 @@ function ChatRoom() {
     getRoom();
   }
 
+  const handleMuteMembers = async () => {
+    try {
+      await Promise.all(
+        selectedNotOwners.map((notOwner) =>
+          httpClient.post(`/channels/${roomId}/users/mute`, {
+            username: notOwner.username,
+            muteDuration: 2
+          })
+        )
+      );
+    } catch (error) {
+      console.error("An error occurred while muting the members from the channel:", error);
+    }
+    closeMuteMembers();
+    getRoom();
+  }
+
 	return (
 		<>
       <IconButton
@@ -704,6 +755,7 @@ function ChatRoom() {
       {room.isDM && <MenuItem onClick={handleClose}>Block {dmUser.username}</MenuItem>}
       {room.isAdmin && !room.isDM && <MenuItem onClick={handleClose}>Add Users</MenuItem>}
       {room.isAdmin && !room.isDM && <MenuItem onClick={handleClose}>Add Administrators</MenuItem>}
+      {room.isAdmin && !room.isDM && <MenuItem onClick={handleClose}>Mute Members</MenuItem>}
       {room.isAdmin && !room.isDM && <MenuItem onClick={handleClose}>Kick Members</MenuItem>}
       {room.isAdmin && !room.isDM && <MenuItem onClick={handleClose}>Ban Members</MenuItem>}
       {room.isOwner && room.isProtected && <MenuItem onClick={handleClose}>Change Password</MenuItem>}
@@ -875,6 +927,34 @@ function ChatRoom() {
           sx={{ mt: 2, mb: 2 }}
         >
           Ban Members
+        </Button>
+      </Dialog>
+      <Dialog open={muteMembers} onClose={() => closeMuteMembers()}>
+        <DialogTitle>Choose users to mute</DialogTitle>
+        <TextField
+          placeholder="Search users"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        {displayedNotOwners.map((user, index) => (  // フィルタリングとページングされたユーザーを表示
+          <ListItem key={index}>
+            <Avatar src={import.meta.env.VITE_API_BASE_URL + "users/" + user.username + "/avatar"} sx={{ mr: 1 }} />
+            <ListItemText primary={user.username} />
+            <Checkbox color="primary" onChange={() => handleToggleNotOwner(user)} />
+          </ListItem>
+        ))}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1 }}>
+          <Button onClick={() => setPage(page - 1)} disabled={page === 0}>Previous</Button>
+          <Button onClick={() => setPage(page + 1)} disabled={(page + 1) * itemsPerPage >= filteredUsers.length}>Next</Button>
+        </Box>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          onClick={handleMuteMembers} 
+          disabled={selectedNotOwners.length === 0}
+          sx={{ mt: 2, mb: 2 }}
+        >
+          Mute Members
         </Button>
       </Dialog>
       <Dialog open={changePassword} onClose={() => setChangePassword(false)}>
