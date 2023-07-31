@@ -234,7 +234,8 @@ function ChatRoom() {
   const [leaveChannel, setLeaveChannel] = useState(false); // チャンネル退出の状態を管理
   const [selectedUser, setSelectedUser] = useState(null); // 選択されたユーザーの状態を管理
   const [banMembers, setBanMembers] = useState(false); // チャンネル退出の状態を管理
-  const [muteMembers, setMuteMembers] = useState(false); // チャンネル退出の状態を管理
+  const [muteMembers, setMuteMembers] = useState(false); // ミュートの状態を管理
+  const [muteDuration, setMuteDuration] = useState(2); // ミュート時間の状態を管理
   const itemsPerPage = 10; // 1ページあたりのアイテム数
   const [anchorEl, setAnchorEl] = useState(null);
 
@@ -245,6 +246,7 @@ function ChatRoom() {
   };
   
   const handleClose = (event) => {
+    getRoom();
     closeMembers();
     closeUsers();
     closeNotOwners();
@@ -720,12 +722,13 @@ function ChatRoom() {
         selectedNotOwners.map((notOwner) =>
           httpClient.post(`/channels/${roomId}/users/mute`, {
             username: notOwner.username,
-            muteDuration: 2
+            muteDuration: muteDuration
           })
         )
       );
     } catch (error) {
       console.error("An error occurred while muting the members from the channel:", error);
+      alert(`${error}`);
     }
     closeMuteMembers();
     getRoom();
@@ -948,6 +951,14 @@ function ChatRoom() {
           <Button onClick={() => setPage(page - 1)} disabled={page === 0}>Previous</Button>
           <Button onClick={() => setPage(page + 1)} disabled={(page + 1) * itemsPerPage >= filteredUsers.length}>Next</Button>
         </Box>
+        <TextField
+          label="Mute duration (minutes)"
+          value={muteDuration}
+          onChange={(e) => setMuteDuration(e.target.value)}
+          type="number"
+          inputProps={{ min: "1" }}
+          sx={{ mt: 2 }}
+        />
         <Button 
           variant="contained" 
           color="primary" 
