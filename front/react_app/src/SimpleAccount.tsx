@@ -3,9 +3,12 @@ import { Divider, Avatar, Typography, Grid, Rating, Box } from '@mui/material';
 import { httpClient } from './httpClient.ts';
 import { getCookie } from './utils/HandleCookie.tsx';
 import { useParams } from 'react-router-dom';
+import { Button } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import './App.css';
 
 function SimpleAccount() {
+	const navigate = useNavigate();
 
 	// ユーザー名
 	const { username } = useParams();
@@ -85,6 +88,14 @@ function SimpleAccount() {
 							<Typography component="legend">win: {win}</Typography>
 							<Typography component="legend">lose: {lose}</Typography>
 						</Box>
+						<Button 
+                variant="contained" 
+                color="primary" 
+                onClick={() => navigate(-1)}
+                sx={{ m:3 }}
+            >
+                Back
+            </Button>
 				</Grid>
 			</Grid>
 		</>

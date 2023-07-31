@@ -25,6 +25,7 @@ import InputAdornment from '@mui/material/InputAdornment';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import Tooltip from '@mui/material/Tooltip';
 
 
 // socket.ioの初期化(socketをどのタイミングで作成するかは要検討)
@@ -1177,6 +1178,12 @@ function ChatRoom() {
 
 const Message = ({ message, myAccountUserId }) => {
   const [avatarPath, setAvatarPath] = useState("");
+  const navigate = useNavigate();  // useNavigateを呼び出し
+
+  const handleAvatarClick = () => {
+    // Avatarがクリックされたときに/simpAccount/{username}に遷移
+    navigate(`/simpleAccount/${message.username}`);
+  };
   
   // 自分のメッセージかどうか
   const isMine = message.username === myAccountUserId;
@@ -1207,7 +1214,9 @@ const Message = ({ message, myAccountUserId }) => {
 					alignItems: "center",
 					}}
 				>
-					<Avatar src={avatarPath} />
+					<Tooltip title={message.username}>
+            <Avatar src={avatarPath} onClick={handleAvatarClick}/>
+          </Tooltip>
 					<Paper
 						variant="outlined"
 						sx={{
