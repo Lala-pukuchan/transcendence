@@ -38,6 +38,9 @@ model User {
     adminChannels     Channel[] @relation("ChannelAdmins")
     bannedChannels    Channel[] @relation("BlockedUsers")
 
+    // mutes
+    mutedChannels     Mute[] @relation("MutedUser")
+
     // messages
     messages          Message[] @relation("ChannelAuthor")
 
@@ -74,6 +77,9 @@ model Channel {
 
     // status
     lastUpdated DateTime @default(now())
+
+    // mutes
+    mutes       Mute[] @relation("MutedChannel")
 }
 
 model Message {
@@ -88,6 +94,16 @@ model Message {
     author    User     @relation("ChannelAuthor", fields: [username], references: [username])
     channelId Int
     channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+}
+
+model Mute {
+  id             Int      @id @default(autoincrement())
+  mutedUserId    String
+  mutedUser      User     @relation("MutedUser", fields: [mutedUserId], references: [id])
+  startedAt      DateTime @default(now())
+  duration       Int      // in minutes
+  channelId      Int
+  channel        Channel  @relation("MutedChannel", fields: [channelId], references: [id], onDelete: Cascade)
 }
 
 model Game {
