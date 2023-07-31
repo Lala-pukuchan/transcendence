@@ -611,15 +611,11 @@ export class ChannelService {
       }
 
       // Check if the user is already muted
-      const existingMute = await this.prisma.mute.findFirst({
-        where: {
-            channelId: channelId,
-            mutedUserId: user.id,
-        },
-      });
+      const existingMute = await this.isUserMuted(channelId, username);
 
-      if (existingMute) {
-          throw new BadRequestException(`User with username ${username} is already muted in channel ${channelId}`);
+
+      if (existingMute.isMuted) {
+          throw new BadRequestException(`User with username ${username} is already muted in channel with ID ${channelId}. wait ${existingMute.remainingMinutes} minutes`);
       }
 
       // Mute the user
