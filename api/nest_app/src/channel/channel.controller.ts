@@ -202,5 +202,32 @@ export class ChannelController {
     }
     return this.channelService.banUser(channelIdNumber, username);
   }
-  
+
+  @Get(':channelId/users/:username/is-muted')
+  @ApiResponse({ status: 200, description: 'Successfully returned if user is muted' })
+  async isUserMuted(@Param('channelId') channelId: string, @Param('username') username: string) {
+    const channelIdNumber = Number(channelId);
+    
+    if (isNaN(channelIdNumber)) {
+      throw new BadRequestException('Invalid channel ID.');
+    }
+    return this.channelService.isUserMuted(channelIdNumber, username);
+  }
+
+  @Post(':channelId/users/mute')
+  @ApiResponse({ status: 200, description: 'Successfully muted user' })
+  async muteUser(@Param('channelId') channelId: string, @Body('username') username: string, @Body('muteDuration') muteDuration: number) {
+    const channelIdNumber = Number(channelId);
+    
+    if (isNaN(channelIdNumber)) {
+      throw new BadRequestException('Invalid channel ID.');
+    }
+
+    const muteDurationNumber = Number(muteDuration);
+
+    if (isNaN(muteDurationNumber)) {
+      throw new BadRequestException('Invalid mute duration.');
+    }
+    return this.channelService.muteUser(channelIdNumber, username, muteDurationNumber);
+  }
 }
