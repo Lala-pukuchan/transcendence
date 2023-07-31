@@ -402,6 +402,7 @@ export class ChannelService {
           owner: true,
           admins: true,
           users: true,
+          mutes: true,
         },
       });
 
@@ -409,14 +410,15 @@ export class ChannelService {
         throw new NotFoundException(`Channel with ID ${channelId} not found`);
       }
 
-      // const user = channel.users.find((user) => user.username === username);
+      const user = channel.users.find((user) => user.username === username);
 
-      // if (!user) {
-      //   throw new BadRequestException(`User with username ${username} not found in channel with ID ${channelId}`);
-      // }
+      if (!user) {
+        throw new BadRequestException(`User with username ${username} not found in channel with ID ${channelId}`);
+      }
 
       const isOwner = channel.owner.username === username;
       const isAdmin = channel.admins.some((admin) => admin.username === username);
+      const isMuted = channel.mutes.some((mute) => mute.mutedUserId === user.id);
 
       return {
         isOwner: isOwner,
@@ -424,6 +426,7 @@ export class ChannelService {
         isPublic: channel.isPublic,
         isProtected: channel.isProtected,
         isDM: channel.isDM,
+        isMuted: isMuted,
       };
     }
 
@@ -535,4 +538,99 @@ export class ChannelService {
       });
       return { success: true };
     }
+
+    async isUserMuted(channelId: number, username: string) {
+      const channel = await this.prisma.channel.findUnique({
+        where: { id: channelId },
+      });
+
+      if (!channel) {
+        throw new NotFoundException(`Channel with ID ${channelId} not found`);
+      }
+
+      const user = await this.prisma.user.findUnique({
+        where: { username: username },
+      });
+
+      if (!user) {
+        throw new NotFoundException(`User with username ${username} not found`);
+      }
+
+      // Retrieve the mute record
+      const mute = await this.prisma.mute.findFirst({
+        where: {
+          channelId: channelId,
+          mutedUserId: user.id,
+          startedAt: {
+            lt: new Date(), // Started before now
+          },
+        },
+      });
+    
+      // If there is no mute record, return not muted
+      if (!mute) {
+        return { isMuted: false };
+      }
+    
+      // Calculate the elapsed time since the mute started (in minutes)
+      const elapsedMinutes = Math.floor(
+        (new Date().getTime() - mute.startedAt.getTime()) / 1000 / 60
+      );
+    
+      // Calculate remaining mute time
+      const remainingMinutes = mute.duration - elapsedMinutes;
+    
+      // If the remaining time is less than or equal to 0, the user is no longer muted
+      if (remainingMinutes <= 0) {
+        // Delete the mute record
+        await this.prisma.mute.delete({
+          where: { id: mute.id }
+        });
+        return { isMuted: false };
+      } else {
+        // If there is remaining time, the user is still muted
+        return { isMuted: true, remainingMinutes: remainingMinutes };
+      }
+    }
+    
+    async muteUser(channelId: number, username: string, duration: number) {
+      const channel = await this.prisma.channel.findUnique({
+        where: { id: channelId },
+      });
+
+      if (!channel) {
+        throw new NotFoundException(`Channel with ID ${channelId} not found`);
+      }
+
+      const user = await this.prisma.user.findUnique({
+        where: { username: username },
+      });
+
+      if (!user) {
+        throw new NotFoundException(`User with username ${username} not found`);
+      }
+
+      // Check if the user is already muted
+      const existingMute = await this.prisma.mute.findFirst({
+        where: {
+            channelId: channelId,
+            mutedUserId: user.id,
+        },
+      });
+
+      if (existingMute) {
+          throw new BadRequestException(`User with username ${username} is already muted in channel ${channelId}`);
+      }
+
+      // Mute the user
+      const newMute = await this.prisma.mute.create({
+          data: {
+              mutedUserId: user.id,
+              channelId: channelId,
+              duration: duration,
+          },
+      });
+
+      return newMute;
+      }
 }
