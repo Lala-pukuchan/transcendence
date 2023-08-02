@@ -10,11 +10,13 @@ import ChatRoom from './ChatRoom.tsx';
 import Login from './Login.tsx';
 import Tfa from "./Tfa.tsx";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import MenuBar from './MenuBar.tsx';
 
 function App() {
   return (
     <>
       <BrowserRouter>
+      <MenuBar/>
         <Routes>
           <Route path="/" element={<Top />} />
           <Route path="/login" element={<Login />} />
