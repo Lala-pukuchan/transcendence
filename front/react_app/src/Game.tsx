@@ -7,6 +7,12 @@ import { httpClient } from './httpClient';
 import { getCookie } from './utils/HandleCookie.tsx';
 import { decodeToken } from "react-jwt";
 
+const reqHeader = {
+	headers: {
+	  Authorization: `Bearer ` + getCookie('token'),
+	  'Content-Type': 'application/json',
+	},
+};
 const paddleWidth: number = 20, paddleHeight: number = 200, ballWidth: number = 16, wallOffset: number = 20;
 const MATCHPOINT: number = 3;
 class Position {
@@ -110,9 +116,8 @@ async function createGame() {
 	const username = decoded.user.username;
 	try {
 		const response = await httpClient.post('/games/' , {
-			// username: username  TODO:usernameに直す
-			username: "testusername"
-		});
+			username: username
+		}, reqHeader);
 		console.log('response: ', response);
 		return response.data;
 	} catch (error) {
@@ -122,7 +127,8 @@ async function createGame() {
 
 async function fetchAndProcessMatchmakingGame() {
 	try {
-		const response = await httpClient.get('/games/matchmaking');
+		const response = await httpClient.get('/games/matchmaking', reqHeader);
+		console.log('res(check matchmaking): ', response);
 		const game = response.data;
 		return game;
 	} catch (error) {
@@ -163,7 +169,7 @@ function Game() {
 					console.log("本当にマッチメイキング中のゲームが見つかりました。");
 					console.log("matching game : ", game);
 					try {
-						const response = await httpClient.put(`/games/${game[0].id}/join`);
+						const response = await httpClient.put(`/games/${game[0].id}/join`, reqHeader);
 						setGameId(game[0].id);
 						console.log(response.data); // レスポンスデータをログに表示
 						console.log("joined game : ", game);
@@ -296,7 +302,7 @@ function Game() {
 				httpClient.put(`/games/${gameId}/score`, {
 					score1: playerScore,
 					score2: opponentScore
-				}).then((response) => {
+				}, reqHeader).then((response) => {
 					console.log("score response : ", response);
 				}).catch((error) => {
 					console.log("score error : ", error);
