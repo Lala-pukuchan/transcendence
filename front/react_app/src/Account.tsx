@@ -62,7 +62,7 @@ function Account() {
 	useEffect(() => {
 
 		httpClient
-			.get("/users/" + username)
+			.get("/users/" + username, { headers: { 'Authorization': 'Bearer ' + getCookie("token") }})
 			.then((response) => {
 				console.log("response(get userInfo): ", response);
 				if (response.data.isEnabledTfa)
@@ -270,7 +270,7 @@ function Account() {
 	const [rows, setRows] = useState([]);
 	useEffect(() => {
 		httpClient
-			.get("/games/user/" + username + "/match-history")
+			.get("/games/user/" + username + "/match-history", { headers: { 'Authorization': 'Bearer ' + getCookie("token") }})
 			.then((response) => {
 				console.log("response(match history): ", response);
 				setRows(response.data);

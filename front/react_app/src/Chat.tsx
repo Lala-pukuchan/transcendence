@@ -2,9 +2,13 @@ import Button from '@mui/material/Button';
 import AddCommentIcon from '@mui/icons-material/AddComment';
 import ChatIcon from '@mui/icons-material/Chat';
 import { useNavigate, useLocation } from 'react-router-dom';
-
+import { getCookie } from './utils/HandleCookie';
 
 function Chat() {
+  if (!getCookie("token")) {
+		window.location.href = "/";
+		return null;
+	}
 
   const navigate = useNavigate();
 

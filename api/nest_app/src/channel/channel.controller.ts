@@ -1,9 +1,10 @@
-import { Controller, Get, Post, Delete, Patch, Body } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Patch, Body, UseGuards } from '@nestjs/common';
 import { ChannelService } from './channel.service';
 import { createChannelDto } from 'src/dto/channel.dto';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { BadRequestException } from '@nestjs/common';
 import { Param, HttpStatus } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt.guards';
 
 @ApiTags('channel')
 @Controller('channels')
@@ -17,6 +18,7 @@ export class ChannelController {
   }
 
   @Post(':channelId/verifyPassword')
+  @UseGuards(JwtAuthGuard)
   @ApiResponse({ status: HttpStatus.OK, type: Boolean, description: 'Verify channel password.'})
   async verifyChannelPassword(@Param('channelId') channelId: string, @Body('password') password: string) {
     const channelIdNumber = Number(channelId);
@@ -29,6 +31,7 @@ export class ChannelController {
   }
 
   @Get(':channelId/users')
+  @UseGuards(JwtAuthGuard)
   async getUsersInChannel(@Param('channelId') channelId: string) {
     const channelIdNumber = Number(channelId);
 
@@ -40,6 +43,7 @@ export class ChannelController {
   }
 
   @Get(':channelId/users/not-members')
+  @UseGuards(JwtAuthGuard)
   @ApiResponse({ status: 200, description: 'Successfully returned users not in channel' })
   async getUsersNotInChannel(@Param('channelId') channelId: string) {
     const channelIdNumber = Number(channelId);
@@ -89,6 +93,7 @@ export class ChannelController {
   }
 
   @Get(':channelId/users/members')
+  @UseGuards(JwtAuthGuard)
   @ApiResponse({ status: 200, description: 'Successfully returned non-admin users' })
   async getNonAdminUsersInChannel(@Param('channelId') channelId: string) {
     const channelIdNumber = Number(channelId);

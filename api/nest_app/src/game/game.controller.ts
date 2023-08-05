@@ -1,8 +1,9 @@
 // game.controller.ts
-import { Controller, Get, Param, Post, HttpStatus, Put, Body } from '@nestjs/common';
+import { Controller, Get, Param, Post, HttpStatus, Put, Body, UseGuards } from '@nestjs/common';
 import { GameService } from './game.service';
 import { ApiTags, ApiResponse } from '@nestjs/swagger';
 import { CreateGameDto, ScoreDto } from 'src/dto/game.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt.guards';
 
 @ApiTags('games')
 @Controller('games')
@@ -10,24 +11,28 @@ export class GameController {
   constructor(private gameService: GameService) {}
 
   @Post()
+  @UseGuards(JwtAuthGuard)
   @ApiResponse({ status: HttpStatus.OK, type: CreateGameDto })
   async createGame(@Body() createGameDto: CreateGameDto) {
     return this.gameService.createGame(createGameDto);
   }
 
   @Get('matchmaking')
+  @UseGuards(JwtAuthGuard)
   @ApiResponse({ status: HttpStatus.OK })
   async getMatchmakingGames() {
     return this.gameService.getMatchmakingGames();
   }
 
   @Put(':gameId/join')
+  @UseGuards(JwtAuthGuard)
   @ApiResponse({ status: HttpStatus.OK, type: CreateGameDto })
   async joinGame(@Param('gameId') gameId: string, @Body() createGameDto: CreateGameDto) {
     return this.gameService.joinGame(createGameDto, gameId);
   }
 
   @Put(':gameId/score')
+  @UseGuards(JwtAuthGuard)
   @ApiResponse({ status: HttpStatus.OK, type: ScoreDto })
   async updateGameScore(
     @Param('gameId') gameId: string,

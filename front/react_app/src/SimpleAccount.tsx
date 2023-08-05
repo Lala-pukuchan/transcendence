@@ -8,17 +8,22 @@ import { useNavigate } from 'react-router-dom';
 import './App.css';
 
 function SimpleAccount() {
+	if (!getCookie("token")) {
+		window.location.href = "/";
+		return null;
+	}
+	const reqHeader = {
+		headers: {
+		  Authorization: `Bearer ` + getCookie('token'),
+		  'Content-Type': 'application/json',
+		},
+	};
+
 	const navigate = useNavigate();
 
 	// ユーザー名
 	const { username } = useParams();
 	if (username === '') {
-		return null;
-	}
-
-	// tokenが無い場合、ログイン画面にリダイレクトさせる
-	if (!getCookie("token")) {
-		window.location.href = "login";
 		return null;
 	}
 
@@ -38,7 +43,7 @@ function SimpleAccount() {
 	useEffect(() => {
 
 		httpClient
-			.get("/users/" + username)
+			.get("/users/" + username, reqHeader)
 			.then((response) => {
 				console.log("response(get userInfo): ", response);
 				setDisplayName(response.data.displayName);

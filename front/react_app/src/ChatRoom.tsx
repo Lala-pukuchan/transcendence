@@ -32,12 +32,18 @@ import Tooltip from '@mui/material/Tooltip';
 const socket = io('http://localhost:3000');
 
 function ChatRoom() {
-  const navigate = useNavigate();
-
   if (!getCookie("token")) {
-    window.location.href = "login";
-    return null;
-  }
+		window.location.href = "/";
+		return null;
+	}
+  const reqHeader = {
+    headers: {
+      Authorization: `Bearer ` + getCookie('token'),
+      'Content-Type': 'application/json',
+    },
+  };
+
+  const navigate = useNavigate();
 
   // tokenデコード
   const decoded = decodeToken(getCookie("token"));
@@ -57,7 +63,7 @@ function ChatRoom() {
 
   // ルーム情報を取得する関数
   async function getRoom() {
-    const res = await httpClient.get(`/channels/${roomId}/${username}/info`);
+    const res = await httpClient.get(`/channels/${roomId}/${username}/info`, reqHeader);
     setRoom(res.data);
   }
 
@@ -72,7 +78,7 @@ function ChatRoom() {
   // チャットの履歴を取得する関数
   async function getChatHistory() {
     try {
-      const response = await httpClient.get(`/message/${roomId}`);
+      const response = await httpClient.get(`/message/${roomId}`, reqHeader);
       setChatLog(response.data);
     } catch (error) {
       console.error("An error occurred while fetching the chat history:", error);
@@ -142,7 +148,7 @@ function ChatRoom() {
       channelId: roomId,
       content: message.content,
       createdAt: new Date().toISOString()
-    })
+    }, reqHeader)
     .then((response) => {
       console.log("Message saved successfully:", response);
     })
@@ -307,7 +313,7 @@ function ChatRoom() {
   // channelに存在しないユーザー一覧を取得する関数
   async function getUsersNotInChannel() {
     try {
-      const response = await httpClient.get(`/channels/${roomId}/users/not-members`);
+      const response = await httpClient.get(`/channels/${roomId}/users/not-members`, reqHeader);
       console.log('response: ', response);
       setUsers(response.data);
     } catch (error) {
@@ -318,7 +324,7 @@ function ChatRoom() {
   // channelのmember一覧を取得する関数
   async function getMembers() {
     try {
-      const response = await httpClient.get(`/channels/${roomId}/users/members`);
+      const response = await httpClient.get(`/channels/${roomId}/users/members`, reqHeader);
       console.log('response: ', response);
       setMembers(response.data);
     } catch (error) {
