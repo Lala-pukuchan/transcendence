@@ -10,6 +10,9 @@ export class StatusGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   // オンラインユーザー
   private onlineUsers: Map<string, string> = new Map();
+
+  // オンラインゲームユーザー
+  private onlineGameUsers: Map<string, string> = new Map();
   
   // ログ出力用
   private logger: Logger = new Logger('StatusGateway');
@@ -31,6 +34,24 @@ export class StatusGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const onlineUsersArray = Array.from(onlineUsernames);
       this.server.emit('onlineUsers', onlineUsersArray);
 
+      console.log("< game online socket count: ", this.onlineGameUsers.size, ">"); 
+      const onlineGameUsernames = new Set();
+      this.onlineGameUsers.forEach((username, clientId) => {
+        console.log(`|--- Username: ${username}, Client ID: ${clientId}`);
+        onlineGameUsernames.add(username);
+      });
+
+      const onlineGameUsersArray = Array.from(onlineGameUsernames);
+      console.log('onlineGameUsersArray: ', onlineGameUsersArray);
+      this.server.emit('onlineGameUsers', onlineGameUsersArray);
+
+    });
+
+    client.on('gameOnline', (username: string) => {
+
+      console.log('game online: ', username);
+      this.onlineGameUsers.set(client.id, username);
+
     });
 
   }
@@ -44,6 +65,13 @@ export class StatusGateway implements OnGatewayConnection, OnGatewayDisconnect {
     console.log("[ online socket count: ", this.onlineUsers.size, "]");
     this.onlineUsers.forEach((username, clientId) => {
       console.log(`|-- Username: ${username}, Client ID: ${clientId}`);
+    });
+
+    this.onlineGameUsers.delete(client.id);
+
+    console.log("< game online socket count: ", this.onlineGameUsers.size, ">");
+    this.onlineGameUsers.forEach((username, clientId) => {
+      console.log(`|--- Username: ${username}, Client ID: ${clientId}`);
     });
 
   }

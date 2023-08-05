@@ -39,11 +39,19 @@ function Account() {
 	// オンラインユーザー一覧取得
 	const location = useLocation();
 	const [onlineUsers, setOnlineUsers] = useState<string[]>(location.state?.onlineUsers || []);
+	const [onlineGameUsers, setOnlineGameUsers] = useState<string[]>(location.state?.onlineGameUsers || []);
+
 	useEffect(() => {
 		socket.on('connect', () => {
+			console.log('connect');
 			socket.emit('online', username);
 			socket.on('onlineUsers', (message: string) => {
+				console.log('onlineUsers', message);
 				setOnlineUsers(message);
+			});
+			socket.on('onlineGameUsers', (message: string) => {
+				console.log('onlineGameUsers', message);
+				setOnlineGameUsers(message);
 			});
 		});
 	}, []);
@@ -398,7 +406,10 @@ function Account() {
 										sx={{
 											"& .MuiBadge-badge": {
 												backgroundColor: onlineUsers.includes(friend.username) ? 'green' : 'gray',
-											}
+											},
+											"& .MuiBadge-badge.MuiBadge-dot": {
+												boxShadow: onlineGameUsers.includes(friend.username) ? '0 0 0 2px #fff' : 'none',
+											},
 										}}
 									>
 									<Avatar alt={friend.username} src={friend.avatar} sx={{ m:0.1 }}/>
