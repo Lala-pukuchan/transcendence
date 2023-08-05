@@ -20,6 +20,10 @@ import ListItemText from '@mui/material/ListItemText';
 import Checkbox from '@mui/material/Checkbox';
 
 function CreateRoom() {
+  if (!getCookie("token")) {
+		window.location.href = "/";
+		return null;
+	}
   const reqHeader = {
     headers: {
       Authorization: `Bearer ` + getCookie('token'),
@@ -39,11 +43,6 @@ function CreateRoom() {
   const [selectedUser, setSelectedUser] = useState(null); // 選択されたユーザーの状態を管理
 
   const navigate = useNavigate();
-
-  if (!getCookie("token")) {
-    window.location.href = "login";
-    return null;
-  }
 
   // tokenデコード
   const decoded = decodeToken(getCookie("token"));

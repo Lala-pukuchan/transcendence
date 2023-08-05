@@ -47,10 +47,10 @@ function SelectRoom() {
 	
   const navigate = useNavigate();
 
-  if (!getCookie("token")) {
-    window.location.href = "login";
-    return null;
-  }
+	if (!getCookie("token")) {
+		window.location.href = "/";
+		return null;
+	}
 
   const reqHeader = {
     headers: {

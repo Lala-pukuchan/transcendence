@@ -7,12 +7,6 @@ import { httpClient } from './httpClient';
 import { getCookie } from './utils/HandleCookie.tsx';
 import { decodeToken } from "react-jwt";
 
-const reqHeader = {
-	headers: {
-	  Authorization: `Bearer ` + getCookie('token'),
-	  'Content-Type': 'application/json',
-	},
-};
 const paddleWidth: number = 20, paddleHeight: number = 200, ballWidth: number = 16, wallOffset: number = 20;
 const MATCHPOINT: number = 3;
 class Position {
@@ -107,9 +101,15 @@ class Ball extends Position {
 
 async function createGame() {
 	if (!getCookie("token")) {
-		window.location.href = "login";
+		window.location.href = "/";
 		return null;
 	}
+	const reqHeader = {
+		headers: {
+		  Authorization: `Bearer ` + getCookie('token'),
+		  'Content-Type': 'application/json',
+		},
+	};
 	// tokenデコード
 	const decoded = decodeToken(getCookie("token"));
 	console.log('decoded: ', decoded);
@@ -126,6 +126,12 @@ async function createGame() {
 }
 
 async function fetchAndProcessMatchmakingGame() {
+	const reqHeader = {
+		headers: {
+		  Authorization: `Bearer ` + getCookie('token'),
+		  'Content-Type': 'application/json',
+		},
+	};
 	try {
 		const response = await httpClient.get('/games/matchmaking', reqHeader);
 		console.log('res(check matchmaking): ', response);
@@ -141,6 +147,16 @@ const socket = io('http://localhost:3000');
 
 //TODO: ブラウザが非アクティブになったとき，どうするか考える
 function Game() {
+	if (!getCookie("token")) {
+		window.location.href = "/";
+		return null;
+	}
+	const reqHeader = {
+		headers: {
+		  Authorization: `Bearer ` + getCookie('token'),
+		  'Content-Type': 'application/json',
+		},
+	};
 	const navigate = useNavigate();
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
 	const contextRef = useRef<CanvasRenderingContext2D | null>(null);

@@ -8,6 +8,10 @@ import { useNavigate } from 'react-router-dom';
 import './App.css';
 
 function SimpleAccount() {
+	if (!getCookie("token")) {
+		window.location.href = "/";
+		return null;
+	}
 	const reqHeader = {
 		headers: {
 		  Authorization: `Bearer ` + getCookie('token'),
@@ -20,12 +24,6 @@ function SimpleAccount() {
 	// ユーザー名
 	const { username } = useParams();
 	if (username === '') {
-		return null;
-	}
-
-	// tokenが無い場合、ログイン画面にリダイレクトさせる
-	if (!getCookie("token")) {
-		window.location.href = "login";
 		return null;
 	}
 

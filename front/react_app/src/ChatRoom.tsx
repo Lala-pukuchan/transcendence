@@ -32,6 +32,10 @@ import Tooltip from '@mui/material/Tooltip';
 const socket = io('http://localhost:3000');
 
 function ChatRoom() {
+  if (!getCookie("token")) {
+		window.location.href = "/";
+		return null;
+	}
   const reqHeader = {
     headers: {
       Authorization: `Bearer ` + getCookie('token'),
@@ -40,11 +44,6 @@ function ChatRoom() {
   };
 
   const navigate = useNavigate();
-
-  if (!getCookie("token")) {
-    window.location.href = "login";
-    return null;
-  }
 
   // tokenデコード
   const decoded = decodeToken(getCookie("token"));
