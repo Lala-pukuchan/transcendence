@@ -1,6 +1,7 @@
 import { WebSocketGateway, WebSocketServer, OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets';
 import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
+//import { GameGateway } from 'src/game/game.gateway';
 
 @WebSocketGateway({ cors: { origin: '*' } })
 export class StatusGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -66,6 +67,18 @@ export class StatusGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.onlineUsers.forEach((username, clientId) => {
       console.log(`|-- Username: ${username}, Client ID: ${clientId}`);
     });
+
+    //// ゲームオンラインユーザーがオフラインになったときに、ユーザーの所属ゲームルームに送信
+    //console.log('disconnected', client.id);
+    //const gameGatewayInstance = new GameGateway();
+    //const sockRoomMap = gameGatewayInstance.gameSocketRoomMap;
+    //console.log("[ @sockRoomMap count: ", sockRoomMap.size, "]");
+    //sockRoomMap.forEach((clientId, roomId) => {
+    //  console.log(`@Client ID: ${clientId}, Room ID: ${roomId}`);
+    //});
+    //if (sockRoomMap.has(client.id)) {
+    //  console.log('!!!room: ', sockRoomMap.get(client.id));
+    //}
 
     this.onlineGameUsers.delete(client.id);
 
