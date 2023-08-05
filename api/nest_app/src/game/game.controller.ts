@@ -25,7 +25,6 @@ export class GameController {
   }
 
   @Put(':gameId/join')
-  @UseGuards(JwtAuthGuard)
   @ApiResponse({ status: HttpStatus.OK, type: CreateGameDto })
   async joinGame(@Param('gameId') gameId: string, @Body() createGameDto: CreateGameDto) {
     return this.gameService.joinGame(createGameDto, gameId);

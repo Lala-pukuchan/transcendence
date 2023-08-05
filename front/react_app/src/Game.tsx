@@ -264,7 +264,12 @@ function Game() {
 			setIsMatching(false);
 		};
 
-		socket.on('connect', handleConnect);
+		//socket.on('connect', handleConnect);
+		const decoded = decodeToken(getCookie("token"));
+		socket.on('connect', () => {
+			handleConnect();
+			socket.emit('gameOnline', decoded.user.username);
+		});
 		socket.on('opponentPaddle', handleOpponetPaddle);
 		socket.on('GameStatus', handleGameStatus);
 		socket.on('centerball', handleBall);

@@ -7,6 +7,8 @@ export class GameGateway {
 
 	@WebSocketServer()
 	server: Server;
+
+	//public gameSocketRoomMap: Map<string, string> = new Map();
 	
 	// ログ出力用
 	private logger: Logger = new Logger('GameGateway');	
@@ -24,7 +26,12 @@ export class GameGateway {
 	@SubscribeMessage('joinRoom')
 	joinOrUpdateRoom(@MessageBody() roomId: string, @ConnectedSocket() socket: Socket) {	
 		// ログ出力
-		this.logger.log("socket id: " + socket.id, "room id: " + roomId);	
+		this.logger.log("socket id: " + socket.id, "room id: " + roomId);
+		
+		//console.log("joinRoom socket id: " + socket.id, "room id: " + roomId);
+		// ユーザーとルームのマッピングを追加
+		//this.gameSocketRoomMap.set(socket.id, roomId);
+
 		// ルームに参加（既に他ルームに参加している場合は退室）
 		const rooms = [...socket.rooms].slice(0);
 		if (rooms.length == 2) socket.leave(rooms[1]);
