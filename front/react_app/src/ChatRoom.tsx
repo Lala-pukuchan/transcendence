@@ -79,7 +79,7 @@ function ChatRoom() {
   // チャットの履歴を取得する関数
   async function getChatHistory() {
     try {
-      const response = await httpClient.get(`/message/${roomId}`);
+      const response = await httpClient.get(`/message/${roomId}`, reqHeader);
       setChatLog(response.data);
     } catch (error) {
       console.error("An error occurred while fetching the chat history:", error);
@@ -149,7 +149,7 @@ function ChatRoom() {
       channelId: roomId,
       content: message.content,
       createdAt: new Date().toISOString()
-    })
+    }, reqHeader)
     .then((response) => {
       console.log("Message saved successfully:", response);
     })
@@ -314,7 +314,7 @@ function ChatRoom() {
   // channelに存在しないユーザー一覧を取得する関数
   async function getUsersNotInChannel() {
     try {
-      const response = await httpClient.get(`/channels/${roomId}/users/not-members`);
+      const response = await httpClient.get(`/channels/${roomId}/users/not-members`, reqHeader);
       console.log('response: ', response);
       setUsers(response.data);
     } catch (error) {
@@ -325,7 +325,7 @@ function ChatRoom() {
   // channelのmember一覧を取得する関数
   async function getMembers() {
     try {
-      const response = await httpClient.get(`/channels/${roomId}/users/members`);
+      const response = await httpClient.get(`/channels/${roomId}/users/members`, reqHeader);
       console.log('response: ', response);
       setMembers(response.data);
     } catch (error) {

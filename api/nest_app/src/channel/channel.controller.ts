@@ -93,6 +93,7 @@ export class ChannelController {
   }
 
   @Get(':channelId/users/members')
+  @UseGuards(JwtAuthGuard)
   @ApiResponse({ status: 200, description: 'Successfully returned non-admin users' })
   async getNonAdminUsersInChannel(@Param('channelId') channelId: string) {
     const channelIdNumber = Number(channelId);
