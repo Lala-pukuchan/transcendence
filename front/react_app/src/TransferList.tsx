@@ -10,6 +10,7 @@ import Checkbox from '@mui/material/Checkbox';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import { httpClient } from './httpClient.ts';
+import { getCookie } from './utils/HandleCookie.tsx';
 
 function not(a: readonly { username: string, displayName: string }[], b: readonly { username: string, displayName: string }[]) {
   return a.filter((value) => b.indexOf(value) === -1);
@@ -24,6 +25,13 @@ function union(a: readonly { username: string, displayName: string }[], b: reado
 }
 
 const TransferList = (props) => {
+
+  const reqHeader = {
+		headers: {
+		  Authorization: `Bearer ` + getCookie('token'),
+		  'Content-Type': 'application/json',
+		},
+	};
 
   const [checked, setChecked] = useState<readonly { username: string, displayName: string }[]>([]);
   const { friendsList, notFriendsList, username } = props;
@@ -67,7 +75,7 @@ const TransferList = (props) => {
   const handleCheckedRight = async () => {
     const addUserName = leftChecked.map((item) => item.username);
     try {
-      const res = await httpClient.patch(`/users/${username}/addFriends`, { usernames: addUserName });
+      const res = await httpClient.patch(`/users/${username}/addFriends`, { usernames: addUserName }, reqHeader);
       console.log('add friends res: ', res);
       setRight(right.concat(leftChecked));
       setLeft(not(left, leftChecked));
@@ -81,7 +89,7 @@ const TransferList = (props) => {
   const handleCheckedLeft = async () => {
     const deleteUserName = rightChecked.map((item) => item.username);
     try {
-      const res = await httpClient.patch(`/users/${username}/deleteFriends`, { usernames: deleteUserName });
+      const res = await httpClient.patch(`/users/${username}/deleteFriends`, { usernames: deleteUserName }, reqHeader);
       console.log('delete friends res: ', res);
       setLeft(left.concat(rightChecked));
       setRight(not(right, rightChecked));

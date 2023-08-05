@@ -8,6 +8,13 @@ import { useNavigate } from 'react-router-dom';
 import './App.css';
 
 function SimpleAccount() {
+	const reqHeader = {
+		headers: {
+		  Authorization: `Bearer ` + getCookie('token'),
+		  'Content-Type': 'application/json',
+		},
+	};
+
 	const navigate = useNavigate();
 
 	// ユーザー名
@@ -38,7 +45,7 @@ function SimpleAccount() {
 	useEffect(() => {
 
 		httpClient
-			.get("/users/" + username)
+			.get("/users/" + username, reqHeader)
 			.then((response) => {
 				console.log("response(get userInfo): ", response);
 				setDisplayName(response.data.displayName);

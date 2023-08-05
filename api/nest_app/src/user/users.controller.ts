@@ -29,12 +29,14 @@ export class UsersController {
     }
 
     @Patch(':username/addFriends')
+    @UseGuards(JwtAuthGuard)
     @ApiResponse({ status: HttpStatus.OK, type: UserNamesClass, description: 'Add friend.'})
     addFriend(@Param('username') username: string, @Body() data: UserNamesClass) {
         return this.usersService.addFriend(username, data.usernames);
     }
 
     @Patch(':username/deleteFriends')
+    @UseGuards(JwtAuthGuard)
     @ApiResponse({ status: HttpStatus.OK, type: UserNamesClass, description: 'Delete friend.'})
     deleteFriend(@Param('username') username: string, @Body() data: UserNamesClass) {
         return this.usersService.removeFriend(username, data.usernames);
