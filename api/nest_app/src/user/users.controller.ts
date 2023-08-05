@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Patch, HttpStatus, Body, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Patch, HttpStatus, Body, Param, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto, GetUsersInfoResponse, GetUserDetailResponse, GetChannelsResponse, DisplayNameClass, UserNamesClass } from '../dto/user.dto';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/guards/jwt.guards';
 
 @ApiTags('user')
 @Controller('users')
@@ -15,6 +16,7 @@ export class UsersController {
     }
 
     @Get(':username')
+    @UseGuards(JwtAuthGuard)
     @ApiResponse({ status: HttpStatus.OK, type: GetUserDetailResponse, description: 'Get user detail. matches: 5 latest matches'})
     getUserDetail(@Param('username') username: string) {
         return this.usersService.getUserDetail(username);
