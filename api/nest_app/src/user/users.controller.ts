@@ -72,6 +72,7 @@ export class UsersController {
     }
 
     @Get(':username/users')
+    @UseGuards(JwtAuthGuard)
     @ApiResponse({ status: HttpStatus.OK, type: [GetUsersInfoResponse], description: 'Get a list of users without {username} user.'})
     getOtherUsers(@Param('username') username: string) {
         return this.usersService.getOtherUsers(username);

@@ -20,6 +20,12 @@ import ListItemText from '@mui/material/ListItemText';
 import Checkbox from '@mui/material/Checkbox';
 
 function CreateRoom() {
+  const reqHeader = {
+    headers: {
+      Authorization: `Bearer ` + getCookie('token'),
+      'Content-Type': 'application/json',
+    },
+  };
   const [roomType, setroomType] = useState("");
   const [accessLevel, setaccessLevel] = useState("");
   const [password, setPassword] = useState("");
@@ -129,7 +135,7 @@ function CreateRoom() {
   //以下はDMの作成において必要な諸関数
   async function getUsers() {
     try {
-      const response = await httpClient.get(`/users/${username}/users`);
+      const response = await httpClient.get(`/users/${username}/users`, reqHeader);
       console.log('response: ', response);
       setUsers(response.data);
     } catch (error) {
@@ -167,7 +173,7 @@ function CreateRoom() {
         isProtected: false,
         password: null,
         dmUser: selectedUser.username,
-      });
+      }, reqHeader);
       console.log('response: ', response);
       navigate('/chatRoom', { state: { room: response.data.id } });
     } catch (error) {
