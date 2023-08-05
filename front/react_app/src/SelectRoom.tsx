@@ -34,7 +34,7 @@ function channelsToRows(response: any): GridRowsProp {
   }));
 }
 
-function SelectRoom() {
+function SelectRoom() {  
   const [rows, setRows] = useState<GridRowsProp>([]);
   const [roomId, setRoomId] = useState(0);
   const [openDialog, setOpenDialog] = useState(false);
@@ -51,6 +51,13 @@ function SelectRoom() {
     window.location.href = "login";
     return null;
   }
+
+  const reqHeader = {
+    headers: {
+      Authorization: `Bearer ` + getCookie('token'),
+      'Content-Type': 'application/json',
+    },
+  };
 
   // tokenデコード
   const decoded = decodeToken(getCookie("token"));
@@ -96,7 +103,7 @@ function SelectRoom() {
   useEffect(() => {
     // 参加しているチャンネル一覧を取得
     httpClient
-      .get(`/users/${username}/channels`)
+      .get(`/users/${username}/channels`, reqHeader)
       .then((response) => {
         console.log("response is ", response);
         setRows(channelsToRows(response));
@@ -109,7 +116,7 @@ function SelectRoom() {
   useEffect(() => {
     // 未参加のpublicチャンルーム一覧を取得
     httpClient
-      .get(`/users/${username}/channels/not-members`)
+      .get(`/users/${username}/channels/not-members`, reqHeader)
       .then((response) => {
         console.log("response is ", response);
         setNotJoinedRows(channelsToRows(response));  // 結果をnotJoinedRowsに保存
@@ -145,14 +152,14 @@ function SelectRoom() {
 
   const handlePasswordSubmit = () => {
     httpClient
-      .post(`/channels/${selectedRoom.id}/verifyPassword`, { password: inputPassword })
+      .post(`/channels/${selectedRoom.id}/verifyPassword`, { password: inputPassword }, reqHeader)
       .then((response) => {
         console.log(response);  // レスポンスをログ出力
         if (response.data.isValid) {
           setOpenDialog(false);  // パスワードが検証された後にダイアログを閉じます
           if (!isJoined) {
             httpClient
-              .post(`/channels/${selectedRoom.id}/users`, { username: username })
+              .post(`/channels/${selectedRoom.id}/users`, { username: username }, reqHeader)
               .then((response) => {
                 console.log(response);  // レスポンスをログ出力
               })
@@ -184,7 +191,7 @@ function SelectRoom() {
     } else {
       if (!isJoined) {
         httpClient
-          .post(`/channels/${selectedRoom.id}/users`, { username: username })
+          .post(`/channels/${selectedRoom.id}/users`, { username: username }, reqHeader)
           .then((response) => {
             console.log(response);  // レスポンスをログ出力
           })

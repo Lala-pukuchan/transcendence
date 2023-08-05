@@ -32,6 +32,13 @@ import Tooltip from '@mui/material/Tooltip';
 const socket = io('http://localhost:3000');
 
 function ChatRoom() {
+  const reqHeader = {
+    headers: {
+      Authorization: `Bearer ` + getCookie('token'),
+      'Content-Type': 'application/json',
+    },
+  };
+
   const navigate = useNavigate();
 
   if (!getCookie("token")) {
@@ -57,7 +64,7 @@ function ChatRoom() {
 
   // ルーム情報を取得する関数
   async function getRoom() {
-    const res = await httpClient.get(`/channels/${roomId}/${username}/info`);
+    const res = await httpClient.get(`/channels/${roomId}/${username}/info`, reqHeader);
     setRoom(res.data);
   }
 
