@@ -29,7 +29,7 @@ export class GameService {
 		});
 	}
 
-	async getMatchmakingGames(): Promise<Game[]> {
+	async getMatchmakingGames(username: string): Promise<Game[]> {
 		
 		// マッチメイキング中のゲームを返却
 		return this.prisma.game.findMany({ where: { status: 'matchmaking' } });
@@ -179,6 +179,26 @@ export class GameService {
 		});
 		
 	  }
+
+	async createInvitation(username: string, opponent: string) {
+
+		const user = await this.prisma.user.findUnique({ where: { username: username } });
+		if (!user) {
+			throw new NotFoundException('User not found');
+		}
+		const opponentUser = await this.prisma.user.findUnique({ where: { username: opponent } });
+		if (!opponentUser) {
+			throw new NotFoundException('Opponent user not found');
+		}
+
+		return await this.prisma.game.create({
+			data: {
+				user1Name: username,
+				user2Name: opponent,
+				status: 'inviting',
+			},
+		});
+	}
 }
 
 

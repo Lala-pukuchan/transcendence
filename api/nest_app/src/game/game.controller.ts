@@ -17,11 +17,18 @@ export class GameController {
     return this.gameService.createGame(createGameDto);
   }
 
-  @Get('matchmaking')
+  @Post('/invite/:username')
+  // @UseGuards(JwtAuthGuard)
+  @ApiResponse({ status: HttpStatus.OK, type: CreateGameDto })
+  async createInvitation(@Param('username') username: string, @Body('opponent') opponent: string) {
+    return this.gameService.createInvitation(username, opponent);
+  }
+
+  @Get('matchmaking/:username')
   @UseGuards(JwtAuthGuard)
   @ApiResponse({ status: HttpStatus.OK })
-  async getMatchmakingGames() {
-    return this.gameService.getMatchmakingGames();
+  async getMatchmakingGames(@Param('username') username: string) {
+    return this.gameService.getMatchmakingGames(username);
   }
 
   @Put(':gameId/join')
