@@ -747,7 +747,6 @@ function ChatRoom() {
 
   const inviteGame = async () => {
     const fetchedDmUser = await getDmUser();
-    alert(fetchedDmUser.username);
 
     httpClient
       .post(`/games/invite/${username}`, { opponent: fetchedDmUser.username }, reqHeader)
