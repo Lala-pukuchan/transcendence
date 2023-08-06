@@ -1,13 +1,15 @@
 import { WebSocketGateway, WebSocketServer, OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets';
 import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
-//import { GameGateway } from 'src/game/game.gateway';
+import { StatusService } from './status.service';
 
 @WebSocketGateway({ cors: { origin: '*' } })
 export class StatusGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @WebSocketServer()
   server: Server;
+
+  constructor(private statusService: StatusService) {}
 
   // オンラインユーザー
   private onlineUsers: Map<string, string> = new Map();
@@ -48,11 +50,23 @@ export class StatusGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     });
 
-    client.on('gameOnline', (username: string) => {
-
-      console.log('game online: ', username);
+    // ゲームルーム参加時に受信し、オンラインゲームユーザーに接続ユーザーを追加
+    client.on('gaming', (username: string) => {
+      console.log(`username: ${username}, socketId: ${client.id} starts gaming.`);
       this.onlineGameUsers.set(client.id, username);
+    });
 
+    // 戻るボタンを押下時に受信し、オンラインゲームユーザーから切断ユーザーを削除
+    client.on('returnBack', (username: string) => {
+
+      // オンラインゲームユーザーから削除
+      console.log(`username: ${username}, socketId: ${client.id} is disconnected.`);
+      this.onlineGameUsers.delete(client.id);
+
+      // 所属ゲームルームに通知
+      const roomId = this.statusService.getUsersGameRoom(username);
+      console.log(`User: ${username} disconnected from roomId: ${roomId}`);
+      this.server.to(roomId).emit('detectedDisconnection', username);
     });
 
   }
@@ -68,17 +82,17 @@ export class StatusGateway implements OnGatewayConnection, OnGatewayDisconnect {
       console.log(`|-- Username: ${username}, Client ID: ${clientId}`);
     });
 
-    //// ゲームオンラインユーザーがオフラインになったときに、ユーザーの所属ゲームルームに送信
-    //console.log('disconnected', client.id);
-    //const gameGatewayInstance = new GameGateway();
-    //const sockRoomMap = gameGatewayInstance.gameSocketRoomMap;
-    //console.log("[ @sockRoomMap count: ", sockRoomMap.size, "]");
-    //sockRoomMap.forEach((clientId, roomId) => {
-    //  console.log(`@Client ID: ${clientId}, Room ID: ${roomId}`);
-    //});
-    //if (sockRoomMap.has(client.id)) {
-    //  console.log('!!!room: ', sockRoomMap.get(client.id));
-    //}
+    // リロードまたはブラウザを閉じる時に、オンラインゲームユーザーから切断ユーザーを削除
+    this.onlineGameUsers.forEach((username, clientId) => {
+      if (clientId == client.id) {
+
+        // 所属ゲームルームに通知
+        const roomId = this.statusService.getUsersGameRoom(username);
+        console.log(`User: ${username} disconnected from roomId: ${roomId}`);
+        this.server.to(roomId).emit('detectedDisconnection', username);
+
+      }
+    });
 
     this.onlineGameUsers.delete(client.id);
 

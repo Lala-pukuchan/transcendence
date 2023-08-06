@@ -23,10 +23,10 @@ export class GameGateway {
 		// this.server.emit('opponentPaddle', message);
 	}
 
-	@SubscribeMessage('joinRoom')
+	@SubscribeMessage('joinGameRoom')
 	joinOrUpdateRoom(@MessageBody() roomId: string, @ConnectedSocket() socket: Socket) {	
 		// ログ出力
-		this.logger.log("socket id: " + socket.id, "room id: " + roomId);
+		this.logger.log("socket id: " + socket.id, "gameRoom id: " + roomId);
 		
 		//console.log("joinRoom socket id: " + socket.id, "room id: " + roomId);
 		// ユーザーとルームのマッピングを追加

@@ -17,6 +17,7 @@ export class GameService {
 			}
 		});
 		if (!user) {
+			console.log(`user : ${data.username} is not found in DB.`);
 			throw new NotFoundException('User not found');
 		}
 
