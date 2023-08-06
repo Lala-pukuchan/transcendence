@@ -57,14 +57,14 @@ export class StatusGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
 
     // 戻るボタンを押下時に受信し、オンラインゲームユーザーから切断ユーザーを削除
-    client.on('returnBack', (username: string) => {
+    client.on('returnBack',async (username: string) => {
 
       // オンラインゲームユーザーから削除
       console.log(`username: ${username}, socketId: ${client.id} is disconnected.`);
       this.onlineGameUsers.delete(client.id);
 
       // 所属ゲームルームに通知
-      const roomId = this.statusService.getUsersGameRoom(username);
+      const roomId = await this.statusService.getUsersGameRoom(username);
       console.log(`User: ${username} disconnected from roomId: ${roomId}`);
       this.server.to(roomId).emit('detectedDisconnection', username);
     });
@@ -83,11 +83,11 @@ export class StatusGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
 
     // リロードまたはブラウザを閉じる時に、オンラインゲームユーザーから切断ユーザーを削除
-    this.onlineGameUsers.forEach((username, clientId) => {
+    this.onlineGameUsers.forEach(async (username, clientId) => {
       if (clientId == client.id) {
 
         // 所属ゲームルームに通知
-        const roomId = this.statusService.getUsersGameRoom(username);
+        const roomId = await this.statusService.getUsersGameRoom(username);
         console.log(`User: ${username} disconnected from roomId: ${roomId}`);
         this.server.to(roomId).emit('detectedDisconnection', username);
 
