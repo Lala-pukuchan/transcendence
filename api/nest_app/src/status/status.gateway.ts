@@ -1,12 +1,15 @@
 import { WebSocketGateway, WebSocketServer, OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets';
 import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
+import { StatusService } from './status.service';
 
 @WebSocketGateway({ cors: { origin: '*' } })
 export class StatusGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @WebSocketServer()
   server: Server;
+
+  constructor(private statusService: StatusService) {}
 
   // オンラインユーザー
   private onlineUsers: Map<string, string> = new Map();
@@ -47,11 +50,13 @@ export class StatusGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     });
 
+    // ゲームルーム参加時に受信し、オンラインゲームユーザーに接続ユーザーを追加
     client.on('gaming', (username: string) => {
       console.log(`username: ${username}, socketId: ${client.id} starts gaming.`);
       this.onlineGameUsers.set(client.id, username);
     });
 
+    // 戻るボタンを押下時に受信し、オンラインゲームユーザーから切断ユーザーを削除
     client.on('returnBack', (username: string) => {
       console.log(`username: ${username}, socketId: ${client.id} is disconnected.`);
       this.onlineGameUsers.delete(client.id);
@@ -68,6 +73,17 @@ export class StatusGateway implements OnGatewayConnection, OnGatewayDisconnect {
     console.log("[ online socket count: ", this.onlineUsers.size, "]");
     this.onlineUsers.forEach((username, clientId) => {
       console.log(`|-- Username: ${username}, Client ID: ${clientId}`);
+    });
+
+    // リロードまたはブラウザを閉じる時に、オンラインゲームユーザーから切断ユーザーを削除
+    this.onlineGameUsers.forEach((username, clientId) => {
+      if (clientId == client.id) {
+
+        // 所属ゲームルームに通知
+        const roomId = this.statusService.getUsersGameRoom(username);
+        console.log(`User: ${username} disconnected from roomId: ${roomId}`);
+
+      }
     });
 
     this.onlineGameUsers.delete(client.id);
