@@ -27,10 +27,10 @@ model User {
 
     // relationships
     friends           User[]    @relation("UserFriends")
-    blockedUsers      User[]    @relation("BlockedUsers")
+    blockedUsers      BlockedUserRelation[]    @relation("BlockedUsers")
     // we need to specify the following fields because we want to have "friends" and "blockedUsers" as a relation
     friendRequests    User[]    @relation("UserFriends")
-    blockedBy         User[]    @relation("BlockedUsers")
+    blockedBy         BlockedUserRelation[]    @relation("BlockedBy")
 
     // channels
     channels          Channel[]
@@ -50,7 +50,14 @@ model User {
     ladderLevel       Int       @default(0)
     gamesAsPlayer1   Game[]    @relation("GamePlayer1")
     gamesAsPlayer2   Game[]    @relation("GamePlayer2")
+}
 
+model BlockedUserRelation {
+    id            String @id @default(uuid())
+    blocker       User   @relation("BlockedUsers", fields: [blockerId], references: [id])
+    blockerId     String
+    blocked       User   @relation("BlockedBy", fields: [blockedId], references: [id])
+    blockedId     String
 }
 
 model Channel {

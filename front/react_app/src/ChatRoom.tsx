@@ -647,6 +647,7 @@ function ChatRoom() {
         .catch((error) => {
             console.log("An error occurred:", error);
             alert("An error occurred while blocking the user");  // エラーメッセージを表示します
+            alert(error);
         });
   }
 

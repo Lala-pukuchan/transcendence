@@ -114,19 +114,25 @@ export class UsersService {
     }
 
     async blockUser(username: string, blockedUserName: string): Promise<User> {
-        const user = this.prisma.user.findUnique({ where: { username: username } });
+        const user = await this.prisma.user.findUnique({ where: { username: username } });
         if (!user) {
             throw new NotFoundException(`User with username ${username} not found.`);
         }
+
         const blockedUser = await this.prisma.user.findUnique({ where: { username: blockedUserName } });
         if (!blockedUser) {
             throw new NotFoundException(`User with username ${blockedUserName} not found.`);
         }
-        const updatedUser = await this.prisma.user.update({
-            where: { username: username },
-            data: { blockedUsers: { connect: { id: blockedUser.id } } },
+
+        // 中間テーブルBlockedUserRelationにレコードを作成
+        await this.prisma.blockedUserRelation.create({
+        data: {
+            blockerId: user.id,
+            blockedId: blockedUser.id
+        }
         });
-        return updatedUser;
+
+        return user;
     }
 
     async joinChannel(username: string, channelId: number, password: string): Promise<User> {
@@ -153,11 +159,11 @@ export class UsersService {
     async getUserChannels(username: string) {
         const user = await this.prisma.user.findUnique({
             where: { username: username },
-            include: { 
+            include: {
                 channels: { include: { users: true } },
                 createdChannels: { include: { users: true } },
                 adminChannels: { include: { users: true } },
-                blockedUsers: true,
+                blockedUsers: { select: { blockedId: true } }, // Include blocked user IDs
             },
         });
     
@@ -166,7 +172,7 @@ export class UsersService {
         }
     
         // Get IDs of blocked users
-        const blockedUserIds = user.blockedUsers.map((blockedUser) => blockedUser.id);
+        const blockedUserIds = user.blockedUsers.map((blockedUser) => blockedUser.blockedId);
     
         // Combine all channels arrays and remove duplicates
         const channels = [...user.channels, ...user.createdChannels, ...user.adminChannels];
@@ -203,6 +209,7 @@ export class UsersService {
             lastUpdated: channel.lastUpdated,
         }));
     }
+    
     
 
     async getPublicChannelsNotInUser(username: string) {
