@@ -26,6 +26,7 @@ import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Tooltip from '@mui/material/Tooltip';
+import VideogameAssetIcon from '@mui/icons-material/VideogameAsset';
 
 
 // socket.ioの初期化(socketをどのタイミングで作成するかは要検討)
@@ -70,6 +71,9 @@ function ChatRoom() {
   // ページロード時にルーム情報を取得します
   useEffect(() => {
     getRoom();
+    if (room.isDM) {
+      getDmUser();
+    }
   }, [roomId]);
 
   // メッセージ表示用
@@ -111,7 +115,7 @@ function ChatRoom() {
 
     if (room.isMuted) {
       httpClient
-        .get(`/channels/${roomId}/users/${username}/is-muted`)
+        .get(`/channels/${roomId}/users/${username}/is-muted`, reqHeader)
         .then((response) => {
           console.log(response);
           if (response.data.isMuted) {
@@ -129,10 +133,10 @@ function ChatRoom() {
         });
     }
       
-      // json形式で送信
-      const message = {
-        channelId: roomId,
-        content: inputRef.current.value,
+    // json形式で送信
+    const message = {
+      channelId: roomId,
+      content: inputRef.current.value,
       username: username,
       createdAt: Date.now(),
       contents_path: ""
@@ -335,7 +339,7 @@ function ChatRoom() {
   //owner以外のchannel参加者一覧を取得する関数
   async function getNotOwners() {
     try {
-      const response = await httpClient.get(`/channels/${roomId}/users/not-owners`);
+      const response = await httpClient.get(`/channels/${roomId}/users/not-owners`, reqHeader);
       console.log('response: ', response);
       setNotOwners(response.data);
     } catch (error) {
@@ -346,9 +350,10 @@ function ChatRoom() {
   async function getDmUser()
   {
     try {
-        const response = await httpClient.get(`/channels/${roomId}/users/${username}/dm-user`);
+        const response = await httpClient.get(`/channels/${roomId}/users/${username}/dm-user`, reqHeader);
         console.log('response: ', response);
         setDmUser(response.data);
+        return response.data;
     } catch (error) {
         console.error("An error occurred while fetching the users in channel:", error);
     }
@@ -497,7 +502,7 @@ function ChatRoom() {
         selectedMembers.map((member) =>
           httpClient.post(`/channels/${roomId}/users/admins`, {
             username: member.username,
-          })
+          }, reqHeader)
         )
       );
 
@@ -516,7 +521,7 @@ function ChatRoom() {
         selectedUsers.map((user) =>
           httpClient.post(`/channels/${roomId}/users`, {
             username: user.username,
-          })
+          }, reqHeader)
         )
       );
       console.log("Users added successfully.");
@@ -532,7 +537,7 @@ function ChatRoom() {
     try {
       await Promise.all(
         selectedNotOwners.map((notOwner) =>
-          httpClient.delete(`/channels/${roomId}/users/${notOwner.username}`)
+          httpClient.delete(`/channels/${roomId}/users/${notOwner.username}`, reqHeader)
         )
       );
       console.log("Members removed successfully.");
@@ -555,13 +560,13 @@ function ChatRoom() {
 
   const handlePasswordSubmit = () => {
     httpClient
-      .post(`/channels/${roomId}/verifyPassword`, { password: inputOldPassword })
+      .post(`/channels/${roomId}/verifyPassword`, { password: inputOldPassword }, reqHeader)
       .then((response) => {
         console.log(response);  // レスポンスをログ出力
         if (response.data.isValid) {
           // パスワードが正しい場合、ここでパスワードを変更します
           httpClient
-            .patch(`/channels/${roomId}/change-password`, { oldPassword: inputOldPassword, newPassword: inputNewPassword })
+            .patch(`/channels/${roomId}/change-password`, { oldPassword: inputOldPassword, newPassword: inputNewPassword }, reqHeader)
             .then((response) => {
               console.log(response);  // レスポンスをログ出力
               alert("パスワードを変更しました");  // 成功メッセージを表示します
@@ -586,13 +591,13 @@ function ChatRoom() {
 
   const handleUnsetPassword = () => {
     httpClient
-      .post(`/channels/${roomId}/verifyPassword`, { password: inputOldPassword })
+      .post(`/channels/${roomId}/verifyPassword`, { password: inputOldPassword }, reqHeader)
       .then((response) => {
         console.log(response);  // レスポンスをログ出力
         if (response.data.isValid) {
           // パスワードが正しい場合、ここでパスワードを削除します
           httpClient
-            .patch(`/channels/${roomId}/unset-password`, { password: inputOldPassword})
+            .patch(`/channels/${roomId}/unset-password`, { password: inputOldPassword}, reqHeader)
             .then((response) => {
               console.log(response);
               alert("パスワードを削除しました");  // 成功メッセージを表示します
@@ -616,7 +621,7 @@ function ChatRoom() {
 
   const handleCreatePassword = () => {
     httpClient
-      .patch(`/channels/${roomId}/set-password`, { password: inputNewPassword })
+      .patch(`/channels/${roomId}/set-password`, { password: inputNewPassword }, reqHeader)
       .then((response) => {
         console.log(response);  // レスポンスをログ出力
         alert("パスワードを設定しました");  // 成功メッセージを表示します
@@ -631,7 +636,7 @@ function ChatRoom() {
 
   const handleBlockUser = () => {
     httpClient
-        .post(`/users/${username}/block-user`, { username: dmUser.username })
+        .post(`/users/${username}/block-user`, { username: dmUser.username }, reqHeader)
         .then((response) => {
             console.log(response);  // レスポンスをログ出力
             alert("ユーザーをブロックしました");  // 成功メッセージを表示します
@@ -648,7 +653,7 @@ function ChatRoom() {
   const handleLeaveChannel = () => {
     if (room.isOwner) {
       httpClient
-        .delete(`/channels/${roomId}`)
+        .delete(`/channels/${roomId}`, reqHeader)
         .then((response) => {
             console.log(response);  // レスポンスをログ出力
             alert("チャンネルを削除し、退出しました");  // 成功メッセージを表示します
@@ -664,7 +669,7 @@ function ChatRoom() {
         });
     } else {
       httpClient
-          .delete(`/channels/${roomId}/users/${username}`)
+          .delete(`/channels/${roomId}/users/${username}`, reqHeader)
           .then((response) => {
               console.log(response);  // レスポンスをログ出力
               alert("チャンネルから退出しました");  // 成功メッセージを表示します
@@ -680,7 +685,7 @@ function ChatRoom() {
 
   const handleChangeOwner = () => {
     httpClient
-      .patch(`/channels/${roomId}/change-owner`, { username: selectedUser.username })
+      .patch(`/channels/${roomId}/change-owner`, { username: selectedUser.username }, reqHeader)
       .then((response) => {
         console.log(response);  // レスポンスをログ出力
         alert("オーナーを変更しました");  // 成功メッセージを表示します
@@ -692,7 +697,7 @@ function ChatRoom() {
         return;
       });
     httpClient
-      .delete(`/channels/${roomId}/users/${username}`)
+      .delete(`/channels/${roomId}/users/${username}`, reqHeader)
       .then((response) => {
         console.log(response);  // レスポンスをログ出力
         alert("チャンネルから退出しました");  // 成功メッセージを表示します
@@ -712,7 +717,7 @@ function ChatRoom() {
         selectedNotOwners.map((notOwner) =>
           httpClient.post(`/channels/${roomId}/users/ban`, {
             username: notOwner.username,
-          })
+          }, reqHeader)
         )
       );
     } catch (error) {
@@ -729,7 +734,7 @@ function ChatRoom() {
           httpClient.post(`/channels/${roomId}/users/mute`, {
             username: notOwner.username,
             muteDuration: muteDuration
-          })
+          }, reqHeader)
         )
       );
     } catch (error) {
@@ -738,6 +743,61 @@ function ChatRoom() {
     }
     closeMuteMembers();
     getRoom();
+  }
+
+  const inviteGame = async () => {
+    const fetchedDmUser = await getDmUser();
+    alert(fetchedDmUser.username);
+
+    httpClient
+      .post(`/games/invite/${username}`, { opponent: fetchedDmUser.username }, reqHeader)
+      .then((response) => {
+        console.log(response);  // レスポンスをログ出力
+        alert("ゲームルームを作成しました");  // 成功メッセージを表示します
+
+        let content = inputRef.current.value;
+
+        if (content === '') {
+          content = 'れっつぽんぐ！';
+        }
+        // json形式で送信
+        const message = {
+          channelId: roomId,
+          content: content,
+          isInvitation: true,
+          isAccepted: false,
+          username: username,
+          createdAt: Date.now(),
+          contents_path: ""
+        }
+        // メッセージ入力欄の初期化
+        inputRef.current.value = '';
+        // メッセージ送信
+        socket.emit('message', message);
+        
+        // HTTP POSTリクエストでDBにメッセージを保存
+        httpClient.post('/message', {
+          username: username,
+          channelId: roomId,
+          isInvitation: true,
+          content: message.content,
+          createdAt: new Date().toISOString()
+        }, reqHeader)
+        .then((response) => {
+          console.log("Message saved successfully:", response);
+          alert("招待を送信しました");  // 成功メッセージを表示します
+          navigate('/game');
+        })
+        .catch((error) => {
+          console.error("An error occurred while saving the message:", error);
+        });
+      })
+      .catch((error) => {
+        console.log("An error occurred:", error);
+        alert("An error occurred while inviting the user");  // エラーメッセージを表示します
+        alert(error);
+        return;
+      });
   }
 
 	return (
@@ -788,7 +848,7 @@ function ChatRoom() {
 					))}
 				</Box>
 				<Box sx={{ p: 2, backgroundColor: "background.default" }}>
-        <Grid container spacing={2}>
+        <Grid container spacing={2} justifyContent="center">
           <Grid item xs={2}>
             <Button
               variant="contained"
@@ -798,7 +858,7 @@ function ChatRoom() {
               Back
             </Button>
           </Grid>
-          <Grid item xs={8}>
+          <Grid item xs={6}>
             <TextField
               size="small"
               fullWidth
@@ -824,6 +884,18 @@ function ChatRoom() {
               Send
             </Button>
           </Grid>
+        <Grid item xs={2}>
+          {( room.isDM &&
+          <Button
+            fullWidth
+            color="primary"
+            variant="contained"
+            endIcon={<VideogameAssetIcon />}
+            onClick={inviteGame}
+          >
+            invite
+          </Button>)}
+        </Grid>
         </Grid>
 				</Box>
 			</Box>
@@ -1194,6 +1266,24 @@ function ChatRoom() {
 }
 
 const Message = ({ message, myAccountUserId }) => {
+
+  if (!getCookie("token")) {
+		window.location.href = "/";
+		return null;
+	}
+
+  const reqHeader = {
+    headers: {
+      Authorization: `Bearer ` + getCookie('token'),
+      'Content-Type': 'application/json',
+    },
+  };
+
+  // tokenデコード
+  const decoded = decodeToken(getCookie("token"));
+  console.log('decoded: ', decoded);
+  const username = decoded.user.username;
+
   const [avatarPath, setAvatarPath] = useState("");
   const navigate = useNavigate();  // useNavigateを呼び出し
 
@@ -1210,46 +1300,82 @@ const Message = ({ message, myAccountUserId }) => {
       const avatarURL = import.meta.env.VITE_API_BASE_URL + "users/" + message.username + "/avatar";
       // avatarのpathを非同期で取得するロジックを書く
       setAvatarPath(avatarURL);
+      // alert(message.isInvitation);
     };
 
     fetchAvatarPath();
   }, [message.username]);
 
+  const acceptInvitation = async (message) => {
+    httpClient
+      .post(`/message/accept/${username}`, { messageId: message.id }, reqHeader)
+      .then((response) => {
+        console.log(response);  // レスポンスをログ出力
+        alert("招待を受けました");  // 成功メッセージを表示します
+        navigate('/game');
+      })
+      .catch((error) => {
+        console.log("An error occurred:", error);
+        alert(error);
+        alert("An error occurred while accepting the invitation");  // エラーメッセージを表示します
+        return;
+      });
+  }
+
 	return (
-		<>
-			<Box
-				sx={{
-					display: "flex",
-					justifyContent: isMine ? "flex-end" : "flex-start",
-					mb: 2,
-				}}
-				>
-				<Box
-					sx={{
-					display: "flex",
-					flexDirection: isMine ? "row" : "row-reverse",
-					alignItems: "center",
-					}}
-				>
-					<Tooltip title={message.username}>
-            <Avatar src={avatarPath} onClick={handleAvatarClick}/>
+    <>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: isMine ? "flex-end" : "flex-start",
+          mb: 2,
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: isMine ? "row" : "row-reverse",
+            alignItems: "center",
+          }}
+        >
+          <Tooltip title={message.username}>
+            <Avatar src={avatarPath} onClick={handleAvatarClick} />
           </Tooltip>
-					<Paper
-						variant="outlined"
-						sx={{
-							p: 2,
-							ml: isMine ? 1 : 0,
-							mr: isMine ? 0 : 1,
-							backgroundColor: isMine ? "primary.light" : "secondary.light",
-							borderRadius: isMine ? "20px 20px 20px 5px" : "20px 20px 5px 20px",
-						}}
-						>
-						<Typography variant="body1">{message.content}</Typography>
-					</Paper>
-				</Box>
-			</Box>
-		</>
-	);
-};
+          <Paper
+            variant="outlined"
+            sx={{
+              p: 2,
+              ml: isMine ? 1 : 0,
+              mr: isMine ? 0 : 1,
+              backgroundColor: isMine ? "primary.light" : "secondary.light",
+              borderRadius: isMine ? "20px 20px 20px 5px" : "20px 20px 5px 20px",
+            }}
+          >
+            <Typography variant="body1">{message.content}</Typography>
+            {message.isInvitation && (
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column", // 縦長に配置
+                  alignItems: "center",
+                  mt: 2, // テキストとの間隔を調整
+                }}
+              >
+                <Button
+                  variant="contained"
+                  color="primary"
+                  disabled={message.isAccepted || isMine}
+                  onClick={() => acceptInvitation(message)}
+                >
+                  accept invitation
+                </Button>
+              </Box>
+            )}
+          </Paper>
+        </Box>
+      </Box>
+    </>
+  );
+}
 
 export default ChatRoom
