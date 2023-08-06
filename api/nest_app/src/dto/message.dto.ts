@@ -12,6 +12,9 @@ export class CreateMessageDto {
     @IsNotEmpty()
     channelId: number;
 
+    @ApiProperty({ description: 'The bool value of whether the message is a invitation or not.'})
+    isInvitation: boolean;
+
     @ApiProperty({ description: 'The content of the message.'})
     @IsString()
     @IsNotEmpty()
