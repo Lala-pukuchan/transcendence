@@ -126,6 +126,14 @@ async function createGame() {
 }
 
 async function fetchAndProcessMatchmakingGame() {
+	if (!getCookie("token")) {
+		window.location.href = "/";
+		return null;
+	}
+	// tokenデコード
+	const decoded = decodeToken(getCookie("token"));
+	console.log('decoded: ', decoded);
+	const username = decoded.user.username;
 	const reqHeader = {
 		headers: {
 		  Authorization: `Bearer ` + getCookie('token'),
@@ -133,7 +141,7 @@ async function fetchAndProcessMatchmakingGame() {
 		},
 	};
 	try {
-		const response = await httpClient.get('/games/matchmaking', reqHeader);
+		const response = await httpClient.get(`/games/matchmaking/${username}`, reqHeader);
 		console.log('res(check matchmaking): ', response);
 		const game = response.data;
 		return game;
