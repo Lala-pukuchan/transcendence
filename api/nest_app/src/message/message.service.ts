@@ -56,7 +56,8 @@ export class MessageService {
                 content: createMessageDto.content,
                 createdAt: createMessageDto.createdAt,
                 username: user.username,
-                channelId: createMessageDto.channelId
+                channelId: createMessageDto.channelId,
+                isInvitation: createMessageDto.isInvitation ?? false
             }
         });
     
@@ -67,5 +68,44 @@ export class MessageService {
         });
     
         return newMessage;
+    }
+
+    async acceptInvitation(messageId: number, username: string) {
+        // Find user by username
+        const user = await this.prisma.user.findUnique({
+            where: {
+                username: username
+            }
+        });
+    
+        // If user not found, throw an error
+        if (!user) {
+            throw new Error('User not found');
+        }
+    
+        // Find message by id
+        const message = await this.prisma.message.findUnique({
+            where: {
+                id: messageId
+            }
+        });
+    
+        // If message not found, throw an error
+        if (!message) {
+            throw new Error('Message not found');
+        }
+    
+        // If the message is not an invitation, throw an error
+        if (!message.isInvitation) {
+            throw new Error('This is not an invitation');
+        }
+    
+        // Add the user to the channel
+        await this.prisma.message.update({
+            where: { id: message.id },
+            data: { isAccepted: true }
+        });
+    
+        return message;
     }
 }
