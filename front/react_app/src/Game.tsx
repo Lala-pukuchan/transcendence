@@ -180,7 +180,8 @@ function Game() {
 					const createdGame = await createGame();
 					console.log("createdGame", createdGame);
 					setGameId(createdGame.id);
-					socket.emit('joinRoom', createdGame.roomId);
+					socket.emit('joinGameRoom', createdGame.roomId);
+					socket.emit('gaming', decodeToken(getCookie("token")).user.username);
 				} else {
 					console.log("本当にマッチメイキング中のゲームが見つかりました。");
 					console.log("matching game : ", game);
@@ -189,7 +190,8 @@ function Game() {
 						setGameId(game[0].id);
 						console.log(response.data); // レスポンスデータをログに表示
 						console.log("joined game : ", game);
-						socket.emit('joinRoom', game[0].roomId);
+						socket.emit('joinGameRoom', game[0].roomId);
+						socket.emit('gaming', decodeToken(getCookie("token")).user.username);
 						socket.emit('matched', 'game[0].', socket.id);
 					}
 					catch (error) {
@@ -225,10 +227,6 @@ function Game() {
 		player.draw(context);
 		opponent.draw(context);
 		
-		
-
-		// socket.emit('joinRoom', 1);
-
 		//socket.on
 		const handleConnect = () => {
 			console.log('connection ID : ', socket.id);
@@ -264,12 +262,7 @@ function Game() {
 			setIsMatching(false);
 		};
 
-		//socket.on('connect', handleConnect);
-		const decoded = decodeToken(getCookie("token"));
-		socket.on('connect', () => {
-			handleConnect();
-			socket.emit('gameOnline', decoded.user.username);
-		});
+		socket.on('connect', handleConnect);
 		socket.on('opponentPaddle', handleOpponetPaddle);
 		socket.on('GameStatus', handleGameStatus);
 		socket.on('centerball', handleBall);
@@ -363,6 +356,11 @@ function Game() {
 		});
 	};
 
+	const handleReturnBack = () => {
+		socket.emit('returnBack', decodeToken(getCookie("token")).user.username);
+		navigate('/');
+	};
+
 	// const onClickSubmit = useCallback(() => {
 	// 	socket.emit('ball', socket.id);
 		// console.log("ball emit");
@@ -387,7 +385,7 @@ function Game() {
 				<canvas ref={canvasRef}></canvas>
 				{/* 他のコンポーネントやテキストなど */}
 			</div>
-			<Button variant="contained" endIcon={<UndoIcon />} onClick={() => navigate('/')} sx={{ m: 2 }}>
+			<Button variant="contained" endIcon={<UndoIcon />} onClick={handleReturnBack} sx={{ m: 2 }}>
 				Return Back
 			</Button>
 			<Button variant={isAnimating ? "contained" : "outlined"} onClick={handleStartStop} disabled={isMatching}>
