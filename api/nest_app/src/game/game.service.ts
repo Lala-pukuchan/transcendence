@@ -30,6 +30,31 @@ export class GameService {
 	}
 
 	async getMatchmakingGames(username: string): Promise<Game[]> {
+		// 最初にuser1Nameがusernameと一致し、statusが'inviting'のゲームを検索
+		const gameAsUser1 = await this.prisma.game.findMany({
+			where: {
+				user1Name: username,
+				status: 'inviting',
+			},
+		});
+	
+		// ゲームが見つかればそれを返す
+		if (gameAsUser1) {
+			return gameAsUser1;
+		}
+	
+		// user1Nameとの一致が見つからなければ、次にuser2Nameがusernameと一致するゲームを検索
+		const gameAsUser2 = await this.prisma.game.findMany({
+			where: {
+				user2Name: username,
+				status: 'inviting',
+			},
+		});
+	
+		// そのゲームが見つかればそれを返す
+		if (gameAsUser2) {
+			return gameAsUser2;
+		}
 		
 		// マッチメイキング中のゲームを返却
 		return this.prisma.game.findMany({ where: { status: 'matchmaking' } });
