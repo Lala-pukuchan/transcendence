@@ -87,6 +87,8 @@ model Message {
 
     // basic info
     content   String
+    isInvitation Boolean @default(false)
+    isAccepted Boolean @default(false)
     createdAt DateTime @default(now())
 
     // relations
@@ -109,7 +111,7 @@ model Mute {
 model Game {
 
     id            String       @id @default(uuid())
-	roomId        Int          @default(autoincrement())
+	  roomId        Int          @default(autoincrement())
     createdAt     DateTime     @default(now())
 
     user1         User     @relation("GamePlayer1", fields: [user1Name], references: [username])
