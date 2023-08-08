@@ -11,7 +11,8 @@ import './App.css';
 import io from 'socket.io-client';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 
-const socket = io(import.meta.env.VITE_API_BASE_URL);
+const api_url = import.meta.env.VITE_API_BASE_URL;
+const socket = io(api_url);
 
 function Account() {
 
@@ -31,7 +32,7 @@ function Account() {
 	const [tfaEnabled, setTfaEnabled] = useState(false);
 
 	// アバター
-	const [avatarPath, setAvatarPath] = useState(import.meta.env.VITE_API_BASE_URL + "users/" + username + "/avatar");
+	const [avatarPath, setAvatarPath] = useState(api_url + "users/" + username + "/avatar");
 
 	// ディスプレイ名
 	const [displayName, setDisplayName] = useState('');
@@ -406,13 +407,20 @@ function Account() {
 										sx={{
 											"& .MuiBadge-badge": {
 												backgroundColor: onlineUsers.includes(friend.username) ? 'blue' : 'gray',
+												width: 12,
+												height: 12,
+												borderRadius: '50%',
 											},
 											"& .MuiBadge-badge.MuiBadge-dot": {
 												boxShadow: onlineGameUsers.includes(friend.username) ? '0 0 0 2px red' : 'none',
 											},
 										}}
 									>
-									<Avatar alt={friend.username} src={friend.avatar} sx={{ m:0.1 }}/>
+									<Avatar
+										alt={friend.username}
+										src={`${api_url}users/${friend.username}/avatar`}
+										sx={{ m:0.1 }}
+									/>
 									</Badge>
 								))}
 							</Box>
