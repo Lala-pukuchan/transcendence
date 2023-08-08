@@ -405,10 +405,10 @@ function Account() {
 										variant="dot"
 										sx={{
 											"& .MuiBadge-badge": {
-												backgroundColor: onlineUsers.includes(friend.username) ? 'green' : 'gray',
+												backgroundColor: onlineUsers.includes(friend.username) ? 'blue' : 'gray',
 											},
 											"& .MuiBadge-badge.MuiBadge-dot": {
-												boxShadow: onlineGameUsers.includes(friend.username) ? '0 0 0 2px #fff' : 'none',
+												boxShadow: onlineGameUsers.includes(friend.username) ? '0 0 0 2px red' : 'none',
 											},
 										}}
 									>
@@ -416,6 +416,9 @@ function Account() {
 									</Badge>
 								))}
 							</Box>
+							<Typography variant="body1" sx={{ m:1 }}>
+								Blue: Online, Gray: Offline, Red: Gaming
+							</Typography>
 				</Grid>
 			</Grid>
 		</>
