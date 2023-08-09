@@ -197,6 +197,12 @@ export class GameService {
 			where: {
 			  OR: [{ user1Name: username }, { user2Name: username }],
 			  status: 'finish',
+			  NOT: {
+				OR: [
+				  { score1: null },
+				  { score2: null },
+				],
+			  },
 			},
 			include: {
 			  user1: true,
