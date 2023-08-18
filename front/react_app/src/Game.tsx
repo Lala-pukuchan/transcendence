@@ -269,12 +269,19 @@ function Game() {
 		const handleMatchMaking = (message: string) => {
 			setIsMatching(false);
 		};
+		const handleOpponentDisconnect = (message: string) => {
+			const confirmation = window.confirm(message + " is disconnected. Please click OK.");
+			if (confirmation) {
+			  window.location.href = '/';
+			}
+		};
 
 		socket.on('connect', handleConnect);
 		socket.on('opponentPaddle', handleOpponetPaddle);
 		socket.on('GameStatus', handleGameStatus);
 		socket.on('centerball', handleBall);
 		socket.on('matchedGame', handleMatchMaking);
+		socket.on('detectedDisconnection', handleOpponentDisconnect);
 		
 		const handleKeyDown = (event) => {
 			if (event.key === 'ArrowUp') {
@@ -349,6 +356,7 @@ function Game() {
 			socket.off('opponentPaddle', handleOpponetPaddle);
 			socket.off('GameStatus', handleGameStatus);
 			socket.off('centerball', handleBall);
+			socket.on('detectedDisconnection', handleOpponentDisconnect);
 		};
 	}, [isAnimating, socket, deltaX, isLoading, isMatching]);
 
