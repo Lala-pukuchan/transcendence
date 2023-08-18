@@ -1,4 +1,4 @@
-FROM node:16-alpine
+FROM node:18.17.1-alpine
 # docker-compose側から、コンテナ起動時のディレクトリ位置を引数として受け取り、そこで起動するよう設定
 ARG FRONT_WORKDIR
 WORKDIR ${FRONT_WORKDIR}

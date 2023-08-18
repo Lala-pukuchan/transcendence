@@ -1,5 +1,5 @@
 # 基本的にはfrontのものと同じ
-FROM node:16-alpine
+FROM node:18.17.1-alpine
 ARG API_WORKDIR
 WORKDIR ${API_WORKDIR}
 ENV TZ Asia/Tokyo
