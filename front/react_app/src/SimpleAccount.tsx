@@ -76,6 +76,9 @@ function SimpleAccount() {
 					<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 						<Avatar alt={username} src={avatarPath} sx={{ width: 100, height: 100 }}/>
 						<div style={{ display: 'inline' }}>
+							<p style={{ display: 'inline' }}>intra: {username}</p>
+						</div>
+						<div style={{ display: 'inline' }}>
 							<p style={{ display: 'inline' }}>Name: {displayName}</p>
 						</div>
 					</div>
