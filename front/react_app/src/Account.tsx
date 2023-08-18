@@ -325,6 +325,9 @@ function Account() {
 							</IconButton>
 						</Stack>
 						<div style={{ display: 'inline' }}>
+							<p style={{ display: 'inline' }}>intra: {username}</p>
+						</div>
+						<div style={{ display: 'inline' }}>
 							<p style={{ display: 'inline' }}>Name: {displayName}</p>
 							<button style={{ display: 'inline-block', marginLeft: '5px', paddingTop: '0px', paddingLeft: '0px', paddingRight: '0px', paddingBottom: '0px' }} onClick={handleClickOpen}>
 								<EditIcon />
