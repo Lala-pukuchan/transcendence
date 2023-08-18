@@ -40,7 +40,7 @@ export class GameService {
 		});
 	
 		// ゲームが見つかればそれを返す
-		if (gameAsUser1) {
+		if (gameAsUser1.length > 0) {
 			return gameAsUser1;
 		}
 	
@@ -53,14 +53,14 @@ export class GameService {
 		});
 	
 		// そのゲームが見つかればそれを返す
-		if (gameAsUser2) {
+		if (gameAsUser2.length > 0) {
 			return gameAsUser2;
 		}
 		
 		// マッチメイキング中のゲームを返却
 		return this.prisma.game.findMany({ where: { status: 'matchmaking' } });
 	}
-
+	// matchmaking
 	async joinGame(data: CreateGameDto, gameId: string): Promise<Game> {
 		//TODO:後で，　comment out 直す
 		// ユーザーがいない場合、エラー

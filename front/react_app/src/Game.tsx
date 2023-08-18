@@ -191,7 +191,7 @@ function Game() {
 					socket.emit('joinGameRoom', createdGame.roomId);
 					socket.emit('gaming', decodeToken(getCookie("token")).user.username);
 				} else {
-					console.log("本当にマッチメイキング中のゲームが見つかりました。");
+					console.log("マッチメイキング中のゲームが見つかりました。");
 					console.log("matching game : ", game);
 					try {
 						const response = await httpClient.put(`/games/${game[0].id}/join`, reqHeader);
