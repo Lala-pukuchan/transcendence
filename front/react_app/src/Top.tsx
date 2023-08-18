@@ -7,6 +7,7 @@ import { getCookie } from './utils/HandleCookie.tsx';
 import { decodeToken } from "react-jwt";
 import { useState, useEffect } from 'react';
 import io from 'socket.io-client';
+import { httpClient } from './httpClient.ts';
 
 const socket = io(import.meta.env.VITE_API_BASE_URL);
 
@@ -31,6 +32,25 @@ function Top() {
     window.location.href = "tfa";
     return null;
   }
+
+  // ユーザー情報取得機能
+	useEffect(() => {
+		httpClient
+			.get("/users/" + decoded.user.username, { headers: { 'Authorization': 'Bearer ' + getCookie("token") }})
+			.then((response) => {
+				console.log("response(get userInfo): ", response);
+        if (!response.data.completeSetUp) {
+          console.log('Initial Setup is not completed.');
+          window.location.href = "setup";
+          return null;
+        } else {
+          console.log('Initial Setup is completed.');
+        }
+			})
+			.catch(() => {
+				console.log("error(get userInfo)");
+			});
+	}, []);
 
   // オンライン処理
 	const [onlineUsers, setOnlineUsers] = useState<string[]>([]);

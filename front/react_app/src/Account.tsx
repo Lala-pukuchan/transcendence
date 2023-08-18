@@ -218,6 +218,8 @@ function Account() {
 	};
 	const handleClose = () => {
 		setOpenDn(false);
+		setNewDisplayName('');
+		setErrorMessageDn('');
 	};
 	const [newDisplayName, setNewDisplayName] = useState('');
 	const handleDisplayNameChange = (event) => {
@@ -225,7 +227,11 @@ function Account() {
 	};
 	const [errorMessageDn, setErrorMessageDn] = useState('');
 	const submitDn = (event) => {
-		httpClient
+		if (newDisplayName === '') {
+			console.log('error: DisplayName is empty.');
+			setErrorMessageDn("DisplayName is empty. Please input the correct one.");
+		} else {
+			httpClient
 			.patch("/users/" + username, 
 			{
 				"displayName": newDisplayName
@@ -243,9 +249,10 @@ function Account() {
 				setErrorMessageDn('');
 			})
 			.catch(() => {
-				console.log("error");
+				console.log("error: DisplayName is duplicated.");
 				setErrorMessageDn("DisplayName is duplicated. Please input another one.");
 			});
+		}
 	};
 
 	// 対戦履歴

@@ -9,6 +9,7 @@ import CreateRoom from './CreateRoom.tsx';
 import ChatRoom from './ChatRoom.tsx';
 import Login from './Login.tsx';
 import Tfa from "./Tfa.tsx";
+import Setup from "./Setup.tsx";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import MenuBar from './MenuBar.tsx';
 
@@ -28,6 +29,7 @@ function App() {
           <Route path="/selectRoom" element={<SelectRoom />} />
           <Route path="/chatRoom" element={<ChatRoom />} />
           <Route path="/createRoom" element={<CreateRoom />} />
+          <Route path="/setUp" element={<Setup />} />
         </Routes>
       </BrowserRouter>
     </>

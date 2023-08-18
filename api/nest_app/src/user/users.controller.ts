@@ -73,6 +73,12 @@ export class UsersController {
         return this.usersService.updateUserDisplayName(username, displayName);
     }
 
+    @Patch(':username/completeSetup')
+    @ApiResponse({ status: HttpStatus.OK, description: 'Update users setup status.'})
+    completeUserSetup(@Param('username') username: string){
+        return this.usersService.completeSetup(username);
+    }
+
     @Get(':username/users')
     @UseGuards(JwtAuthGuard)
     @ApiResponse({ status: HttpStatus.OK, type: [GetUsersInfoResponse], description: 'Get a list of users without {username} user.'})

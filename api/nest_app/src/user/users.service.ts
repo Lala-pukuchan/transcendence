@@ -279,6 +279,14 @@ export class UsersService {
         return user;
     }
 
+    async completeSetup(userName: string): Promise<User> {
+        const user = await this.prisma.user.update({
+            where: { username: userName },
+            data: { completeSetUp: true },
+        });
+        return user;
+    }
+
     async getOtherUsers(username: string): Promise<GetUsersInfoResponse[]> {
       // 全てのユーザーを取得します
       const allUsers = await this.prisma.user.findMany();
