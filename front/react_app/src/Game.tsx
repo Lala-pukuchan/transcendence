@@ -7,7 +7,8 @@ import { httpClient } from './httpClient';
 import { getCookie } from './utils/HandleCookie.tsx';
 import { decodeToken } from "react-jwt";
 
-const paddleWidth: number = 20, paddleHeight: number = 200, ballWidth: number = 16, wallOffset: number = 20;
+const paddleWidth: number = 20, paddleHeight: number = 200, wallOffset: number = 20;
+let ballWidth: number = 16;
 const MATCHPOINT: number = 3;
 class Position {
 	width: number;
@@ -178,6 +179,9 @@ function Game() {
 	const [isMatching, setIsMatching] = useState(true);
 	const [gameId, setGameId] = useState(0);
 
+	const [parameterValue, setParameterValue] = useState(60);
+
+
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
@@ -191,7 +195,7 @@ function Game() {
 					socket.emit('joinGameRoom', createdGame.roomId);
 					socket.emit('gaming', decodeToken(getCookie("token")).user.username);
 				} else {
-					console.log("マッチメイキング中のゲームが見つかりました。");
+					console.log("インバイト，または，マッチメイキング中のゲームが見つかりました。");
 					console.log("matching game : ", game);
 					try {
 						const response = await httpClient.put(`/games/${game[0].id}/join`, reqHeader);
@@ -234,7 +238,7 @@ function Game() {
 		const ball = new Ball(ballWidth, ballWidth, canvas.width / 2 - ballWidth / 2, canvas.height / 2 - ballWidth / 2);
 		player.draw(context);
 		opponent.draw(context);
-		
+		ballWidth = parameterValue;
 		//socket.on
 		const handleConnect = () => {
 			console.log('connection ID : ', socket.id);
@@ -295,6 +299,8 @@ function Game() {
 				player.update(canvas, 1);
 			}
 		};
+
+		
 
 		ball.deltaX = deltaX;
 		const gameLoop = () => {
@@ -358,7 +364,7 @@ function Game() {
 			socket.off('centerball', handleBall);
 			socket.on('detectedDisconnection', handleOpponentDisconnect);
 		};
-	}, [isAnimating, socket, deltaX, isLoading, isMatching]);
+	}, [isAnimating, socket, deltaX, isLoading, isMatching, parameterValue]);
 
 	const handleStartStop = () => {
 		var randomDirection = Math.floor(Math.random() * 2);
@@ -391,6 +397,14 @@ function Game() {
 		buttonText = 'Start';
 	}
 
+
+	const handleParameterChange = (event) => {
+		const newValue = parseInt(event.target.value);
+		setParameterValue(newValue);
+	};
+
+	
+
 	return (
 		<>
 			{/* <h2>Game</h2> */}
@@ -407,6 +421,14 @@ function Game() {
 			<Button variant={isAnimating ? "contained" : "outlined"} onClick={handleStartStop} disabled={isMatching}>
 				{buttonText}
 			</Button>
+			
+			<input
+        type="range"
+        min={20}
+        max={100}
+        value={parameterValue}
+        onChange={handleParameterChange}
+      />
 			{/* <Button variant="contained" onClick={onClickSubmit} sx={{ m: 2 }}>
 				emit
 			</Button> */}
