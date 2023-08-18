@@ -10,12 +10,30 @@ export class MessageService {
     constructor(private prisma : PrismaService, private channelService: ChannelService) {}
 
     async getChannelMessages(channelId: number) {
+        // channelIdのroomが存在するかを確認
+        const channel = await this.prisma.channel.findUnique({
+            where: {
+                id: channelId
+            }
+        });
+    
+        if (!channel) {
+            throw new Error(`Channel with ID ${channelId} does not exist.`);
+        }
+    
         return this.prisma.message.findMany({
             where: {
                 channelId: channelId
             },
+            include: {
+                author: {
+                    select: {
+                        displayName: true
+                    }
+                }
+            }
         });
-    }
+    }    
 
     async createMessage(createMessageDto: CreateMessageDto) {
         // Find user by username
