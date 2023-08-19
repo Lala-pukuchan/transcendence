@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
+import { Logger } from '@nestjs/common';
 
 @Injectable()
 export class StatusService {
-
+	private logger: Logger = new Logger('StatusService');	
 	constructor(private prisma: PrismaService) {}
 
 	async getUsersGameRoom(username: string) {
@@ -23,7 +24,9 @@ export class StatusService {
 				},
 				select: { roomId: true },
 			});
-
+			// console.log('GGGGGGGGGGGGGGGGGGGGGGGg: ', game);
+			
+			this.logger.log("GGGGGGGGGGGGGGGGGGGGGGGg:",  game);
 			// ユーザーの所属するゲームルームを終了
 			if (game?.roomId) {
 				const updatedGame = await this.prisma.game.updateMany({

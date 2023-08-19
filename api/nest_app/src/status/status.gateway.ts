@@ -5,10 +5,8 @@ import { StatusService } from './status.service';
 
 @WebSocketGateway({ cors: { origin: '*' } })
 export class StatusGateway implements OnGatewayConnection, OnGatewayDisconnect {
-
   @WebSocketServer()
   server: Server;
-
   constructor(private statusService: StatusService) {}
 
   // オンラインユーザー
@@ -66,7 +64,7 @@ export class StatusGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // 所属ゲームルームに通知
       const roomId = await this.statusService.getUsersGameRoom(username);
       console.log(`User: ${username} disconnected from roomId: ${roomId}`);
-      this.server.to(roomId).emit('detectedDisconnection', username);
+    //   this.server.emit('detectedDisconnection', username, roomId);
     });
 
   }
@@ -89,8 +87,11 @@ export class StatusGateway implements OnGatewayConnection, OnGatewayDisconnect {
         // 所属ゲームルームに通知
         const roomId = await this.statusService.getUsersGameRoom(username);
         console.log(`User: ${username} disconnected from roomId: ${roomId}`);
+		this.logger.log("RETURN DELETE socket id: " + client.id, "gameRoom id: " + roomId);
+        // this.server.emit('detectedDisconnection', username);
         this.server.to(roomId).emit('detectedDisconnection', username);
-
+        this.server.emit('detectedDisconnection', username);
+		// this.gameGateway.getServer(roomId, username);
       }
     });
 

@@ -192,7 +192,7 @@ function Game() {
 
 	const handleReturnBack = () => {
 		socket.emit('returnBack', decodeToken(getCookie("token")).user.username);
-		
+
 		navigate('/');
 	};
 	const [isUser1, setisUser1] = useState(false);
@@ -213,7 +213,7 @@ function Game() {
 					console.log("インバイト，または，マッチメイキング中のゲームが見つかりました。");
 					console.log("matching game : ", game);
 					try {
-						const response = await httpClient.put(`/games/${game[0].id}/join`, reqHeader);
+						const response = await httpClient.put(`/games/${game[0].id}/join`, {username: decodeToken(getCookie("token")).user.username }, reqHeader);
 						setGameId(game[0].id);
 						console.log(response.data); // レスポンスデータをログに表示
 						console.log("joined game : ", game);
@@ -288,13 +288,25 @@ function Game() {
 		const handleMatchMaking = (message: string) => {
 			setIsMatching(false);
 		};
-		const handleOpponentDisconnect = (message: string) => {
-			const confirmation = window.confirm(message + " is disconnected. Please click OK.");
-			// alert("Your opponent left the game.");
-			console.log("confirmation : ", "さよなら");
+		const handleOpponentDisconnect = (message :string) => {
+			// alert("username: " + message[0] + "gameId: " + message[1] + " is disconnected. Please click OK. " + gameId);
+			const confirmation = window.confirm( " is disconnected. Please click OK.");
+			console.log("confirmation : ", confirmation);
 			if (confirmation) {
-			  window.location.href = '/';
+				  window.location.href = '/';
+				  return ;
 			}
+			// if (message[1] === gameId)
+			// {
+			// 	const confirmation = window.confirm(message[0] + " is disconnected. Please click OK.");
+			// 	// alert("Your opponent left the game.");
+			// 	console.log("confirmation : ", "さよなら");
+			// 	if (confirmation) {
+			// 	  window.location.href = '/';
+			// 	}
+			// }
+			// alert("Your ばいばい");
+			// handleReturnBack();
 		};
 		const handleBallSizeUpdate = (message: string) => {
 			ballWidth = parseInt(message);
@@ -302,6 +314,7 @@ function Game() {
 		}
 
 		const handleLeft = (message: string) => {
+			
 			alert("Your opponent left the game.");
 			handleReturnBack();
 		}

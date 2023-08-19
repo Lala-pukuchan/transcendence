@@ -26,7 +26,7 @@ export class GameGateway {
 	@SubscribeMessage('joinGameRoom')
 	joinOrUpdateRoom(@MessageBody() roomId: string, @ConnectedSocket() socket: Socket) {	
 		// ログ出力
-		this.logger.log("socket id: " + socket.id, "gameRoom id: " + roomId);
+		this.logger.log("JOIN socket id: " + socket.id, "gameRoom id: " + roomId);
 		
 		//console.log("joinRoom socket id: " + socket.id, "room id: " + roomId);
 		// ユーザーとルームのマッピングを追加
@@ -59,6 +59,7 @@ export class GameGateway {
 	handleMatch(@MessageBody() message: string, @ConnectedSocket() socket: Socket) {
 		const rooms = [...socket.rooms].slice(0);
 		this.server.to(rooms[1]).emit('matchedGame', message);
+		this.logger.log("MATCHED socket id: " + socket.id, "gameRoom id: " + rooms[1]);
 		// this.server.emit('centerball', message);
 	}
 
