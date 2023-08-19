@@ -56,7 +56,7 @@ function SimpleAccount() {
 			.catch(() => {
 				console.log("error");
 			});
-	}, []);
+	}, [username]);
 
 	// 対戦履歴の表示
 	const columns: GridColDef[] = [
