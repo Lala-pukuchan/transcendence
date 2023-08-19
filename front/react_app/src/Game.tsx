@@ -165,6 +165,7 @@ const socket = io('http://localhost:3000');
 
 //TODO: ブラウザが非アクティブになったとき，どうするか考える
 function Game() {
+	window.history.pushState(null, '', window.location.href);
 	if (!getCookie("token")) {
 		window.location.href = "/";
 		return null;

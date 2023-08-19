@@ -72,7 +72,7 @@ function Top() {
               Chat
             </ListItemText>
           </MenuItem>
-          <MenuItem onClick={() => navigate('/game')}>
+          <MenuItem onClick={() => navigate('/game', { replace: true })}>
             <ListItemText>
               Game
             </ListItemText>
