@@ -291,7 +291,7 @@ function Game() {
 		};
 		const handleOpponentDisconnect = (message :string) => {
 			// alert("username: " + message[0] + "gameId: " + message[1] + " is disconnected. Please click OK. " + gameId);
-			const confirmation = window.confirm( " is disconnected. Please click OK.");
+			const confirmation = window.confirm(message +  " is disconnected. Please click OK.");
 			console.log("confirmation : ", confirmation);
 			if (confirmation) {
 				  window.location.href = '/';
