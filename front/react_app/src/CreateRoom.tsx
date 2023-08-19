@@ -106,30 +106,25 @@ function CreateRoom() {
 
     try {
       // POSTリクエストを送信
-      const response = await fetch('http://localhost:3000/channels', { // URLは適切なものに変更してください
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-
-      // サーバーからのレスポンスがエラーを示している場合、エラーを投げる
-      if (!response.ok) {
-        throw new Error(`Server responded with status code ${response.status}`);
-      }
-
+      const response = await httpClient.post('/channels', data);
+    
       // レスポンスを受け取る
-      const result = await response.json();
-
+      const result = response.data;
+    
       // 結果を表示（必要に応じて）
       console.log(result);
       navigate('/chatRoom', { state: { room: result.id } });
     } catch (error) {
+      // axiosのエラーオブジェクトは、error.responseにレスポンス情報を持っています。
       // エラーハンドリング（ここではコンソールにエラーを表示）
-      console.error('Error during room creation:', error);
+      if (typeof error === 'object' && error !== null && 'response' in error) {
+        console.error('Server responded with status code:', error.response);
+      } else {
+        console.error('Error during room creation:', error);
+      }
     }
   };
+    
 
   //以下はDMの作成において必要な諸関数
   async function getUsers() {
