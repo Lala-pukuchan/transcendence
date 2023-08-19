@@ -100,9 +100,9 @@ class Ball extends Position {
 			socket.emit('leftPosition', this.y, this.deltaX, this.deltaY, socket.id);
 		}
 
-		// if (this.x == canvas.width * 3 / 4) {
-		// 	socket.emit('right position', this.y, this.deltaX, socket.id);
-		// }
+		if (this.x == canvas.width * 3 / 4) {
+			socket.emit('leftPosition', this.y, this.deltaX, this.deltaY, socket.id);
+		}
 
 		this.x += this.deltaX * this.speed;
 		this.y += this.deltaY * this.speed;
@@ -188,6 +188,7 @@ function Game() {
 	const [isLoading, setIsLoading] = useState(true);
 	const [isMatching, setIsMatching] = useState(true);
 	const [gameId, setGameId] = useState(0);
+	const [roomId, setRoomId] = useState(0);
 
 	const [parameterValue, setParameterValue] = useState(60);
 
@@ -210,6 +211,7 @@ function Game() {
 					console.log("createdGame", createdGame);
 					setGameId(createdGame.id);
 					socket.emit('joinGameRoom', createdGame.roomId);
+					setRoomId(createdGame.roomId);
 					socket.emit('gaming', decodeToken(getCookie("token")).user.username);
 					setisUser1(true);
 				} else {
@@ -221,6 +223,7 @@ function Game() {
 						console.log(response.data); // レスポンスデータをログに表示
 						console.log("joined game : ", game);
 						socket.emit('joinGameRoom', game[0].roomId);
+						setRoomId(game[0].roomId);
 						socket.emit('gaming', decodeToken(getCookie("token")).user.username);
 						socket.emit('matched', 'game[0].', socket.id);
 					}
@@ -293,12 +296,16 @@ function Game() {
 		};
 		const handleOpponentDisconnect = (message :string) => {
 			// alert("username: " + message[0] + "gameId: " + message[1] + " is disconnected. Please click OK. " + gameId);
-			const confirmation = window.confirm(message[0] +  " is disconnected. Please click OK.");
-			console.log("confirmation : ", confirmation);
-			if (confirmation) {
-				  window.location.href = '/';
-				  return ;
-			}
+			// console.log("message : ", message[0]  + " " + roomId);
+			// if (message[0] === gameId)
+			// {
+				const confirmation = window.confirm("disconnected. Please click OK.");
+				console.log("confirmation : ", confirmation);
+				if (confirmation) {
+					  window.location.href = '/';
+					  return ;
+				}
+			// }
 			// if (message[1] === gameId)
 			// {
 			// 	const confirmation = window.confirm(message[0] + " is disconnected. Please click OK.");
