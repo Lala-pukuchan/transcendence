@@ -96,13 +96,13 @@ class Ball extends Position {
 		}
 
 		//send the absolute position to check lag
-		if (this.x == canvas.width / 4) {
-			socket.emit('position', this.y, this.deltaX, socket.id);
-		}
+		// if (this.x == canvas.width / 4) {
+		// 	socket.emit('left position', this.y, this.deltaX, socket.id);
+		// }
 
-		if (this.x == canvas.width * 3 / 4) {
-			socket.emit('position', this.y, this.deltaX, socket.id);
-		}
+		// if (this.x == canvas.width * 3 / 4) {
+		// 	socket.emit('right position', this.y, this.deltaX, socket.id);
+		// }
 
 		this.x += this.deltaX * this.speed;
 		this.y += this.deltaY * this.speed;
@@ -192,9 +192,10 @@ function Game() {
 
 	const handleReturnBack = () => {
 		socket.emit('returnBack', decodeToken(getCookie("token")).user.username);
+		
 		navigate('/');
 	};
-
+	const [isUser1, setisUser1] = useState(false);
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
@@ -207,6 +208,7 @@ function Game() {
 					setGameId(createdGame.id);
 					socket.emit('joinGameRoom', createdGame.roomId);
 					socket.emit('gaming', decodeToken(getCookie("token")).user.username);
+					setisUser1(true);
 				} else {
 					console.log("インバイト，または，マッチメイキング中のゲームが見つかりました。");
 					console.log("matching game : ", game);
@@ -288,10 +290,21 @@ function Game() {
 		};
 		const handleOpponentDisconnect = (message: string) => {
 			const confirmation = window.confirm(message + " is disconnected. Please click OK.");
+			// alert("Your opponent left the game.");
+			console.log("confirmation : ", "さよなら");
 			if (confirmation) {
 			  window.location.href = '/';
 			}
 		};
+		const handleBallSizeUpdate = (message: string) => {
+			ballWidth = parseInt(message);
+			setParameterValue(parseInt(message));
+		}
+
+		const handleLeft = (message: string) => {
+			alert("Your opponent left the game.");
+			handleReturnBack();
+		}
 
 		socket.on('connect', handleConnect);
 		socket.on('opponentPaddle', handleOpponetPaddle);
@@ -299,6 +312,8 @@ function Game() {
 		socket.on('centerball', handleBall);
 		socket.on('matchedGame', handleMatchMaking);
 		socket.on('detectedDisconnection', handleOpponentDisconnect);
+		socket.on('ballSizeUpdate', handleBallSizeUpdate);
+		socket.on('userLeft', handleLeft);
 		
 		const handleKeyDown = (event) => {
 			if (event.key === 'ArrowUp') {
@@ -359,10 +374,11 @@ function Game() {
 			}
 			else if (opponentScore >= MATCHPOINT) {
 				alert("You Lose.\n" + "Your Score: " + playerScore + "  :  Opponent Score: " + opponentScore);
+				handleReturnBack(); //FIXME:多分合っている
 			}
 			// setPlayerScore(0);
 			// setOpponentScore(0);
-			handleReturnBack(); //FIXME:多分合っている
+			
 		}
 
 		document.addEventListener('keydown', handleKeyDown);
@@ -376,7 +392,9 @@ function Game() {
 			socket.off('opponentPaddle', handleOpponetPaddle);
 			socket.off('GameStatus', handleGameStatus);
 			socket.off('centerball', handleBall);
-			socket.on('detectedDisconnection', handleOpponentDisconnect);
+			socket.off('detectedDisconnection', handleOpponentDisconnect);
+			socket.off('ballSizeUpdate', handleBallSizeUpdate);
+			socket.off('userLeft', handleLeft);
 		};
 	}, [isAnimating, socket, deltaX, isLoading, isMatching, parameterValue]);
 	// parameterValue入れといて，start状態のときしか動かせないようにする
@@ -412,10 +430,15 @@ function Game() {
 
 	const handleParameterChange = (event) => {
 		const newValue = parseInt(event.target.value);
+		socket.emit('ballSize', newValue, socket.id);
 		setParameterValue(newValue);
 	};
 
-	
+	const returnWhileGaming = () => {
+		handleReturnBack();
+		socket.emit('exitRoom', socket.id);
+		console.log("ばいばい");
+	}
 
 	return (
 		<>
@@ -427,21 +450,47 @@ function Game() {
 				<canvas ref={canvasRef}></canvas>
 				{/* 他のコンポーネントやテキストなど */}
 			</div>
-			<Button variant="contained" endIcon={<UndoIcon />} onClick={handleReturnBack} sx={{ m: 2 }}>
+			<Button variant="contained" endIcon={<UndoIcon />} onClick={returnWhileGaming} sx={{ m: 2 }}>
 				Return Back
 			</Button>
 			<Button variant={isAnimating ? "contained" : "outlined"} onClick={handleStartStop} disabled={isMatching}>
 				{buttonText}
 			</Button>
 			
-			<input
+			{/* <input
 				type="range"
 				min={20}
 				max={100}
 				value={parameterValue}
 				onChange={handleParameterChange}
 				visible={isAnimating ? "hide" : "show"}
-			/>
+			/> */}
+			<div>
+      {(isAnimating || !isUser1) ? (
+    	<input
+	  type="range"
+	  min={20}
+	  max={100}
+	  value={parameterValue}
+	  onChange={handleParameterChange}
+	  style={{ display: 'none' }} // Hide the input element using inline CSS
+	/>
+	  ) : (
+	<input
+	  type="range"
+	  min={20}
+	  max={100}
+	  value={parameterValue}
+	  onChange={handleParameterChange}
+	/>
+	  )}
+	</div>
+		{/* <div>
+			 {(isAnimating || !isUser1) ? (
+		<p></p>
+	  ) : (
+	<p> ball size </p>
+	  )}</div> */}
 			{/* <Button variant="contained" onClick={onClickSubmit} sx={{ m: 2 }}>
 				emit
 			</Button> */}

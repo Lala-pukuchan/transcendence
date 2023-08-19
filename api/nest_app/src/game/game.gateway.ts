@@ -61,6 +61,28 @@ export class GameGateway {
 		this.server.to(rooms[1]).emit('matchedGame', message);
 		// this.server.emit('centerball', message);
 	}
+
+	@SubscribeMessage('ballSize') // Match with the emitted event name from the client
+	handleBallSizeUpdate(
+	  @MessageBody() newValue: number,
+	  @ConnectedSocket() socket: Socket,
+	) {
+	  // Process the received ball size update (newValue) here
+	  
+	  // Broadcast the updated ball size to all connected clients (except the sender)
+	  socket.broadcast.emit('ballSizeUpdate', newValue);
+	}
+
+	@SubscribeMessage('exitRoom') // Match with the emitted event name from the client
+  	handleExitRoom(
+    @MessageBody() socketId: string,
+    @ConnectedSocket() socket: Socket,
+  ) {
+    // Process the exitRoom event here
+    // For example, you might want to remove the socket from the current room
+    
+    // Broadcast the exit information to the remaining clients in the room
+	const rooms = [...socket.rooms].slice(0);
+    this.server.to(rooms[1]).emit('userLeft', "bye");
+  }
 }
-
-
