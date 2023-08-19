@@ -113,7 +113,6 @@ function ChatRoom() {
     if (inputRef.current.value === '')
       return;
 
-    if (room.isMuted) {
       httpClient
         .get(`/channels/${roomId}/users/${username}/is-muted`, reqHeader)
         .then((response) => {
@@ -124,6 +123,32 @@ function ChatRoom() {
           }
           else {
             getRoom();
+                // json形式で送信
+            const message = {
+              channelId: roomId,
+              content: inputRef.current.value,
+              username: username,
+              createdAt: Date.now(),
+              contents_path: ""
+            }
+            // メッセージ入力欄の初期化
+            inputRef.current.value = '';
+            // メッセージ送信
+            socket.emit('message', message);
+            
+            // HTTP POSTリクエストでDBにメッセージを保存
+            httpClient.post('/message', {
+              username: username,
+              channelId: roomId,
+              content: message.content,
+              createdAt: new Date().toISOString()
+            }, reqHeader)
+            .then((response) => {
+              console.log("Message saved successfully:", response);
+            })
+            .catch((error) => {
+              console.error("An error occurred while saving the message:", error);
+            });
           }
         })
         .catch((error) => {
@@ -131,34 +156,6 @@ function ChatRoom() {
           alert("An error occurred while verifying the mute status");  // エラーメッセージを表示します
           return;
         });
-    }
-      
-    // json形式で送信
-    const message = {
-      channelId: roomId,
-      content: inputRef.current.value,
-      username: username,
-      createdAt: Date.now(),
-      contents_path: ""
-    }
-    // メッセージ入力欄の初期化
-    inputRef.current.value = '';
-    // メッセージ送信
-    socket.emit('message', message);
-    
-    // HTTP POSTリクエストでDBにメッセージを保存
-    httpClient.post('/message', {
-      username: username,
-      channelId: roomId,
-      content: message.content,
-      createdAt: new Date().toISOString()
-    }, reqHeader)
-    .then((response) => {
-      console.log("Message saved successfully:", response);
-    })
-    .catch((error) => {
-      console.error("An error occurred while saving the message:", error);
-    });
   }, []);
 
 
@@ -341,7 +338,9 @@ function ChatRoom() {
     try {
       const response = await httpClient.get(`/channels/${roomId}/users/not-owners`, reqHeader);
       console.log('response: ', response);
-      setNotOwners(response.data);
+
+      const filteredUsers = response.data.filter(user => user.username !== username);
+      setNotOwners(filteredUsers);
     } catch (error) {
       console.error("An error occurred while fetching the users in channel:", error);
     }

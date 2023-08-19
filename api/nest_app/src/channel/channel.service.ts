@@ -463,35 +463,47 @@ export class ChannelService {
 
     async changeOwner(channelId: number, username: string) {
       const channel = await this.prisma.channel.findUnique({
-        where: { id: channelId },
-        include: {
-          owner: true,
-          admins: true,
-          users: true,
-        },
-      });
-
-      if (!channel) {
-        throw new NotFoundException(`Channel with ID ${channelId} not found`);
-      }
-
-      const user = channel.users.find((user) => user.username === username);
-
-      if (!user) {
-        throw new BadRequestException(`User with username ${username} not found in channel with ID ${channelId}`);
-      }
-
-      await this.prisma.channel.update({
-        where: { id: channelId },
-        data: {
-          // ownerId: user.id,
-          owner: {
-            connect: { id: user.id },
+          where: { id: channelId },
+          include: {
+              owner: true,
+              admins: true,
+              users: true,
           },
-        },
       });
+  
+      if (!channel) {
+          throw new NotFoundException(`Channel with ID ${channelId} not found`);
+      }
+  
+      const user = channel.users.find((user) => user.username === username);
+  
+      if (!user) {
+          throw new BadRequestException(`User with username ${username} not found in channel with ID ${channelId}`);
+      }
+  
+      // 管理者リストでユーザーが既に存在するかを確認
+      const isAdminAlready = channel.admins.some(admin => admin.id === user.id);
+  
+      const updateData: any = {
+          owner: {
+              connect: { id: user.id },
+          },
+      };
+  
+      // 既にadminでない場合のみ、adminとして追加
+      if (!isAdminAlready) {
+          updateData.admins = {
+              connect: { id: user.id },
+          };
+      }
+  
+      await this.prisma.channel.update({
+          where: { id: channelId },
+          data: updateData,
+      });
+      
       return { success: true };
-    }
+  }  
 
     async deleteChannel(channelId: number) {
       const channel = await this.prisma.channel.findUnique({
