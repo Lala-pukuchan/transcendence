@@ -216,19 +216,35 @@ function Game() {
 					setisUser1(true);
 				} else {
 					console.log("インバイト，または，マッチメイキング中のゲームが見つかりました。");
-					console.log("matching game : ", game);
-					try {
-						const response = await httpClient.put(`/games/${game[0].id}/join`, {username: decodeToken(getCookie("token")).user.username }, reqHeader);
-						setGameId(game[0].id);
-						console.log(response.data); // レスポンスデータをログに表示
-						console.log("joined game : ", game);
+					let inviter = false;
+					// if (game[0].status === "inviting" && game[0].user1 === decodeToken(getCookie("token")).user.username)
+					// 		inviter = true;
+					// console.log("matching game : ", game);
+					
+					game.forEach((g) => {
+						// console.log("g : ", g);
+						g.status === "inviting" && g.user1Name === decodeToken(getCookie("token")).user.username ? inviter = true : inviter = false;
+						console.log("inviter!!!!!!!!!!!!!!");
+						console.log(g.status + " " + g.user1 + " " + g.user1Name + " " + g.user2 + " " + g.roomId);
+					});
+					if (inviter) {
 						socket.emit('joinGameRoom', game[0].roomId);
-						setRoomId(game[0].roomId);
-						socket.emit('gaming', decodeToken(getCookie("token")).user.username);
-						socket.emit('matched', 'game[0].', socket.id);
+						console.log("inviter!!!!!!!!!!!!!!!!!!!!!!!!!1");	
 					}
-					catch (error) {
-						console.error("エラーが発生しました:", error);
+					else {
+						try {
+							const response = await httpClient.put(`/games/${game[0].id}/join`, {username: decodeToken(getCookie("token")).user.username }, reqHeader);
+							setGameId(game[0].id);
+							console.log(response.data); // レスポンスデータをログに表示
+							console.log("joined game : ", game);
+							socket.emit('joinGameRoom', game[0].roomId);
+							setRoomId(game[0].roomId);
+							socket.emit('gaming', decodeToken(getCookie("token")).user.username);
+							socket.emit('matched', 'game[0].', socket.id);
+						}
+						catch (error) {
+							console.error("エラーが発生しました:", error);
+						}
 					}
 				}
 				setIsLoading(false);

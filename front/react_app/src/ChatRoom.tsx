@@ -123,28 +123,29 @@ function ChatRoom() {
           }
           else {
             getRoom();
-                // json形式で送信
-            const message = {
-              channelId: roomId,
-              content: inputRef.current.value,
-              username: username,
-              createdAt: Date.now(),
-              contents_path: ""
-            }
-            // メッセージ入力欄の初期化
-            inputRef.current.value = '';
-            // メッセージ送信
-            socket.emit('message', message);
             
             // HTTP POSTリクエストでDBにメッセージを保存
             httpClient.post('/message', {
               username: username,
               channelId: roomId,
-              content: message.content,
+              content: inputRef.current.value,
               createdAt: new Date().toISOString()
             }, reqHeader)
             .then((response) => {
-              console.log("Message saved successfully:", response);
+              	console.log("Message saved successfully:", response);
+				// json形式で送信
+				const message = {
+				id: response.data.id,
+				channelId: roomId,
+				content: inputRef.current.value,
+				username: username,
+				createdAt: Date.now(),
+				contents_path: ""
+				}
+				// メッセージ入力欄の初期化
+				inputRef.current.value = '';
+				// メッセージ送信
+				socket.emit('message', message);
             })
             .catch((error) => {
               console.error("An error occurred while saving the message:", error);
@@ -1306,7 +1307,7 @@ const Message = ({ message, myAccountUserId }) => {
   }, [message.username]);
 
   const acceptInvitation = async (message) => {
-	console.log("invite message" + message);
+	console.log("invite message" + message.id);
     httpClient
       .post(`/message/accept/${username}`, { messageId: message.id }, reqHeader)
       .then((response) => {
