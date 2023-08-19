@@ -95,6 +95,15 @@ class Ball extends Position {
 			}
 		}
 
+		//send the absolute position to check lag
+		if (this.x == canvas.width / 4) {
+			socket.emit('position', this.y, this.deltaX, socket.id);
+		}
+
+		if (this.x == canvas.width * 3 / 4) {
+			socket.emit('position', this.y, this.deltaX, socket.id);
+		}
+
 		this.x += this.deltaX * this.speed;
 		this.y += this.deltaY * this.speed;
 	}
@@ -181,6 +190,10 @@ function Game() {
 
 	const [parameterValue, setParameterValue] = useState(60);
 
+	const handleReturnBack = () => {
+		socket.emit('returnBack', decodeToken(getCookie("token")).user.username);
+		navigate('/');
+	};
 
 	useEffect(() => {
 		const fetchData = async () => {
@@ -342,13 +355,14 @@ function Game() {
 				}).catch((error) => {
 					console.log("score error : ", error);
 				});
-				  
+				handleReturnBack(); //FIXME:多分合っている
 			}
 			else if (opponentScore >= MATCHPOINT) {
 				alert("You Lose.\n" + "Your Score: " + playerScore + "  :  Opponent Score: " + opponentScore);
 			}
 			// setPlayerScore(0);
 			// setOpponentScore(0);
+			handleReturnBack(); //FIXME:多分合っている
 		}
 
 		document.addEventListener('keydown', handleKeyDown);
@@ -365,6 +379,7 @@ function Game() {
 			socket.on('detectedDisconnection', handleOpponentDisconnect);
 		};
 	}, [isAnimating, socket, deltaX, isLoading, isMatching, parameterValue]);
+	// parameterValue入れといて，start状態のときしか動かせないようにする
 
 	const handleStartStop = () => {
 		var randomDirection = Math.floor(Math.random() * 2);
@@ -378,10 +393,7 @@ function Game() {
 		});
 	};
 
-	const handleReturnBack = () => {
-		socket.emit('returnBack', decodeToken(getCookie("token")).user.username);
-		navigate('/');
-	};
+	
 
 	// const onClickSubmit = useCallback(() => {
 	// 	socket.emit('ball', socket.id);
@@ -423,12 +435,13 @@ function Game() {
 			</Button>
 			
 			<input
-        type="range"
-        min={20}
-        max={100}
-        value={parameterValue}
-        onChange={handleParameterChange}
-      />
+				type="range"
+				min={20}
+				max={100}
+				value={parameterValue}
+				onChange={handleParameterChange}
+				visible={isAnimating ? "hide" : "show"}
+			/>
 			{/* <Button variant="contained" onClick={onClickSubmit} sx={{ m: 2 }}>
 				emit
 			</Button> */}
