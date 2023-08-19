@@ -5,6 +5,7 @@ import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt.guards';
 
 @ApiTags('user')
+@UseGuards(JwtAuthGuard)
 @Controller('users')
 export class UsersController {
     constructor(private readonly usersService: UsersService) {}
@@ -16,7 +17,6 @@ export class UsersController {
     }
 
     @Get(':username')
-    @UseGuards(JwtAuthGuard)
     @ApiResponse({ status: HttpStatus.OK, type: GetUserDetailResponse, description: 'Get user detail. matches: 5 latest matches'})
     getUserDetail(@Param('username') username: string) {
         return this.usersService.getUserDetail(username);
@@ -29,14 +29,12 @@ export class UsersController {
     }
 
     @Patch(':username/addFriends')
-    @UseGuards(JwtAuthGuard)
     @ApiResponse({ status: HttpStatus.OK, type: UserNamesClass, description: 'Add friend.'})
     addFriend(@Param('username') username: string, @Body() data: UserNamesClass) {
         return this.usersService.addFriend(username, data.usernames);
     }
 
     @Patch(':username/deleteFriends')
-    @UseGuards(JwtAuthGuard)
     @ApiResponse({ status: HttpStatus.OK, type: UserNamesClass, description: 'Delete friend.'})
     deleteFriend(@Param('username') username: string, @Body() data: UserNamesClass) {
         return this.usersService.removeFriend(username, data.usernames);
@@ -80,7 +78,6 @@ export class UsersController {
     }
 
     @Get(':username/users')
-    @UseGuards(JwtAuthGuard)
     @ApiResponse({ status: HttpStatus.OK, type: [GetUsersInfoResponse], description: 'Get a list of users without {username} user.'})
     getOtherUsers(@Param('username') username: string) {
         return this.usersService.getOtherUsers(username);
