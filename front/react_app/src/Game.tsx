@@ -96,11 +96,12 @@ class Ball extends Position {
 		}
 
 		//send the absolute position to check lag
-		if (this.x == canvas.width / 4) {
+		if ( canvas.width / 4 - 10 < this.x && this.x < canvas.width / 4) {
+			console.log("1/4");
 			socket.emit('leftPosition', this.y, this.deltaX, this.deltaY, socket.id);
 		}
 
-		if (this.x == canvas.width * 3 / 4) {
+		if (canvas.width * 3 / 4 - 10 < this.x && this.x <  canvas.width * 3 / 4) {
 			socket.emit('leftPosition', this.y, this.deltaX, this.deltaY, socket.id);
 		}
 
@@ -355,7 +356,8 @@ function Game() {
 		}
 
 		const handlePosition = (message: string) => {
-			
+			// console.log("Yes. " + message[0] + " " + message[1] + " " + message[2] + " " + message[3]);
+			// console.log("No." + " " + ball.y + " " + ball.deltaX + " " + ball.deltaY);
 			if (message[3] !== socket.id)
 			{
 				// ball.y = parseInt(message[0]);
@@ -382,7 +384,7 @@ function Game() {
 		}
 
 		const handleLag = (message: string) => {
-			const confirmation = window.confirm(message +  " is disconnected. Please click OK.");
+			const confirmation = window.confirm("lag!. Please click OK.");
 			handleReturnBack();
 		}
 
@@ -530,7 +532,7 @@ function Game() {
 			<div>
 				<h2>Game</h2>
 				{/* 他のコンポーネントやテキストなど */}
-				<h3>{parameterValue}</h3>
+				<h3>match points : {parameterValue}</h3>
 				<h3>{playerScore} : {opponentScore}</h3>
 				<canvas ref={canvasRef}></canvas>
 				{/* 他のコンポーネントやテキストなど */}
