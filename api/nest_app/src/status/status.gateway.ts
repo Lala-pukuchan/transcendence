@@ -90,7 +90,7 @@ export class StatusGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		this.logger.log("RETURN DELETE socket id: " + client.id, "gameRoom id: " + roomId);
         // this.server.emit('detectedDisconnection', username);
         this.server.to(roomId).emit('detectedDisconnection', username);
-        this.server.emit('detectedDisconnection', roomId);
+        this.server.emit('detectedDisconnection', username);
 		// this.gameGateway.getServer(roomId, username);
       }
     });

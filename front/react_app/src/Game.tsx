@@ -8,8 +8,8 @@ import { getCookie } from './utils/HandleCookie.tsx';
 import { decodeToken } from "react-jwt";
 
 const paddleWidth: number = 20, paddleHeight: number = 200, wallOffset: number = 20;
-let ballWidth: number = 16;
-const MATCHPOINT: number = 3;
+const ballWidth: number = 16;
+// let MATCHPOINT: number = 6;
 class Position {
 	width: number;
 	height: number;
@@ -190,7 +190,7 @@ function Game() {
 	const [gameId, setGameId] = useState(0);
 	const [roomId, setRoomId] = useState(0);
 
-	const [parameterValue, setParameterValue] = useState(60);
+	const [parameterValue, setParameterValue] = useState(3);
 
 	const [isLag, setIsLag] = useState(false);
 
@@ -259,7 +259,7 @@ function Game() {
 		const ball = new Ball(ballWidth, ballWidth, canvas.width / 2 - ballWidth / 2, canvas.height / 2 - ballWidth / 2);
 		player.draw(context);
 		opponent.draw(context);
-		ballWidth = parameterValue;
+		// parameterValue = parameterValue;
 		//socket.on
 		const handleConnect = () => {
 			console.log('connection ID : ', socket.id);
@@ -288,7 +288,7 @@ function Game() {
 			}
 			ball.deltaX *= -1;
 			ball.x = canvas.width / 2 - ball.width / 2;
-			if (parseInt(message[1]) >= MATCHPOINT)
+			if (parseInt(message[1]) >= parameterValue)
 				ball.y = canvas.height / 2 - ball.width / 2;
 		};
 		const handleMatchMaking = (message: string) => {
@@ -305,6 +305,14 @@ function Game() {
 					  window.location.href = '/';
 					  return ;
 				}
+				// setIsMatching(true);
+				alert("Your opponent left the game.\n Please click OK and Return back.");
+				ball.x = canvas.width / 2 - ball.width / 2;
+				ball.y = canvas.height / 2;
+				ball.deltaX = 0;
+				ball.deltaY = 0;
+				
+				// handleReturnBack();
 			// }
 			// if (message[1] === gameId)
 			// {
@@ -319,7 +327,8 @@ function Game() {
 			// handleReturnBack();
 		};
 		const handleBallSizeUpdate = (message: string) => {
-			ballWidth = parseInt(message);
+			// ballWidth = parseInt(message);
+			// MATCHPOINT = parseInt(message);
 			setParameterValue(parseInt(message));
 		}
 
@@ -394,12 +403,12 @@ function Game() {
 			player.update(canvas, 0);
 			opponent.update(canvas, 0);
 			setPlayerScore((prevScore: number) => {
-				if (prevScore >= MATCHPOINT)
+				if (prevScore >= parameterValue)
 					setIsAnimating(false);
 				return prevScore;
 			});
 			setOpponentScore((prevScore: number) => {
-				if (prevScore >= MATCHPOINT)
+				if (prevScore >= parameterValue)
 					setIsAnimating(false);
 				return prevScore;
 			});
@@ -417,8 +426,7 @@ function Game() {
 			animationIdRef.current = requestAnimationFrame(gameLoop);
 		}
 		else {
-			if (playerScore >= MATCHPOINT) {
-				alert("You Win!\n" + "Your Score: " + playerScore + " Opponent Score: " + opponentScore);
+			if (playerScore >= parameterValue) {
 				httpClient.put(`/games/${gameId}/score`, {
 					score1: playerScore,
 					score2: opponentScore
@@ -427,9 +435,10 @@ function Game() {
 				}).catch((error) => {
 					console.log("score error : ", error);
 				});
+				alert("You Win!\n" + "Your Score: " + playerScore + " Opponent Score: " + opponentScore);
 				handleReturnBack(); //FIXME:多分合っている
 			}
-			else if (opponentScore >= MATCHPOINT) {
+			else if (opponentScore >= parameterValue) {
 				alert("You Lose.\n" + "Your Score: " + playerScore + "  :  Opponent Score: " + opponentScore);
 				handleReturnBack(); //FIXME:多分合っている
 			}
@@ -505,6 +514,7 @@ function Game() {
 			<div>
 				<h2>Game</h2>
 				{/* 他のコンポーネントやテキストなど */}
+				<h3>{parameterValue}</h3>
 				<h3>{playerScore} : {opponentScore}</h3>
 				<canvas ref={canvasRef}></canvas>
 				{/* 他のコンポーネントやテキストなど */}
@@ -528,8 +538,8 @@ function Game() {
       {(isAnimating || !isUser1) ? (
     	<input
 	  type="range"
-	  min={20}
-	  max={100}
+	  min={2}
+	  max={6}
 	  value={parameterValue}
 	  onChange={handleParameterChange}
 	  style={{ display: 'none' }} // Hide the input element using inline CSS
@@ -537,8 +547,8 @@ function Game() {
 	  ) : (
 	<input
 	  type="range"
-	  min={20}
-	  max={100}
+	  min={2}
+	  max={6}
 	  value={parameterValue}
 	  onChange={handleParameterChange}
 	/>
