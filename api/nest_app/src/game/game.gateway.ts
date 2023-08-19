@@ -86,4 +86,30 @@ export class GameGateway {
 	const rooms = [...socket.rooms].slice(0);
     this.server.to(rooms[1]).emit('userLeft', "bye");
   }
+
+  @SubscribeMessage('leftPosition') // Match with the emitted event name from the client
+  handleLeftPosition(
+    @MessageBody() message : string,
+    @ConnectedSocket() socket: Socket
+  ) {
+    // Process the received leftPosition data here
+    // For example, you might want to update the position of an element based on the received data
+    
+    // Broadcast the updated position to all connected clients (except the sender)
+	const rooms = [...socket.rooms].slice(0);
+    this.server.to(rooms[1]).emit('knowPosition', message);
+  }
+
+  @SubscribeMessage('zure') // Match with the emitted event name from the client
+  handleZure(
+    @MessageBody() message : string,
+    @ConnectedSocket() socket: Socket
+  ) {
+    // Process the received leftPosition data here
+    // For example, you might want to update the position of an element based on the received data
+    
+    // Broadcast the updated position to all connected clients (except the sender)
+	const rooms = [...socket.rooms].slice(0);
+    this.server.to(rooms[1]).emit('lag', message);
+  }
 }

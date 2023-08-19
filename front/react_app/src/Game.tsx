@@ -96,9 +96,9 @@ class Ball extends Position {
 		}
 
 		//send the absolute position to check lag
-		// if (this.x == canvas.width / 4) {
-		// 	socket.emit('left position', this.y, this.deltaX, socket.id);
-		// }
+		if (this.x == canvas.width / 4) {
+			socket.emit('leftPosition', this.y, this.deltaX, this.deltaY, socket.id);
+		}
 
 		// if (this.x == canvas.width * 3 / 4) {
 		// 	socket.emit('right position', this.y, this.deltaX, socket.id);
@@ -190,6 +190,8 @@ function Game() {
 	const [gameId, setGameId] = useState(0);
 
 	const [parameterValue, setParameterValue] = useState(60);
+
+	const [isLag, setIsLag] = useState(false);
 
 	const handleReturnBack = () => {
 		socket.emit('returnBack', decodeToken(getCookie("token")).user.username);
@@ -291,7 +293,7 @@ function Game() {
 		};
 		const handleOpponentDisconnect = (message :string) => {
 			// alert("username: " + message[0] + "gameId: " + message[1] + " is disconnected. Please click OK. " + gameId);
-			const confirmation = window.confirm(message +  " is disconnected. Please click OK.");
+			const confirmation = window.confirm(message[0] +  " is disconnected. Please click OK.");
 			console.log("confirmation : ", confirmation);
 			if (confirmation) {
 				  window.location.href = '/';
@@ -314,9 +316,41 @@ function Game() {
 			setParameterValue(parseInt(message));
 		}
 
-		const handleLeft = (message: string) => {
+		const handleLeftRoom = (message: string) => {
 			
 			alert("Your opponent left the game.");
+			handleReturnBack();
+		}
+
+		const handlePosition = (message: string) => {
+			
+			if (message[3] !== socket.id)
+			{
+				// ball.y = parseInt(message[0]);
+				
+				if (ball.deltaX !== 0)
+				{
+					console.log("Yes. " + message[0] + " " + message[1] + " " + message[2] + " " + message[3]);
+					console.log("No." + " " + ball.y + " " + ball.deltaX + " " + ball.deltaY);
+					if (ball.deltaX * -1 !== parseInt(message[1]) || ball.deltaY !== parseInt(message[2]))
+					{
+						console.log("heeeeeeeeeeeeeeeeeeeeeelllllllllllllo");
+						if (isLag === false)
+						{
+							socket.emit('zure', socket.id);
+							console.log("lalalalalalalaallalala" + " " + isLag);
+							setIsLag(true);
+						}
+						// socket.broadcast.emit('detectedDisconnection', decodeToken(getCookie("token")).user.username);
+						// ball.deltaX = parseInt(message[1]) * -1;
+						// ball.deltaY = parseInt(message[2]);
+					}
+				}
+			}
+		}
+
+		const handleLag = (message: string) => {
+			const confirmation = window.confirm(message +  " is disconnected. Please click OK.");
 			handleReturnBack();
 		}
 
@@ -327,7 +361,9 @@ function Game() {
 		socket.on('matchedGame', handleMatchMaking);
 		socket.on('detectedDisconnection', handleOpponentDisconnect);
 		socket.on('ballSizeUpdate', handleBallSizeUpdate);
-		socket.on('userLeft', handleLeft);
+		socket.on('userLeft', handleLeftRoom);
+		socket.on('knowPosition', handlePosition);
+		socket.on('lag', handleLag);
 		
 		const handleKeyDown = (event) => {
 			if (event.key === 'ArrowUp') {
@@ -408,9 +444,11 @@ function Game() {
 			socket.off('centerball', handleBall);
 			socket.off('detectedDisconnection', handleOpponentDisconnect);
 			socket.off('ballSizeUpdate', handleBallSizeUpdate);
-			socket.off('userLeft', handleLeft);
+			socket.off('userLeft', handleLeftRoom);
+			socket.off('knowPosition', handlePosition);
+			socket.off('lag', handleLag);
 		};
-	}, [isAnimating, socket, deltaX, isLoading, isMatching, parameterValue]);
+	}, [isAnimating, socket, deltaX, isLoading, isMatching, parameterValue, isLag]);
 	// parameterValue入れといて，start状態のときしか動かせないようにする
 
 	const handleStartStop = () => {
