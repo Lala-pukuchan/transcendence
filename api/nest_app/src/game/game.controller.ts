@@ -6,26 +6,24 @@ import { CreateGameDto, ScoreDto } from 'src/dto/game.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt.guards';
 
 @ApiTags('games')
+@UseGuards(JwtAuthGuard)
 @Controller('games')
 export class GameController {
   constructor(private gameService: GameService) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard)
   @ApiResponse({ status: HttpStatus.OK, type: CreateGameDto })
   async createGame(@Body() createGameDto: CreateGameDto) {
     return this.gameService.createGame(createGameDto);
   }
 
   @Post('/invite/:username')
-  // @UseGuards(JwtAuthGuard)
   @ApiResponse({ status: HttpStatus.OK, type: CreateGameDto })
   async createInvitation(@Param('username') username: string, @Body('opponent') opponent: string) {
     return this.gameService.createInvitation(username, opponent);
   }
 
   @Get('matchmaking/:username')
-  @UseGuards(JwtAuthGuard)
   @ApiResponse({ status: HttpStatus.OK })
   async getMatchmakingGames(@Param('username') username: string) {
     return this.gameService.getMatchmakingGames(username);
@@ -38,7 +36,6 @@ export class GameController {
   }
 
   @Put(':gameId/score')
-  @UseGuards(JwtAuthGuard)
   @ApiResponse({ status: HttpStatus.OK, type: ScoreDto })
   async updateGameScore(
     @Param('gameId') gameId: string,

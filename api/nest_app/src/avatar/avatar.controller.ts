@@ -1,12 +1,13 @@
 import { existsSync, mkdirSync } from 'fs';
 import { ApiTags, ApiResponse } from '@nestjs/swagger';
-import { Controller, Get, Post, UploadedFile, UseInterceptors, Param, HttpStatus, Res } from '@nestjs/common';
+import { Controller, Get, Post, UploadedFile, UseInterceptors, Param, HttpStatus, Res, UseGuards } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { join } from 'path';
 import { UsersService } from '../user/users.service';
 import { NotFoundException } from '@nestjs/common';
 import { Response } from 'express';
+import { JwtAuthGuard } from '../auth/guards/jwt.guards';
 
 
 @Controller()
@@ -33,6 +34,7 @@ export class AvatarController {
       }
     })
   }))
+
   @ApiResponse({ status: HttpStatus.OK, description: 'The file has been successfully uploaded.'})
   async uploadFile(@UploadedFile() file, @Param('username') username: string) {
     console.log(file);

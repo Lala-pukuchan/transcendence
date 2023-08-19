@@ -199,8 +199,8 @@ export class GameService {
 			  status: 'finish',
 			  NOT: {
 				OR: [
-				  { score1: null },
-				  { score2: null },
+				  { result1: null },
+				  { result2: null },
 				],
 			  },
 			},

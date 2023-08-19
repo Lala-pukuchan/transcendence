@@ -6,6 +6,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt.guards';
 import { BadRequestException } from '@nestjs/common';
 
 @ApiTags('message')
+@UseGuards(JwtAuthGuard)
 @Controller('message')
 export class MessageController {
     constructor(private readonly messageService: MessageService) {}
@@ -13,7 +14,6 @@ export class MessageController {
     //　存在しないチャンネルIDを指定した場合、空の配列が返ってくる
     // parseIntに失敗すると、500エラーが帰ってきてしまう
     @Get(':channelId')
-    @UseGuards(JwtAuthGuard)
     @ApiResponse({ status: 200, description: 'Successfully retrieved the messages.', type: [MessageResponseDto] })
     async getMessages(@Param('channelId') channelId: string) {
         const id = parseInt(channelId, 10);
@@ -21,14 +21,12 @@ export class MessageController {
     }
 
     @Post()
-    @UseGuards(JwtAuthGuard)
     @ApiResponse({ status: 201, description: 'Successfully created the message.', type: MessageResponseDto })
     async createMessage(@Body() createMessageDto: CreateMessageDto) {
         return await this.messageService.createMessage(createMessageDto);
     }
 
     @Post(`/accept/:username`)
-    @UseGuards(JwtAuthGuard)
     @ApiResponse({ status: 201, description: 'Successfully accepted the invitation.'})
     async acceptInvitation(@Param('username') username: string, @Body('messageId') messageId: string) {
         const messageIdNumber = Number(messageId);
