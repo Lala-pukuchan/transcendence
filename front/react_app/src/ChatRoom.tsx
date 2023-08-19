@@ -1306,6 +1306,7 @@ const Message = ({ message, myAccountUserId }) => {
   }, [message.username]);
 
   const acceptInvitation = async (message) => {
+	console.log("invite message" + message);
     httpClient
       .post(`/message/accept/${username}`, { messageId: message.id }, reqHeader)
       .then((response) => {

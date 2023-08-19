@@ -4,6 +4,7 @@ import { CreateMessageDto, MessageResponseDto } from '../dto/message.dto';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt.guards';
 import { BadRequestException } from '@nestjs/common';
+import {Logger} from "@nestjs/common";
 
 @ApiTags('message')
 @UseGuards(JwtAuthGuard)
@@ -25,15 +26,15 @@ export class MessageController {
     async createMessage(@Body() createMessageDto: CreateMessageDto) {
         return await this.messageService.createMessage(createMessageDto);
     }
-
+	private logger: Logger = new Logger('MessageController');
     @Post(`/accept/:username`)
     @ApiResponse({ status: 201, description: 'Successfully accepted the invitation.'})
     async acceptInvitation(@Param('username') username: string, @Body('messageId') messageId: string) {
         const messageIdNumber = Number(messageId);
-
-    if (isNaN(messageIdNumber)) {
-      throw new BadRequestException(`Invalid message id. ${messageId}`);
-    }
+		this.logger.log("messageIdNumber: " + username + " : " + messageId + " " + messageIdNumber);
+    	if (isNaN(messageIdNumber)) {
+   			throw new BadRequestException(`Invalid message id. ${messageId}`);
+		}
         return await this.messageService.acceptInvitation(messageIdNumber, username);
     }
 }
