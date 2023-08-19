@@ -4,8 +4,9 @@ import { httpClient } from './httpClient.ts';
 import { getCookie } from './utils/HandleCookie.tsx';
 import { useParams } from 'react-router-dom';
 import { Button } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import './App.css';
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
 
 function SimpleAccount() {
 	if (!getCookie("token")) {
@@ -57,6 +58,47 @@ function SimpleAccount() {
 			});
 	}, []);
 
+	// 対戦履歴の表示
+	const columns: GridColDef[] = [
+		{ field: 'createdAt', headerName: 'createdAt' },
+		{
+			field: 'user1.displayName',
+			headerName: 'user1',
+			valueGetter: (params) => params.row.user1?.displayName || 'N/A',
+			renderCell: (params) => (
+			  <Link to={`/simpleAccount/${params.row.user1?.username}`}>
+				{params.row.user1?.displayName || 'N/A'}
+			  </Link>
+			),
+		},
+		{ field: 'score1', headerName: 'score1', type: 'number'},
+		{ field: 'result1', headerName: 'result1' },
+		{
+			field: 'user2.displayName',
+			headerName: 'user2',
+			valueGetter: (params) => params.row.user2?.displayName || 'N/A',
+			renderCell: (params) => (
+				<Link to={`/simpleAccount/${params.row.user2?.username}`}>
+				  {params.row.user2?.displayName || 'N/A'}
+				</Link>
+			),
+		},
+		{ field: 'score2', headerName: 'score2', type: 'number' },
+		{ field: 'result2', headerName: 'result2' },
+	];
+	const [rows, setRows] = useState([]);
+	useEffect(() => {
+		httpClient
+			.get("/games/user/" + username + "/match-history", { headers: { 'Authorization': 'Bearer ' + getCookie("token") }})
+			.then((response) => {
+				console.log("response(match history): ", response);
+				setRows(response.data);
+			})
+			.catch(() => {
+				console.log("error");
+			});
+	}, []);
+
 	return (
 		<>
 			<Grid
@@ -76,6 +118,9 @@ function SimpleAccount() {
 					<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 						<Avatar alt={username} src={avatarPath} sx={{ width: 100, height: 100 }}/>
 						<div style={{ display: 'inline' }}>
+							<p style={{ display: 'inline' }}>intra: {username}</p>
+						</div>
+						<div style={{ display: 'inline' }}>
 							<p style={{ display: 'inline' }}>Name: {displayName}</p>
 						</div>
 					</div>
@@ -92,6 +137,20 @@ function SimpleAccount() {
 							<Typography component="legend">- Count -</Typography>
 							<Typography component="legend">win: {win}</Typography>
 							<Typography component="legend">lose: {lose}</Typography>
+						</Box>
+						<Box sx={{ m:3 }}>
+							<Typography component="legend">- Match History -</Typography>
+							<DataGrid
+							 	sx={{ m:3 }}
+								rows={rows}
+								columns={columns}
+								initialState={{
+									pagination: {
+										paginationModel: { page: 0, pageSize: 5 },
+									},
+								}}
+								pageSizeOptions={[5, 10]}
+							/>
 						</Box>
 						<Button 
                 variant="contained" 

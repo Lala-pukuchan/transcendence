@@ -190,10 +190,10 @@ function ChatRoom() {
 	const sendButtonRef = useRef(null);
 	useEffect(() => {
 		const handleKeyPress = (event) => {
-			if (event.key === 'Enter') {
-				event.preventDefault();
-				sendButtonRef.current.click();
-			}
+			// if (event.key === 'Enter') {
+			// 	event.preventDefault();
+			// 	sendButtonRef.current.click();
+			// }
 		};
 	
 		document.addEventListener('keydown', handleKeyPress);
@@ -214,10 +214,10 @@ function ChatRoom() {
   };
 
   const handleKeyDown = (event) => {
-    if (event.key === 'Enter' && !event.isComposing && !composing) {
-      event.preventDefault();
-      submitMessage();
-    }
+    // if (event.key === 'Enter' && !event.isComposing && !composing) {
+    //   event.preventDefault();
+    //   submitMessage();
+    // }
   };
 
   //以下はsubjectの機能を満たすためのchannel編集機能
@@ -1338,7 +1338,7 @@ const Message = ({ message, myAccountUserId }) => {
             alignItems: "center",
           }}
         >
-          <Tooltip title={message.username}>
+          <Tooltip title={message.author?.displayName}>
             <Avatar src={avatarPath} onClick={handleAvatarClick} />
           </Tooltip>
           <Paper

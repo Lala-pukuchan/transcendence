@@ -41,7 +41,6 @@ export class UsersService {
         });
     }
 
-    //usernameが存在しない時のエラーハンドリング未対応
     async getUserDetail(username: string): Promise<ExtendedUser> {
         const user = await this.prisma.user.findUnique({
             where: {
@@ -68,6 +67,19 @@ export class UsersService {
     }
 
     async changeAvatar(userName: string, newAvatar: string): Promise<User> {
+        const checkUser = await this.prisma.user.findUnique({
+            where: {
+                username: userName,
+            },
+            include: {
+                friends: true,
+            },
+        });
+
+        if (!checkUser) {
+            throw new NotFoundException(`User with username ${userName} not found.`);
+        }
+
         const user = await this.prisma.user.update({
             where: { username: userName },
             data: { avatar: newAvatar },
