@@ -124,7 +124,7 @@ yarn add qrcode
 ```
 ```
 curl http://localhost:3000/auth/profile -H "Authorization: Bearer <token>"
-{"id":"f434212f-4dc2-4d8f-a884-775200ed3893","fortyTwoId":"103540","username":"rukobaya","avatar":"default.jpg","wins":0,"losses":0,"ladderLevel":0,"achievements":[]}
+{"id":"f434212f-4dc2-4d8f-a884-775200ed3893","fortyTwoId":"<42id>","username":"<username>","avatar":"default.jpg","wins":0,"losses":0,"ladderLevel":0,"achievements":[]}
 
 curl -X POST http://localhost:3000/auth/2fa/generate -H "Authorization: Bearer <token>"
 
